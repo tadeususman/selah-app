@@ -75,6 +75,7 @@ func main() {
 		r.Post("/journal/{id}/delete", app.JournalDelete)
 
 		r.Get("/admin", app.AdminPage)
+		r.Post("/admin/email", app.AdminUpdateEmail)
 		r.Post("/admin/name", app.AdminUpdateName)
 		r.Post("/admin/password", app.AdminUpdatePassword)
 	})

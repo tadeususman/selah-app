@@ -29,6 +29,8 @@ func (a *App) AdminPage(w http.ResponseWriter, r *http.Request) {
 	}
 	data := adminPageData{Name: name, Email: email, Version: appconfig.Version, Year: time.Now().Year()}
 	switch r.URL.Query().Get("ok") {
+	case "email":
+		data.FlashOK = "Email berhasil diperbarui."
 	case "name":
 		data.FlashOK = "Nama berhasil diperbarui."
 	case "password":
@@ -43,6 +45,26 @@ func (a *App) AdminPage(w http.ResponseWriter, r *http.Request) {
 		data.FlashErr = "Password baru minimal 8 karakter."
 	}
 	a.render(w, "admin.html", data)
+}
+
+func (a *App) AdminUpdateEmail(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.UserID(r)
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "bad form", http.StatusBadRequest)
+		return
+	}
+	email := r.FormValue("email")
+	if email == "" {
+		http.Redirect(w, r, "/admin?err=empty", http.StatusSeeOther)
+		return
+	}
+	_, err := a.DB.ExecContext(r.Context(),
+		`UPDATE users SET email = $1 WHERE id = $2`, email, userID)
+	if err != nil {
+		http.Error(w, "could not update email", http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, "/admin?ok=email", http.StatusSeeOther)
 }
 
 func (a *App) AdminUpdateName(w http.ResponseWriter, r *http.Request) {

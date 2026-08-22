@@ -17,6 +17,15 @@
     {{if .FlashErr}}<div class="flash-err">{{.FlashErr}}</div>{{end}}
 
     <section class="admin-section">
+      <h3>Email Login</h3>
+      <form method="POST" action="/admin/email" class="stacked-form">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" value="{{.Email}}" required autocomplete="email">
+        <button type="submit" class="btn-secondary">Simpan Email</button>
+      </form>
+    </section>
+
+    <section class="admin-section">
       <h3>Nama Tampilan</h3>
       <form method="POST" action="/admin/name" class="stacked-form">
         <label for="name">Nama</label>

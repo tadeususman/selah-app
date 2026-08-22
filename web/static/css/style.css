@@ -230,15 +230,72 @@ input:focus, textarea:focus {
 
 .btn-icon-trash {
   background: none;
-  border: none;
+  border: 1px solid var(--border);
+  border-radius: 20px;
   cursor: pointer;
   color: var(--text-muted);
-  padding: 4px;
-  border-radius: 8px;
+  padding: 5px 10px 5px 8px;
   display: flex;
   align-items: center;
+  gap: 4px;
+  font-family: inherit;
+  font-size: 12px;
+  transition: color 0.15s, border-color 0.15s;
 }
-.btn-icon-trash:hover { color: var(--danger); }
+.btn-icon-trash:hover { color: var(--danger); border-color: var(--danger); }
+.btn-icon-trash-label { line-height: 1; }
+
+/* ---------- Delete modal ---------- */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-card {
+  background: var(--card);
+  border-radius: 20px;
+  padding: 28px 24px 24px;
+  max-width: 320px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+}
+.modal-icon { font-size: 36px; margin-bottom: 12px; }
+.modal-title { font-size: 17px; font-weight: 700; color: var(--navy-dark); margin: 0 0 8px; }
+.modal-desc { font-size: 13px; color: var(--text-muted); margin: 0 0 22px; line-height: 1.5; }
+.modal-actions { display: flex; gap: 10px; }
+.modal-btn-cancel {
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: none;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.modal-btn-cancel:hover { background: var(--btn-secondary-bg); }
+.modal-btn-delete {
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  background: var(--danger);
+  color: white;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.modal-btn-delete:hover { opacity: 0.9; }
 
 .greeting {
   font-size: 22px;

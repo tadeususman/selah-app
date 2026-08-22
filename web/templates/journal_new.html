@@ -14,10 +14,16 @@
 
     <form method="POST" action="/journal" class="stacked-form">
       <div class="location-tag-wrap">
-        <svg class="location-pin-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-        </svg>
-        <input type="text" name="location" class="location-input" placeholder="Tambah lokasi...">
+        <button type="button" id="loc-btn" class="location-pin-btn" title="Deteksi lokasi otomatis">
+          <svg id="loc-icon" class="location-pin-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+          </svg>
+          <svg id="loc-spinner" class="location-spinner" style="display:none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="12" cy="12" r="9" stroke-opacity="0.25"/>
+            <path d="M12 3a9 9 0 019 9" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <input type="text" id="location-input" name="location" class="location-input" placeholder="Tambah lokasi...">
       </div>
 
       <label>Referensi ayat (opsional)</label>
@@ -31,6 +37,49 @@
   </main>
 
   {{template "nav" .}}
+
+  <script>
+    document.getElementById('loc-btn').addEventListener('click', function() {
+      if (!navigator.geolocation) {
+        document.getElementById('location-input').placeholder = 'Geolokasi tidak didukung';
+        return;
+      }
+      var icon = document.getElementById('loc-icon');
+      var spinner = document.getElementById('loc-spinner');
+      icon.style.display = 'none';
+      spinner.style.display = 'block';
+      this.disabled = true;
+
+      navigator.geolocation.getCurrentPosition(
+        function(pos) {
+          var lat = pos.coords.latitude, lon = pos.coords.longitude;
+          fetch('https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lon + '&format=json&accept-language=id')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+              var a = data.address || {};
+              var name = a.suburb || a.city_district || a.neighbourhood || a.quarter
+                       || a.city || a.town || a.village || a.county || '';
+              document.getElementById('location-input').value = name;
+            })
+            .catch(function() {
+              document.getElementById('location-input').placeholder = 'Gagal mendapatkan nama lokasi';
+            })
+            .finally(function() {
+              icon.style.display = 'block';
+              spinner.style.display = 'none';
+              document.getElementById('loc-btn').disabled = false;
+            });
+        },
+        function() {
+          icon.style.display = 'block';
+          spinner.style.display = 'none';
+          document.getElementById('loc-btn').disabled = false;
+          document.getElementById('location-input').placeholder = 'Izin lokasi ditolak';
+        },
+        { timeout: 10000 }
+      );
+    });
+  </script>
 </body>
 </html>
 {{end}}

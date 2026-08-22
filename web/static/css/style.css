@@ -577,7 +577,7 @@ input:focus, textarea:focus {
 
 .nav-item.active, .nav-item-btn:hover { color: var(--navy); }
 .nav-icon { font-size: 18px; }
-.nav-icon-svg { width: 22px; height: 22px; }
+.nav-icon-svg { width: 18px; height: 18px; }
 .nav-logout-form { margin: 0; flex: 1; }
 
 /* ---------- Loading overlay ---------- */

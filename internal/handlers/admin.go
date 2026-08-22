@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 	appconfig "journalflow/internal/config"
@@ -12,6 +13,7 @@ type adminPageData struct {
 	Email    string
 	Name     string
 	Version  string
+	Year     int
 	FlashOK  string
 	FlashErr string
 }
@@ -25,7 +27,7 @@ func (a *App) AdminPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not load user", http.StatusInternalServerError)
 		return
 	}
-	data := adminPageData{Name: name, Email: email, Version: appconfig.Version}
+	data := adminPageData{Name: name, Email: email, Version: appconfig.Version, Year: time.Now().Year()}
 	switch r.URL.Query().Get("ok") {
 	case "name":
 		data.FlashOK = "Nama berhasil diperbarui."

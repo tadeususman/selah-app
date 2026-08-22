@@ -45,8 +45,11 @@ func (a *App) Dashboard(w http.ResponseWriter, r *http.Request) {
 		entries = append(entries, p)
 	}
 
+	idMonths := [13]string{"", "Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"}
+	monthLabel := idMonths[now.Month()] + " " + now.Format("2006")
+
 	a.render(w, "dashboard.html", dashboardData{
-		MonthLabel: now.Format("January 2006"),
+		MonthLabel: monthLabel,
 		Entries:    entries,
 	})
 }

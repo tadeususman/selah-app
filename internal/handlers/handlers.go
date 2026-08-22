@@ -2,18 +2,17 @@ package handlers
 
 import (
 	"database/sql"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"path/filepath"
+	"time"
 
 	"journalflow/internal/ai"
 	"journalflow/internal/session"
 )
 
-// App bundles the dependencies every handler needs. Passing it as a
-// receiver keeps handler signatures as plain http.HandlerFunc, which
-// plugs straight into chi without extra adapters.
 type App struct {
 	DB       *sql.DB
 	Sessions *session.Manager
@@ -21,12 +20,36 @@ type App struct {
 	Tmpl     *template.Template
 }
 
-// LoadTemplates parses every template in web/templates so {{template
-// "layout" .}} composition works across files. Called once at startup;
-// re-run (and restart the process) after editing templates.
+var idMonths = [13]string{"", "Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"}
+var idMonthsFull = [13]string{"", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"}
+var idDays = map[time.Weekday]string{
+	time.Sunday:    "Minggu",
+	time.Monday:    "Senin",
+	time.Tuesday:   "Selasa",
+	time.Wednesday: "Rabu",
+	time.Thursday:  "Kamis",
+	time.Friday:    "Jumat",
+	time.Saturday:  "Sabtu",
+}
+
 func LoadTemplates(dir string) *template.Template {
+	funcs := template.FuncMap{
+		// "2 Agustus 2006" → formatted in Indonesian
+		"idDate": func(t time.Time) string {
+			return fmt.Sprintf("%d %s %d", t.Day(), idMonthsFull[t.Month()], t.Year())
+		},
+		// short month + year: "Agt 2026"
+		"idMonthYear": func(t time.Time) string {
+			return fmt.Sprintf("%s %d", idMonths[t.Month()], t.Year())
+		},
+		// day name: "Sabtu"
+		"idDay": func(t time.Time) string {
+			return idDays[t.Weekday()]
+		},
+	}
+
 	pattern := filepath.Join(dir, "*.html")
-	t, err := template.ParseGlob(pattern)
+	t, err := template.New("").Funcs(funcs).ParseGlob(pattern)
 	if err != nil {
 		log.Fatalf("failed loading templates from %s: %v", pattern, err)
 	}

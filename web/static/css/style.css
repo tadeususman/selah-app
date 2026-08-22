@@ -246,6 +246,7 @@ input:focus, textarea:focus {
 }
 
 .entry-card-title { font-weight: 700; color: var(--navy-dark); font-size: 15px; }
+.entry-card-day { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
 .entry-card-snippet { font-size: 13px; color: var(--text-muted); margin: 4px 0 0; }
 
 .empty-state { color: var(--text-muted); font-size: 14px; text-align: center; padding: 40px 0; }

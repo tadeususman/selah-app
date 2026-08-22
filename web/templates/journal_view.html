@@ -2,16 +2,16 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <title>{{.Entry.EntryDate.Format "2 Jan 2006"}} · selah.</title>
+  <title>{{idDate .Entry.EntryDate}} · selah.</title>
   {{template "head" .}}
 </head>
 <body>
   <main class="page">
     <header class="page-header">
       <a href="/dashboard" class="back-link">← Kembali</a>
-      <h1>{{.Entry.EntryDate.Format "2 January 2006"}}</h1>
+      <h1>{{idDate .Entry.EntryDate}}</h1>
       <p class="page-sub">
-        {{if .Entry.Location}}{{.Entry.Location}} · {{end}}{{.Entry.EntryDate.Format "Monday"}}
+        {{idDay .Entry.EntryDate}}{{if .Entry.Location}} · {{.Entry.Location}}{{end}}
         {{if eq .Entry.Status "completed"}} · <span class="badge-done">Selesai ✓</span>{{end}}
       </p>
     </header>

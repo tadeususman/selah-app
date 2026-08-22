@@ -254,6 +254,28 @@ func (a *App) JournalComplete(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 }
 
+// ---- POST /journal/{id}/delete ----
+
+func (a *App) JournalDelete(w http.ResponseWriter, r *http.Request) {
+	entry, ok := a.loadOwnedEntry(w, r)
+	if !ok {
+		return
+	}
+	_, err := a.DB.ExecContext(r.Context(),
+		`DELETE FROM journal_messages WHERE entry_id = $1`, entry.ID)
+	if err != nil {
+		http.Error(w, "could not delete messages", http.StatusInternalServerError)
+		return
+	}
+	_, err = a.DB.ExecContext(r.Context(),
+		`DELETE FROM journal_entries WHERE id = $1`, entry.ID)
+	if err != nil {
+		http.Error(w, "could not delete journal", http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
+}
+
 // ---- helpers ----
 
 func (a *App) loadOwnedEntry(w http.ResponseWriter, r *http.Request) (models.JournalEntry, bool) {

@@ -72,6 +72,7 @@ func main() {
 		r.Post("/journal/{id}/reflect", app.JournalReflect)
 		r.Post("/journal/{id}/discuss", app.JournalDiscuss)
 		r.Post("/journal/{id}/complete", app.JournalComplete)
+		r.Post("/journal/{id}/delete", app.JournalDelete)
 
 		r.Get("/admin", app.AdminPage)
 		r.Post("/admin/name", app.AdminUpdateName)

@@ -10,20 +10,24 @@
     <header class="page-header">
       <a href="/dashboard" class="back-link">← Kembali</a>
       <h1>Ayat apa yang ingin kamu renungkan hari ini?</h1>
-      <p class="page-sub">Tempel atau ketik ayatnya di bawah. AI akan bantu carikan latar belakang & maknanya.</p>
+      <p class="page-sub">AI akan bantu carikan latar belakang &amp; maknanya.</p>
     </header>
 
     <form method="POST" action="/journal" class="stacked-form">
+      <div class="location-tag-wrap">
+        <svg class="location-pin-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+        </svg>
+        <input type="text" name="location" class="location-input" placeholder="Tambah lokasi...">
+      </div>
+
       <label>Referensi ayat (opsional)</label>
       <input type="text" name="verse_ref" placeholder="mis. Mazmur 23:1-3">
 
       <label>Teks ayat</label>
       <textarea name="verse_text" rows="6" placeholder="Ketik atau tempel ayat di sini..." required autofocus></textarea>
 
-      <label>Lokasi (opsional)</label>
-      <input type="text" name="location" placeholder="mis. Rumah, pagi hari">
-
-      <button type="submit" class="btn-primary">Lanjutkan &amp; Cari Latar Belakang</button>
+      <button type="submit" class="btn-primary">Gali Lebih Dalam</button>
     </form>
   </main>
 

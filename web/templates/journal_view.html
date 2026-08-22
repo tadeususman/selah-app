@@ -69,6 +69,13 @@
     {{end}}
   </main>
 
+  <div class="delete-zone">
+    <form method="POST" action="/journal/{{.Entry.ID}}/delete"
+          onsubmit="return confirm('Hapus journal ini? Tidak bisa dibatalkan.')">
+      <button type="submit" class="btn-delete-journal">Hapus journal ini</button>
+    </form>
+  </div>
+
   {{template "nav" .}}
 
   <!-- Render markdown in AI bubbles -->

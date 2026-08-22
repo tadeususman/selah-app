@@ -2,17 +2,16 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <title>Day {{.Entry.DayNumber}} · selah.</title>
+  <title>{{.Entry.EntryDate.Format "2 Jan 2006"}} · selah.</title>
   {{template "head" .}}
 </head>
 <body>
   <main class="page">
     <header class="page-header">
       <a href="/dashboard" class="back-link">← Kembali</a>
-      <h1>Day {{.Entry.DayNumber}}</h1>
+      <h1>{{.Entry.EntryDate.Format "2 January 2006"}}</h1>
       <p class="page-sub">
-        {{.Entry.EntryDate.Format "2 January 2006"}}
-        {{if .Entry.Location}} · {{.Entry.Location}}{{end}}
+        {{if .Entry.Location}}{{.Entry.Location}} · {{end}}{{.Entry.EntryDate.Format "Monday"}}
         {{if eq .Entry.Status "completed"}} · <span class="badge-done">Selesai ✓</span>{{end}}
       </p>
     </header>
@@ -71,6 +70,15 @@
   </main>
 
   {{template "nav" .}}
+
+  <!-- Render markdown in AI bubbles -->
+  <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
+  <script>
+    marked.use({ breaks: true, gfm: true });
+    document.querySelectorAll('.bubble-ai .bubble-content').forEach(function(el) {
+      el.innerHTML = marked.parse(el.textContent);
+    });
+  </script>
 </body>
 </html>
 {{end}}

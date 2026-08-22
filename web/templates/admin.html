@@ -1,0 +1,45 @@
+{{define "admin.html"}}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <title>Pengaturan · selah.</title>
+  {{template "head" .}}
+</head>
+<body>
+  <main class="page">
+    <header class="page-header">
+      <p class="brand-wordmark brand-small">selah<span class="dot">.</span></p>
+      <h1>Pengaturan</h1>
+      <p class="page-sub">{{.Email}}</p>
+    </header>
+
+    {{if .FlashOK}}<div class="flash-ok">{{.FlashOK}}</div>{{end}}
+    {{if .FlashErr}}<div class="flash-err">{{.FlashErr}}</div>{{end}}
+
+    <section class="admin-section">
+      <h3>Nama Tampilan</h3>
+      <form method="POST" action="/admin/name" class="stacked-form">
+        <label for="name">Nama</label>
+        <input id="name" name="name" type="text" value="{{.Name}}" required>
+        <button type="submit" class="btn-primary">Simpan Nama</button>
+      </form>
+    </section>
+
+    <section class="admin-section">
+      <h3>Ganti Password</h3>
+      <form method="POST" action="/admin/password" class="stacked-form">
+        <label for="old_password">Password Sekarang</label>
+        <input id="old_password" name="old_password" type="password" required autocomplete="current-password">
+        <label for="new_password">Password Baru</label>
+        <input id="new_password" name="new_password" type="password" required autocomplete="new-password" minlength="8">
+        <label for="new_password2">Konfirmasi Password Baru</label>
+        <input id="new_password2" name="new_password2" type="password" required autocomplete="new-password" minlength="8">
+        <button type="submit" class="btn-secondary">Ganti Password</button>
+      </form>
+    </section>
+  </main>
+
+  {{template "nav" .}}
+</body>
+</html>
+{{end}}

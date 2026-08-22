@@ -72,6 +72,10 @@ func main() {
 		r.Post("/journal/{id}/reflect", app.JournalReflect)
 		r.Post("/journal/{id}/discuss", app.JournalDiscuss)
 		r.Post("/journal/{id}/complete", app.JournalComplete)
+
+		r.Get("/admin", app.AdminPage)
+		r.Post("/admin/name", app.AdminUpdateName)
+		r.Post("/admin/password", app.AdminUpdatePassword)
 	})
 
 	log.Printf("JournalFlow listening on :%s", cfg.AppPort)

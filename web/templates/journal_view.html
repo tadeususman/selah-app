@@ -69,9 +69,9 @@
       </div>
 
       <div id="panel-ask" class="action-panel" style="display:none">
-        <form method="POST" action="/journal/{{.Entry.ID}}/discuss" class="stacked-form">
+        <form method="POST" action="/journal/{{.Entry.ID}}/discuss" class="stacked-form" id="discuss-form">
           <textarea name="message" rows="3" placeholder="Tanyakan ke Teman Selah..." required autofocus></textarea>
-          <button type="submit" class="btn-secondary">Kirim</button>
+          <button type="submit" class="btn-secondary" id="discuss-submit">Kirim</button>
         </form>
       </div>
 
@@ -97,11 +97,35 @@
 
   {{template "nav" .}}
 
+  <!-- Loading overlay -->
+  <div id="loading-overlay" style="display:none">
+    <div class="loading-card">
+      <div class="loading-spinner"></div>
+      <p class="loading-label">Teman Selah sedang berpikir…</p>
+      <p class="loading-sub">Biasanya butuh 15–30 detik</p>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
   <script>
     marked.use({ breaks: true, gfm: true });
     document.querySelectorAll('.bubble-ai .bubble-content').forEach(function(el) {
       el.innerHTML = marked.parse(el.textContent);
+    });
+
+    // Loading state for discuss form
+    var discussForm = document.getElementById('discuss-form');
+    var overlay = document.getElementById('loading-overlay');
+    if (discussForm) {
+      discussForm.addEventListener('submit', function() {
+        var btn = document.getElementById('discuss-submit');
+        btn.disabled = true;
+        overlay.style.display = 'flex';
+      });
+    }
+    // Hide overlay if user navigates back (bfcache restore)
+    window.addEventListener('pageshow', function(e) {
+      if (e.persisted) overlay.style.display = 'none';
     });
 
     function togglePanel(id) {

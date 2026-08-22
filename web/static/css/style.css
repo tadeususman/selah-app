@@ -565,15 +565,56 @@ input:focus, textarea:focus {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
   font-size: 11px;
   color: var(--text-muted);
   background: none;
   border: none;
   font-family: inherit;
   cursor: pointer;
+  padding: 0;
 }
 
 .nav-item.active, .nav-item-btn:hover { color: var(--navy); }
 .nav-icon { font-size: 18px; }
+.nav-icon-svg { width: 22px; height: 22px; }
 .nav-logout-form { margin: 0; flex: 1; }
+
+/* ---------- Loading overlay ---------- */
+
+#loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--cream);
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.loading-card {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+.loading-spinner {
+  width: 44px;
+  height: 44px;
+  border: 3px solid var(--border);
+  border-top-color: var(--navy);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--navy-dark);
+  margin: 0;
+}
+.loading-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 0;
+}

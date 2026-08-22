@@ -230,20 +230,16 @@ input:focus, textarea:focus {
 
 .btn-icon-trash {
   background: none;
-  border: 1px solid var(--border);
-  border-radius: 20px;
+  border: none;
   cursor: pointer;
   color: var(--text-muted);
-  padding: 5px 10px 5px 8px;
+  padding: 4px;
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-family: inherit;
-  font-size: 12px;
-  transition: color 0.15s, border-color 0.15s;
+  border-radius: 8px;
+  transition: color 0.15s;
 }
-.btn-icon-trash:hover { color: var(--danger); border-color: var(--danger); }
-.btn-icon-trash-label { line-height: 1; }
+.btn-icon-trash:hover { color: var(--danger); }
 
 /* ---------- Delete modal ---------- */
 

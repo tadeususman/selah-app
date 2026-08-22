@@ -8,7 +8,17 @@
 <body>
   <main class="page">
     <header class="page-header">
-      <a href="/dashboard" class="back-link">← Kembali</a>
+      <div class="page-header-row">
+        <a href="/dashboard" class="back-link">← Kembali</a>
+        <form method="POST" action="/journal/{{.Entry.ID}}/delete"
+              onsubmit="return confirm('Hapus journal ini? Tidak bisa dibatalkan.')">
+          <button type="submit" class="btn-icon-trash" title="Hapus journal">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+              <path d="M9 3v1H4v2h1v13a2 2 0 002 2h10a2 2 0 002-2V6h1V4h-5V3H9zm0 5h2v9H9V8zm4 0h2v9h-2V8z"/>
+            </svg>
+          </button>
+        </form>
+      </div>
       <h1>{{idDate .Entry.EntryDate}}</h1>
       <p class="page-sub">
         {{idDay .Entry.EntryDate}}{{if .Entry.Location}} · {{.Entry.Location}}{{end}}
@@ -25,7 +35,7 @@
     <section class="thread">
       {{range .Messages}}
         <div class="bubble bubble-{{.Role}}">
-          <div class="bubble-label">{{if eq .Role "ai"}}AI{{else}}Kamu{{end}}</div>
+          <div class="bubble-label">{{if eq .Role "ai"}}Teman Selah{{else}}Kamu{{end}}</div>
           <div class="bubble-content">{{.Content}}</div>
         </div>
       {{end}}
@@ -39,52 +49,79 @@
       </section>
     {{else}}
 
-      {{if not .Entry.Reflection}}
-      <section class="action-box">
-        <h3>Apa yang kamu dapat setelah membaca &amp; merenungkan?</h3>
-        <form method="POST" action="/journal/{{.Entry.ID}}/reflect" class="stacked-form">
-          <textarea name="reflection" rows="5" placeholder="Tulis refleksimu di sini..." required autofocus></textarea>
-          <button type="submit" class="btn-primary">Simpan Refleksi</button>
-        </form>
-      </section>
-      {{else}}
+      <div class="action-btns">
+        <button class="action-btn" onclick="togglePanel('panel-ask')">
+          <span class="action-btn-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+              <path d="M20 2H4a2 2 0 00-2 2v18l4-4h14a2 2 0 002-2V4a2 2 0 00-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+            </svg>
+          </span>
+          <span>Ada yang mau ditanya ke Teman Selah?</span>
+        </button>
+        <button class="action-btn" onclick="togglePanel('panel-write')">
+          <span class="action-btn-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+              <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+            </svg>
+          </span>
+          <span>Tulis apa yang kamu dapat</span>
+        </button>
+      </div>
 
-      <section class="action-box">
-        <h3>Ada yang kurang jelas atau ingin didiskusikan?</h3>
+      <div id="panel-ask" class="action-panel" style="display:none">
         <form method="POST" action="/journal/{{.Entry.ID}}/discuss" class="stacked-form">
-          <textarea name="message" rows="3" placeholder="Tanyakan sesuatu ke AI..." required></textarea>
-          <button type="submit" class="btn-secondary">Kirim ke AI</button>
+          <textarea name="message" rows="3" placeholder="Tanyakan ke Teman Selah..." required autofocus></textarea>
+          <button type="submit" class="btn-secondary">Kirim</button>
         </form>
-      </section>
+      </div>
 
-      <section class="action-box">
-        <h3>Pesan / langkah praktis apa yang bisa dilakukan?</h3>
+      <div id="panel-write" class="action-panel" style="display:none">
+        <form method="POST" action="/journal/{{.Entry.ID}}/reflect" class="stacked-form">
+          <textarea name="reflection" rows="5" placeholder="Tulis refleksimu di sini..." required></textarea>
+          <button type="submit" class="btn-primary">Simpan</button>
+        </form>
+      </div>
+
+      {{if .Entry.Reflection}}
+      <section class="action-box" style="margin-top:8px">
+        <h3>Langkah praktis apa yang bisa dilakukan?</h3>
         <form method="POST" action="/journal/{{.Entry.ID}}/complete" class="stacked-form">
           <textarea name="practical_step" rows="4" placeholder="Tulis langkah praktismu..." required></textarea>
           <button type="submit" class="btn-primary">Selesaikan Journal</button>
         </form>
       </section>
-
       {{end}}
+
     {{end}}
   </main>
 
-  <div class="delete-zone">
-    <form method="POST" action="/journal/{{.Entry.ID}}/delete"
-          onsubmit="return confirm('Hapus journal ini? Tidak bisa dibatalkan.')">
-      <button type="submit" class="btn-delete-journal">Hapus journal ini</button>
-    </form>
-  </div>
-
   {{template "nav" .}}
 
-  <!-- Render markdown in AI bubbles -->
   <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
   <script>
     marked.use({ breaks: true, gfm: true });
     document.querySelectorAll('.bubble-ai .bubble-content').forEach(function(el) {
       el.innerHTML = marked.parse(el.textContent);
     });
+
+    function togglePanel(id) {
+      var panels = document.querySelectorAll('.action-panel');
+      var btns = document.querySelectorAll('.action-btn');
+      var target = document.getElementById(id);
+      var isOpen = target.style.display !== 'none';
+
+      // Close all
+      panels.forEach(function(p) { p.style.display = 'none'; });
+      btns.forEach(function(b) { b.classList.remove('active'); });
+
+      if (!isOpen) {
+        target.style.display = 'block';
+        // Mark the clicked button active
+        var idx = id === 'panel-ask' ? 0 : 1;
+        btns[idx].classList.add('active');
+        target.querySelector('textarea').focus();
+      }
+    }
   </script>
 </body>
 </html>

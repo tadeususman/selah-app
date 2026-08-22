@@ -9,9 +9,25 @@
   <main class="page">
     <header class="page-header">
       <p class="brand-wordmark brand-small">selah<span class="dot">.</span></p>
+      <h1 class="greeting">Halo, {{.UserName}} 👋</h1>
     </header>
 
+    {{if .Recent}}
     <div class="section-title-row">
+      <h2>Terakhir dibaca</h2>
+    </div>
+    <div class="entry-list">
+      {{range .Recent}}
+      <a href="/journal/{{.ID}}" class="entry-card entry-card-recent">
+        {{if .VerseRef}}<div class="recent-verse-ref">{{.VerseRef}}</div>{{end}}
+        <div class="recent-verse-text">{{.VerseText}}</div>
+        <div class="entry-card-day">{{idDay .EntryDate}} · {{idDate .EntryDate}}</div>
+      </a>
+      {{end}}
+    </div>
+    {{end}}
+
+    <div class="section-title-row" style="margin-top:24px">
       <h2>{{.MonthLabel}}</h2>
     </div>
 

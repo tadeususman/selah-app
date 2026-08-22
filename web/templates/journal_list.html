@@ -16,9 +16,15 @@
         <p class="empty-state">Belum ada journal. Tekan + untuk mulai.</p>
       {{end}}
       {{range .Entries}}
-      <a href="/journal/{{.ID}}" class="entry-card">
-        <div class="entry-card-title">{{.EntryDate.Day}}</div>
-        <div class="entry-card-day">{{idDay .EntryDate}}</div>
+      <a href="/journal/{{.ID}}" class="entry-card entry-card-list">
+        <div class="list-card-left">
+          <div class="entry-card-title">{{.EntryDate.Day}}</div>
+          <div class="entry-card-day">{{idDay .EntryDate}}</div>
+        </div>
+        <div class="list-card-right">
+          {{if .VerseRef}}<div class="list-verse-ref">{{.VerseRef}}</div>{{end}}
+          <div class="list-verse-text">{{.VerseText}}</div>
+        </div>
       </a>
       {{end}}
     </div>

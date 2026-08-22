@@ -22,7 +22,8 @@ func (a *App) JournalList(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.UserID(r)
 	rows, err := a.DB.QueryContext(r.Context(), `
 		SELECT id, day_number, entry_date,
-		       COALESCE(NULLIF(reflection, ''), NULLIF(verse_text, ''), 'Belum ada isi') AS snippet
+		       COALESCE(NULLIF(reflection, ''), NULLIF(verse_text, ''), 'Belum ada isi') AS snippet,
+		       COALESCE(verse_ref, ''), verse_text
 		FROM journal_entries
 		WHERE user_id = $1
 		ORDER BY entry_date DESC, day_number DESC`,
@@ -36,9 +37,12 @@ func (a *App) JournalList(w http.ResponseWriter, r *http.Request) {
 	var entries []models.Preview
 	for rows.Next() {
 		var p models.Preview
-		if err := rows.Scan(&p.ID, &p.DayNumber, &p.EntryDate, &p.Snippet); err != nil {
+		if err := rows.Scan(&p.ID, &p.DayNumber, &p.EntryDate, &p.Snippet, &p.VerseRef, &p.VerseText); err != nil {
 			http.Error(w, "could not read journals", http.StatusInternalServerError)
 			return
+		}
+		if len(p.VerseText) > 100 {
+			p.VerseText = p.VerseText[:100] + "…"
 		}
 		entries = append(entries, p)
 	}

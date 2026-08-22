@@ -1,0 +1,26 @@
+{{define "login.html"}}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <title>Masuk · selah.</title>
+  {{template "head" .}}
+</head>
+<body class="auth-body">
+  <div class="auth-card">
+    <div class="brand-mark-icon">s</div>
+    <h1 class="brand-wordmark">selah<span class="dot">.</span></h1>
+    <p class="auth-sub">ruang jeda untuk merenung.</p>
+
+    {{if .Error}}<p class="form-error">{{.Error}}</p>{{end}}
+
+    <form method="POST" action="/login" class="auth-form">
+      <label>Email</label>
+      <input type="email" name="email" required autofocus>
+      <label>Password</label>
+      <input type="password" name="password" required>
+      <button type="submit" class="btn-primary">Masuk</button>
+    </form>
+  </div>
+</body>
+</html>
+{{end}}

@@ -1,0 +1,45 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: journalflow
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: journalflow
+    volumes:
+      - journalflow_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U journalflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # Uncomment to allow connecting from a DB client on the host:
+    # ports:
+    #   - "5432:5432"
+
+  app:
+    build: .
+    restart: unless-stopped
+    container_name: journalflow-app-1
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      APP_PORT: "8080"
+      DATABASE_URL: postgres://journalflow:${POSTGRES_PASSWORD:-changeme}@db:5432/journalflow?sslmode=disable
+      SESSION_SECRET: ${SESSION_SECRET:?set a random secret in .env}
+      BRIDGE_URL: ${BRIDGE_URL:-http://host.docker.internal:8765}
+    ports:
+      - "8082:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - default
+      - proxy
+
+volumes:
+  journalflow_pgdata:
+
+networks:
+  proxy:
+    external: true

@@ -1,0 +1,38 @@
+{{define "dashboard.html"}}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <title>Dashboard · selah.</title>
+  {{template "head" .}}
+</head>
+<body>
+  <main class="page">
+    <header class="page-header">
+      <p class="brand-wordmark brand-small">selah<span class="dot">.</span></p>
+      <p class="eyebrow">my appetite is mightier<br>than your mental notes</p>
+    </header>
+
+    <div class="section-title-row">
+      <h2>{{.MonthLabel}}</h2>
+    </div>
+
+    <div class="entry-list">
+      {{if not .Entries}}
+        <p class="empty-state">Belum ada journal bulan ini. Tekan tombol + untuk mulai.</p>
+      {{end}}
+      {{range .Entries}}
+      <a href="/journal/{{.ID}}" class="entry-card">
+        <div class="entry-card-title">Day {{.DayNumber}}</div>
+        <div class="entry-card-snippet">{{.Snippet}}</div>
+        <div class="entry-card-date">{{.EntryDate.Format "2 January 2006"}}</div>
+      </a>
+      {{end}}
+    </div>
+
+    <a href="/journal/new" class="fab" aria-label="Tambah journal baru">+</a>
+  </main>
+
+  {{template "nav" .}}
+</body>
+</html>
+{{end}}

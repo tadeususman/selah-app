@@ -1,0 +1,76 @@
+{{define "journal_view.html"}}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <title>Day {{.Entry.DayNumber}} · selah.</title>
+  {{template "head" .}}
+</head>
+<body>
+  <main class="page">
+    <header class="page-header">
+      <a href="/dashboard" class="back-link">← Kembali</a>
+      <h1>Day {{.Entry.DayNumber}}</h1>
+      <p class="page-sub">
+        {{.Entry.EntryDate.Format "2 January 2006"}}
+        {{if .Entry.Location}} · {{.Entry.Location}}{{end}}
+        {{if eq .Entry.Status "completed"}} · <span class="badge-done">Selesai ✓</span>{{end}}
+      </p>
+    </header>
+
+    <section class="verse-box">
+      {{if .Entry.VerseRef}}<div class="verse-ref">{{.Entry.VerseRef}}</div>{{end}}
+      <p class="verse-text">{{.Entry.VerseText}}</p>
+    </section>
+
+    {{if .Messages}}
+    <section class="thread">
+      {{range .Messages}}
+        <div class="bubble bubble-{{.Role}}">
+          <div class="bubble-label">{{if eq .Role "ai"}}AI{{else}}Kamu{{end}}</div>
+          <div class="bubble-content">{{.Content}}</div>
+        </div>
+      {{end}}
+    </section>
+    {{end}}
+
+    {{if eq .Entry.Status "completed"}}
+      <section class="summary-box">
+        <h3>Langkah Praktis</h3>
+        <p>{{.Entry.PracticalStep}}</p>
+      </section>
+    {{else}}
+
+      {{if not .Entry.Reflection}}
+      <section class="action-box">
+        <h3>Apa yang kamu dapat setelah membaca &amp; merenungkan?</h3>
+        <form method="POST" action="/journal/{{.Entry.ID}}/reflect" class="stacked-form">
+          <textarea name="reflection" rows="5" placeholder="Tulis refleksimu di sini..." required autofocus></textarea>
+          <button type="submit" class="btn-primary">Simpan Refleksi</button>
+        </form>
+      </section>
+      {{else}}
+
+      <section class="action-box">
+        <h3>Ada yang kurang jelas atau ingin didiskusikan?</h3>
+        <form method="POST" action="/journal/{{.Entry.ID}}/discuss" class="stacked-form">
+          <textarea name="message" rows="3" placeholder="Tanyakan sesuatu ke AI..." required></textarea>
+          <button type="submit" class="btn-secondary">Kirim ke AI</button>
+        </form>
+      </section>
+
+      <section class="action-box">
+        <h3>Pesan / langkah praktis apa yang bisa dilakukan?</h3>
+        <form method="POST" action="/journal/{{.Entry.ID}}/complete" class="stacked-form">
+          <textarea name="practical_step" rows="4" placeholder="Tulis langkah praktismu..." required></textarea>
+          <button type="submit" class="btn-primary">Selesaikan Journal</button>
+        </form>
+      </section>
+
+      {{end}}
+    {{end}}
+  </main>
+
+  {{template "nav" .}}
+</body>
+</html>
+{{end}}

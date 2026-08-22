@@ -1,0 +1,29 @@
+{{define "head"}}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="/static/css/style.css">
+{{end}}
+
+{{define "nav"}}
+<nav class="bottom-nav">
+  <a href="/dashboard" class="nav-item" data-path="/dashboard">
+    <span class="nav-icon">⌂</span><span>Home</span>
+  </a>
+  <a href="/journal" class="nav-item" data-path="/journal">
+    <span class="nav-icon">▤</span><span>Journal</span>
+  </a>
+  <form action="/logout" method="POST" class="nav-item nav-logout-form">
+    <button type="submit" class="nav-item-btn">
+      <span class="nav-icon">⏻</span><span>Logout</span>
+    </button>
+  </form>
+</nav>
+<script>
+  // Lightweight active-state highlight — no server plumbing needed.
+  document.querySelectorAll('.nav-item[data-path]').forEach(function (el) {
+    if (window.location.pathname.startsWith(el.dataset.path)) {
+      el.classList.add('active');
+    }
+  });
+</script>
+{{end}}

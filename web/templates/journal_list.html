@@ -1,0 +1,33 @@
+{{define "journal_list.html"}}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <title>Semua Journal · selah.</title>
+  {{template "head" .}}
+</head>
+<body>
+  <main class="page">
+    <header class="page-header">
+      <h1>Daily Journal</h1>
+    </header>
+
+    <div class="entry-list">
+      {{if not .Entries}}
+        <p class="empty-state">Belum ada journal. Tekan tombol + untuk mulai.</p>
+      {{end}}
+      {{range .Entries}}
+      <a href="/journal/{{.ID}}" class="entry-card">
+        <div class="entry-card-title">Day {{.DayNumber}}</div>
+        <div class="entry-card-snippet">{{.Snippet}}</div>
+        <div class="entry-card-date">{{.EntryDate.Format "2 January 2006"}}</div>
+      </a>
+      {{end}}
+    </div>
+
+    <a href="/journal/new" class="fab" aria-label="Tambah journal baru">+</a>
+  </main>
+
+  {{template "nav" .}}
+</body>
+</html>
+{{end}}

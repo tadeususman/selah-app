@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+  <rect width="192" height="192" rx="42" fill="#2C4468"/>
+  <!-- "s" letterform as a path so no font dependency -->
+  <text x="96" y="138" text-anchor="middle"
+    font-family="'Plus Jakarta Sans', -apple-system, 'Helvetica Neue', Arial, sans-serif"
+    font-weight="800" font-size="112" letter-spacing="-2"
+    fill="#F0A93B">s</text>
+</svg>

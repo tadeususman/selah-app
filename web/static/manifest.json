@@ -1,0 +1,18 @@
+{
+  "name": "Selah — Jurnal Devotional",
+  "short_name": "selah.",
+  "description": "Jurnal devotional pribadi berbantuan AI",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F7F3EC",
+  "theme_color": "#2C4468",
+  "icons": [
+    {
+      "src": "/static/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

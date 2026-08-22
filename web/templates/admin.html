@@ -37,6 +37,21 @@
         <button type="submit" class="btn-secondary">Ganti Password</button>
       </form>
     </section>
+
+    <section class="admin-section about-section">
+      <div class="about-icon">
+        <img src="/static/icon.svg" alt="selah. icon" width="64" height="64">
+      </div>
+      <div class="about-wordmark brand-wordmark">selah<span class="dot">.</span></div>
+      <div class="about-tagline">Jurnal devotional pribadi berbantuan AI</div>
+      <div class="about-meta">
+        <span class="about-version">v{{.Version}}</span>
+        <span class="about-sep">·</span>
+        <span>Go + PostgreSQL</span>
+        <span class="about-sep">·</span>
+        <span>Claude AI</span>
+      </div>
+    </section>
   </main>
 
   {{template "nav" .}}

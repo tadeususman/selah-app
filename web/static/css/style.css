@@ -272,7 +272,13 @@ input:focus, textarea:focus {
   line-height: 1.5;
 }
 .bubble-label { font-size: 10px; font-weight: 700; text-transform: uppercase; opacity: 0.6; margin-bottom: 3px; }
-.bubble-content { white-space: pre-wrap; }
+.bubble-content { }
+.bubble-content p { margin: 0 0 8px; }
+.bubble-content p:last-child { margin-bottom: 0; }
+.bubble-content h1,.bubble-content h2,.bubble-content h3 { font-size: 14px; margin: 10px 0 4px; }
+.bubble-content ul,.bubble-content ol { margin: 4px 0 8px; padding-left: 18px; }
+.bubble-content li { margin-bottom: 2px; }
+.bubble-content strong { font-weight: 700; }
 
 .bubble-ai {
   background: var(--bubble-ai-bg);
@@ -329,6 +335,47 @@ input:focus, textarea:focus {
 
 [data-theme="dark"] .flash-ok { background: #1B3A27; color: #6FCF97; }
 [data-theme="dark"] .flash-err { background: #3A1F1F; color: #E06B67; }
+
+/* ---------- About section ---------- */
+
+.about-section {
+  text-align: center;
+  padding: 28px 18px 24px;
+}
+.about-icon {
+  margin-bottom: 14px;
+}
+.about-icon img {
+  border-radius: 18px;
+  box-shadow: 0 6px 20px var(--shadow);
+}
+.about-wordmark {
+  font-size: 26px;
+  color: var(--navy-dark);
+  margin-bottom: 6px;
+}
+.about-tagline {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+.about-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.about-version {
+  background: var(--gold);
+  color: white;
+  font-weight: 700;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+.about-sep { opacity: 0.4; }
 
 /* ---------- Floating action button ---------- */
 

@@ -5,6 +5,8 @@ import (
 	"os"
 )
 
+const Version = "0.1.0"
+
 type Config struct {
 	AppPort   string
 	DBUrl     string

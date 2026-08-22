@@ -17,7 +17,7 @@
       {{end}}
       {{range .Entries}}
       <a href="/journal/{{.ID}}" class="entry-card">
-        <div class="entry-card-title">{{idDate .EntryDate}}</div>
+        <div class="entry-card-title">{{.EntryDate.Day}}</div>
         <div class="entry-card-day">{{idDay .EntryDate}}</div>
       </a>
       {{end}}

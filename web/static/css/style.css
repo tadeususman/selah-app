@@ -71,6 +71,14 @@ body {
   color: var(--navy-dark);
 }
 
+.brand-hero {
+  font-size: 52px;
+  text-align: center;
+  margin: 0 0 8px;
+  color: var(--navy-dark);
+  line-height: 1;
+}
+
 .brand-mark-icon {
   width: 56px;
   height: 56px;
@@ -351,7 +359,6 @@ input:focus, textarea:focus {
   box-shadow: 0 6px 20px var(--shadow);
 }
 .about-wordmark {
-  font-size: 26px;
   color: var(--navy-dark);
   margin-bottom: 6px;
 }

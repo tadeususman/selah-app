@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <title>Journal Baru · selah.</title>
+  <title>Journal Baru · selah,</title>
   {{template "head" .}}
 </head>
 <body>
@@ -12,7 +12,46 @@
       <h1>Ayat apa yang ingin kamu renungkan hari ini?</h1>
     </header>
 
+    <div class="modal-backdrop" id="new-hint" style="display:none" onclick="if(event.target===this)closeHint()">
+      <div class="modal-card" style="text-align:left;max-width:340px">
+        <h3 style="font-size:14px;font-weight:700;color:var(--navy-dark);margin:0 0 16px">Alur renungan harian</h3>
+        <div class="hint-flow">
+          <div class="hint-step">
+            <div class="hint-num">1</div>
+            <div class="hint-text">
+              Tahu referensinya? Isi <strong>Referensi ayat</strong> lalu ketuk <strong>Ambil ayat</strong><br>
+              <span style="color:var(--text-muted);font-size:11px">— atau —</span><br>
+              Ingat kata-kata ayatnya? Ketik frasa di kolom <strong>Teks ayat</strong>, lalu ketuk <strong>Cari ayat</strong>
+            </div>
+          </div>
+          <div class="hint-arrow">↓</div>
+          <div class="hint-step">
+            <div class="hint-num">2</div>
+            <div class="hint-text">Setelah referensi dan teks terisi, ketuk <strong>Renungkan Ayat Ini</strong> — Teman Selah akan memberi latar belakang ayat</div>
+          </div>
+          <div class="hint-arrow">↓</div>
+          <div class="hint-step">
+            <div class="hint-num">3</div>
+            <div class="hint-text"><strong>Diskusi</strong> lebih dalam dengan Teman Selah jika ada yang ingin ditanyakan <span style="color:var(--text-muted);font-size:11px">(opsional)</span></div>
+          </div>
+          <div class="hint-arrow">↓</div>
+          <div class="hint-step">
+            <div class="hint-num">4</div>
+            <div class="hint-text"><strong>Tulis refleksi</strong> — apa yang kamu dapat dari perenungan ini</div>
+          </div>
+          <div class="hint-arrow">↓</div>
+          <div class="hint-step">
+            <div class="hint-num hint-num-last">✓</div>
+            <div class="hint-text"><strong>Langkah singkat</strong> <span style="color:var(--text-muted);font-size:11px">(opsional)</span> atau langsung <strong>Selesaikan Journal</strong></div>
+          </div>
+        </div>
+        <button class="btn-primary" style="width:100%;margin-top:20px" onclick="closeHint()">Mengerti, mulai renungan</button>
+      </div>
+    </div>
+
     <form method="POST" action="/journal" class="stacked-form">
+      <input type="hidden" name="entry_date" id="entry-date">
+      <input type="hidden" name="entry_time" id="entry-time">
       <div class="location-tag-wrap">
         <button type="button" id="loc-btn" class="location-pin-btn" title="Deteksi lokasi otomatis">
           <svg id="loc-icon" class="location-pin-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
@@ -23,22 +62,246 @@
             <path d="M12 3a9 9 0 019 9" stroke-linecap="round"/>
           </svg>
         </button>
-        <input type="text" id="location-input" name="location" class="location-input" placeholder="Tambah lokasi...">
+        <input type="text" id="location-input" name="location" class="location-input" placeholder="Tambah lokasi..." maxlength="200">
       </div>
 
-      <label>Referensi ayat (opsional)</label>
-      <input type="text" name="verse_ref" placeholder="mis. Mazmur 23:1-3">
+      <label>Referensi ayat</label>
+      <div class="verse-ref-wrap">
+        <input type="text" name="verse_ref" id="verse-ref" placeholder="mis. Mazmur 23:1-3" maxlength="100" required autofocus>
+        <button type="button" id="fetch-verse-btn" class="btn-fetch-verse">Ambil ayat</button>
+      </div>
+      <div id="fetch-status" style="display:none"></div>
 
       <label>Teks ayat</label>
-      <textarea name="verse_text" rows="6" placeholder="Ketik atau tempel ayat di sini..." required autofocus></textarea>
+      <textarea name="verse_text" id="verse-text" rows="6" placeholder="Ketik atau tempel ayat di sini. Tidak tahu referensinya? Tulis frasa yang kamu ingat — tidak harus sama persis." required></textarea>
+      <div class="char-counter" id="verse-text-counter">0 / 1000</div>
+      <div class="fetch-status-info" id="verse-too-long" style="display:none">Teks ayat terlalu panjang. Mohon gunakan ayat yang lebih spesifik, misalnya beberapa ayat saja. Konteks yang lebih luas bisa didiskusikan dengan Teman Selah nanti.</div>
 
-      <button type="submit" class="btn-primary">Gali Lebih Dalam</button>
+      <div id="verse-search-results" class="verse-search-results" style="display:none"></div>
+
+      <button type="button" class="btn-primary" id="search-verse-btn" style="display:none">Cari ayat</button>
+      <div id="submit-row" style="display:none;flex-direction:row;gap:8px;align-items:center;">
+        <button type="button" class="btn-ghost" id="reset-btn" onclick="resetForm()">Ganti Ayat</button>
+        <button type="submit" class="btn-primary" id="submit-btn" style="flex:1">Renungkan Ayat Ini</button>
+      </div>
     </form>
+
+    <section class="thread" id="new-loading-thread" style="display:none;margin-top:24px">
+      <div class="bubble bubble-ai">
+        <div class="bubble-label">Teman Selah</div>
+        <div class="bubble-content typing-dots"><span></span><span></span><span></span></div>
+        <div class="bubble-waiting-msg" id="waiting-msg"></div>
+      </div>
+    </section>
   </main>
 
   {{template "nav" .}}
 
+  <button type="button" class="help-btn-top" onclick="openHint()" title="Cara penggunaan">?</button>
+
   <script>
+    var waitingMessages = [
+      'Tunggu sebentar ya...',
+      'Teman Selah sedang membaca ayatnya...',
+      'Teman Selah sedang menyiapkan jawabannya...',
+      'Sebentar lagi ya...',
+      'Teman Selah sedang menggali konteks ayat ini...',
+      'Teman Selah sedang merenungkan ayat ini bersamamu...',
+      'Lagi diproses, sebentar ya...',
+    ];
+
+    function openHint() {
+      document.getElementById('new-hint').style.display = 'flex';
+    }
+    function closeHint() {
+      document.getElementById('new-hint').style.display = 'none';
+      localStorage.setItem('selah-hint-new-{{.UserID}}', '1');
+    }
+    if (!localStorage.getItem('selah-hint-new-{{.UserID}}')) {
+      document.getElementById('new-hint').style.display = 'flex';
+    }
+
+    var VERSE_MAX = 1000;
+    var verseRefEl  = document.getElementById('verse-ref');
+    var verseTextEl = document.getElementById('verse-text');
+    var verseCounter = document.getElementById('verse-text-counter');
+    var verseTooLong = document.getElementById('verse-too-long');
+    var searchBtn   = document.getElementById('search-verse-btn');
+    var submitBtn   = document.getElementById('submit-btn');
+    var submitRow   = document.getElementById('submit-row');
+
+    function updateBottomBtn() {
+      var ref  = verseRefEl.value.trim();
+      var text = verseTextEl.value.trim();
+      var valid = text.length > 0 && text.length <= VERSE_MAX;
+      if (ref && valid) {
+        searchBtn.style.display = 'none';
+        submitRow.style.display = 'flex';
+      } else if (!ref && text) {
+        searchBtn.style.display = '';
+        submitRow.style.display = 'none';
+      } else {
+        searchBtn.style.display = 'none';
+        submitRow.style.display = 'none';
+      }
+    }
+
+    function resetForm() {
+      verseRefEl.value = '';
+      verseTextEl.value = '';
+      document.getElementById('fetch-status').style.display = 'none';
+      var resultsEl = document.getElementById('verse-search-results');
+      resultsEl.style.display = 'none';
+      resultsEl.innerHTML = '';
+      updateVerseCounter();
+      verseRefEl.focus();
+    }
+
+    function updateVerseCounter() {
+      var len = verseTextEl.value.length;
+      verseCounter.textContent = len + ' / ' + VERSE_MAX;
+      verseCounter.classList.toggle('over', len > VERSE_MAX);
+      verseTooLong.style.display = len > VERSE_MAX ? '' : 'none';
+      updateBottomBtn();
+    }
+
+    verseRefEl.addEventListener('input', updateBottomBtn);
+    verseTextEl.addEventListener('input', updateVerseCounter);
+
+    var form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+      if (verseTextEl.value.length > VERSE_MAX) {
+        e.preventDefault();
+        verseCounter.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+      var now = new Date();
+      var pad = function(n) { return String(n).padStart(2, '0'); };
+      document.getElementById('entry-date').value =
+        now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
+      document.getElementById('entry-time').value =
+        pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+      submitBtn.disabled = true;
+      var thread = document.getElementById('new-loading-thread');
+      thread.style.display = 'flex';
+      thread.querySelector('.bubble').scrollIntoView({ behavior: 'smooth', block: 'end' });
+
+      var msgEl = document.getElementById('waiting-msg');
+      var idx = 0;
+      msgEl.textContent = waitingMessages[idx];
+      setInterval(function() {
+        idx = (idx + 1) % waitingMessages.length;
+        msgEl.style.opacity = '0';
+        setTimeout(function() {
+          msgEl.textContent = waitingMessages[idx];
+          msgEl.style.opacity = '1';
+        }, 300);
+      }, 10000);
+    });
+
+    document.getElementById('fetch-verse-btn').addEventListener('click', function() {
+      var ref = verseRefEl.value.trim();
+      if (!ref) { verseRefEl.focus(); return; }
+
+      var btn = this;
+      var status = document.getElementById('fetch-status');
+      btn.disabled = true;
+      btn.textContent = 'Mengambil…';
+      status.style.display = 'none';
+
+      fetch('/api/verse?ref=' + encodeURIComponent(ref))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.error) {
+            status.textContent = data.error;
+            status.className = 'fetch-status-error';
+            status.style.display = '';
+          } else if (data.text.length > 1000) {
+            status.textContent = 'Ayat terlalu panjang untuk satu renungan. Mohon gunakan referensi yang lebih spesifik, misalnya "' + ref + ':1-5". Kalau butuh konteks yang lebih luas, bisa didiskusikan dengan Teman Selah nanti.';
+            status.className = 'fetch-status-info';
+            status.style.display = '';
+          } else {
+            verseTextEl.value = data.text;
+            updateVerseCounter();
+            status.style.display = 'none';
+          }
+        })
+        .catch(function() {
+          status.textContent = 'Gagal mengambil ayat, coba lagi.';
+          status.className = 'fetch-status-error';
+          status.style.display = '';
+        })
+        .finally(function() {
+          btn.disabled = false;
+          btn.textContent = 'Ambil ayat';
+        });
+    });
+
+    searchBtn.addEventListener('click', function() {
+      var query = verseTextEl.value.trim();
+      var status = document.getElementById('fetch-status');
+      var resultsEl = document.getElementById('verse-search-results');
+
+      var words = query.split(/\s+/).filter(function(w) { return w.length > 0; });
+      if (words.length < 3) {
+        status.textContent = 'Masukkan minimal 3 kata agar pencarian lebih akurat.';
+        status.className = 'fetch-status-info';
+        status.style.display = '';
+        return;
+      }
+
+      var fetchBtn = document.getElementById('fetch-verse-btn');
+      searchBtn.disabled = true;
+      fetchBtn.disabled = true;
+      searchBtn.textContent = 'Mencari…';
+      status.style.display = 'none';
+      resultsEl.style.display = 'none';
+      resultsEl.innerHTML = '';
+
+      fetch('/api/verse/search?q=' + encodeURIComponent(query))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.error) {
+            status.textContent = data.error;
+            status.className = 'fetch-status-error';
+            status.style.display = '';
+          } else {
+            var html = '<div class="verse-search-label">Pilih ayat yang sesuai</div>';
+            data.options.forEach(function(opt) {
+              html += '<button type="button" class="verse-option-card" data-ref="' +
+                opt.ref.replace(/"/g, '&quot;') + '" data-text="' +
+                opt.text.replace(/"/g, '&quot;') + '">' +
+                '<div class="verse-option-ref">' + opt.ref + '</div>' +
+                '<div class="verse-option-text">' + opt.text + '</div>' +
+                '</button>';
+            });
+            resultsEl.innerHTML = html;
+            resultsEl.style.display = '';
+            resultsEl.querySelectorAll('.verse-option-card').forEach(function(card) {
+              card.addEventListener('click', function() {
+                verseRefEl.value = this.dataset.ref;
+                verseTextEl.value = this.dataset.text;
+                updateVerseCounter();
+                resultsEl.style.display = 'none';
+                resultsEl.innerHTML = '';
+                status.style.display = 'none';
+                submitBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              });
+            });
+          }
+        })
+        .catch(function() {
+          status.textContent = 'Gagal mencari ayat, coba lagi.';
+          status.className = 'fetch-status-error';
+          status.style.display = '';
+        })
+        .finally(function() {
+          searchBtn.disabled = false;
+          fetchBtn.disabled = false;
+          searchBtn.textContent = 'Cari ayat';
+        });
+    });
+
     document.getElementById('loc-btn').addEventListener('click', function() {
       if (!navigator.geolocation) {
         document.getElementById('location-input').placeholder = 'Geolokasi tidak didukung';
@@ -57,8 +320,15 @@
             .then(function(r) { return r.json(); })
             .then(function(data) {
               var a = data.address || {};
-              var name = a.suburb || a.city_district || a.neighbourhood || a.quarter
-                       || a.city || a.town || a.village || a.county || '';
+              var city = a.city || a.town || a.municipality || a.county || '';
+              var isRtRw = function(s) { return /^R[TW]\s*\d/i.test(s || ''); };
+              var area = (!isRtRw(a.village) && a.village)
+                      || (!isRtRw(a.neighbourhood) && a.neighbourhood)
+                      || (!isRtRw(a.city_district) && a.city_district)
+                      || (!isRtRw(a.quarter) && a.quarter)
+                      || (!isRtRw(a.suburb) && a.suburb)
+                      || '';
+              var name = city && area ? city + ' - ' + area : city || area;
               document.getElementById('location-input').value = name;
             })
             .catch(function() {

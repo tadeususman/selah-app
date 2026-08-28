@@ -4,12 +4,15 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="selah.">
+<meta name="apple-mobile-web-app-title" content="selah,">
 <meta name="theme-color" content="#2C4468" id="themeColorMeta">
-<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="/static/icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32-light.png" media="(prefers-color-scheme: light)">
+<link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32-dark.png" media="(prefers-color-scheme: dark)">
+<link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16-light.png" media="(prefers-color-scheme: light)">
+<link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16-dark.png" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
 <link rel="manifest" href="/static/manifest.json">
-<link rel="stylesheet" href="/static/css/style.css">
+<link rel="stylesheet" href="/static/css/style.css?v=17">
 <script>
   (function() {
     var saved = localStorage.getItem('selah-theme');
@@ -17,10 +20,45 @@
     document.documentElement.dataset.theme = saved || (prefersDark ? 'dark' : 'light');
   })();
 </script>
+<script>
+  (function() {
+    var bar, timer;
+    function init() {
+      bar = document.createElement('div');
+      bar.id = 'page-progress';
+      document.body.prepend(bar);
+    }
+    function start() {
+      if (!bar) return;
+      clearTimeout(timer);
+      bar.style.transition = 'none';
+      bar.style.width = '0%';
+      bar.style.opacity = '1';
+      bar.offsetWidth; // force reflow
+      bar.style.transition = 'width 12s cubic-bezier(0.08, 0.04, 0, 1)';
+      bar.style.width = '82%';
+    }
+    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('click', function(e) {
+      var a = e.target.closest('a[href]');
+      if (!a) return;
+      var href = a.getAttribute('href');
+      if (!href || href.charAt(0) === '#' || a.target === '_blank' || a.download || href.startsWith('mailto:') || href.startsWith('javascript:')) return;
+      start();
+    });
+    document.addEventListener('submit', function() { start(); });
+    window.addEventListener('pageshow', function(e) {
+      if (e.persisted && bar) bar.style.opacity = '0';
+    });
+  })();
+</script>
 {{end}}
 
 {{define "nav"}}
-<button class="theme-toggle" id="themeToggle" aria-label="Toggle dark/light mode" title="Ganti mode terang/gelap"></button>
+<button class="theme-toggle-top" id="themeToggle" aria-label="Toggle dark/light mode">
+  <svg id="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+  <svg id="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18" style="display:none"><path d="M12 7a5 5 0 100 10A5 5 0 0012 7zm0-5a1 1 0 011 1v2a1 1 0 01-2 0V3a1 1 0 011-1zm0 16a1 1 0 011 1v2a1 1 0 01-2 0v-2a1 1 0 011-1zm9-9h-2a1 1 0 010-2h2a1 1 0 010 2zM5 12H3a1 1 0 010-2h2a1 1 0 010 2zm12.66-6.24l-1.41 1.41a1 1 0 01-1.42-1.42l1.41-1.41a1 1 0 111.42 1.42zM8.76 17.66l-1.41 1.41a1 1 0 01-1.42-1.42l1.41-1.41a1 1 0 011.42 1.42zm8.9 1.41l-1.41-1.41a1 1 0 011.42-1.42l1.41 1.41a1 1 0 01-1.42 1.42zM6.34 8.76L4.93 7.34a1 1 0 011.42-1.42l1.41 1.42a1 1 0 01-1.42 1.42z"/></svg>
+</button>
 
 <nav class="bottom-nav">
   <a href="/dashboard" class="nav-item" data-path="/dashboard">
@@ -31,7 +69,7 @@
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="nav-icon-svg"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
     <span>Journal</span>
   </a>
-  <a href="/admin" class="nav-item" data-path="/admin">
+  <a href="/user" class="nav-item" data-path="/user">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="nav-icon-svg"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
     <span>Pengaturan</span>
   </a>
@@ -53,7 +91,8 @@
   var toggle = document.getElementById('themeToggle');
   function applyTheme(t) {
     document.documentElement.dataset.theme = t;
-    toggle.textContent = t === 'dark' ? '☀️' : '🌙';
+    document.getElementById('icon-moon').style.display = t === 'dark' ? 'none' : 'block';
+    document.getElementById('icon-sun').style.display = t === 'dark' ? 'block' : 'none';
   }
   applyTheme(document.documentElement.dataset.theme);
   toggle.addEventListener('click', function() {

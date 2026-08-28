@@ -9,7 +9,9 @@ import (
 )
 
 type dashboardData struct {
+	UserID     int64
 	UserName   string
+	Greeting   string
 	MonthLabel string
 	Entries    []models.Preview
 }
@@ -55,8 +57,22 @@ func (a *App) Dashboard(w http.ResponseWriter, r *http.Request) {
 	idMonths := [13]string{"", "Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"}
 	monthLabel := idMonths[now.Month()] + " " + now.Format("2006")
 
+	wib, _ := time.LoadLocation("Asia/Jakarta")
+	hour := now.In(wib).Hour()
+	greeting := "Selamat malam"
+	switch {
+	case hour < 11:
+		greeting = "Selamat pagi"
+	case hour < 15:
+		greeting = "Selamat siang"
+	case hour < 18:
+		greeting = "Selamat sore"
+	}
+
 	a.render(w, "dashboard.html", dashboardData{
+		UserID:     userID,
 		UserName:   userName,
+		Greeting:   greeting,
 		MonthLabel: monthLabel,
 		Entries:    entries,
 	})

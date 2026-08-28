@@ -1,6 +1,6 @@
 {
   "name": "Selah — Jurnal Devotional",
-  "short_name": "selah.",
+  "short_name": "selah,",
   "description": "Jurnal devotional pribadi berbantuan AI",
   "start_url": "/dashboard",
   "display": "standalone",
@@ -9,9 +9,19 @@
   "theme_color": "#2C4468",
   "icons": [
     {
-      "src": "/static/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/static/favicon-32-light.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/static/app-icon-512-dark.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ]

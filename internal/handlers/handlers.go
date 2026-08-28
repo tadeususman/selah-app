@@ -46,6 +46,15 @@ func LoadTemplates(dir string) *template.Template {
 		"idDay": func(t time.Time) string {
 			return idDays[t.Weekday()]
 		},
+		// message time: "14:05" in WIB
+		"msgTime": func(t time.Time) string {
+			loc, _ := time.LoadLocation("Asia/Jakarta")
+			return t.In(loc).Format("15:04")
+		},
+		// short month + 2-digit year: "Agt 26"
+		"idMonthShort": func(t time.Time) string {
+			return fmt.Sprintf("%s %02d", idMonths[t.Month()], t.Year()%100)
+		},
 	}
 
 	pattern := filepath.Join(dir, "*.html")

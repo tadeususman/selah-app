@@ -35,8 +35,11 @@ type Preview struct {
 	DayNumber int
 	Snippet   string
 	EntryDate time.Time
+	EntryTime time.Time
+	Location  string
 	VerseRef  string
 	VerseText string
+	Status    string
 }
 
 type JournalMessage struct {

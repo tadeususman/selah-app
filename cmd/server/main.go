@@ -56,6 +56,7 @@ func main() {
 	})
 	r.Get("/login", app.LoginPage)
 	r.Post("/login", app.LoginSubmit)
+	r.Get("/register", app.RegisterPage)
 	r.Post("/register", app.RegisterSubmit)
 	r.Post("/logout", app.Logout)
 
@@ -74,10 +75,20 @@ func main() {
 		r.Post("/journal/{id}/complete", app.JournalComplete)
 		r.Post("/journal/{id}/delete", app.JournalDelete)
 
+		r.Get("/api/verse", app.VerseFetch)
+		r.Get("/api/verse/search", app.VerseSearch)
+
+		r.Get("/user", app.UserPage)
+		r.Post("/user/email", app.UserUpdateEmail)
+		r.Post("/user/name", app.UserUpdateName)
+		r.Post("/user/password", app.UserUpdatePassword)
+		r.Post("/user/prefs", app.UserUpdatePrefs)
+
 		r.Get("/admin", app.AdminPage)
-		r.Post("/admin/email", app.AdminUpdateEmail)
-		r.Post("/admin/name", app.AdminUpdateName)
-		r.Post("/admin/password", app.AdminUpdatePassword)
+		r.Post("/admin/users/create", app.AdminCreateUser)
+		r.Post("/admin/users/delete", app.AdminDeleteUser)
+		r.Post("/admin/users/toggle-admin", app.AdminToggleAdmin)
+		r.Post("/admin/users/reset-password", app.AdminResetPassword)
 	})
 
 	log.Printf("JournalFlow listening on :%s", cfg.AppPort)

@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+	"unicode/utf8"
 
 	"github.com/go-chi/chi/v5"
 
@@ -21,9 +22,10 @@ type journalListData struct {
 func (a *App) JournalList(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.UserID(r)
 	rows, err := a.DB.QueryContext(r.Context(), `
-		SELECT id, day_number, entry_date,
+		SELECT id, day_number, entry_date, entry_time,
+		       COALESCE(location, ''),
 		       COALESCE(NULLIF(reflection, ''), NULLIF(verse_text, ''), 'Belum ada isi') AS snippet,
-		       COALESCE(verse_ref, ''), verse_text
+		       COALESCE(verse_ref, ''), verse_text, status
 		FROM journal_entries
 		WHERE user_id = $1
 		ORDER BY entry_date DESC, day_number DESC`,
@@ -37,7 +39,7 @@ func (a *App) JournalList(w http.ResponseWriter, r *http.Request) {
 	var entries []models.Preview
 	for rows.Next() {
 		var p models.Preview
-		if err := rows.Scan(&p.ID, &p.DayNumber, &p.EntryDate, &p.Snippet, &p.VerseRef, &p.VerseText); err != nil {
+		if err := rows.Scan(&p.ID, &p.DayNumber, &p.EntryDate, &p.EntryTime, &p.Location, &p.Snippet, &p.VerseRef, &p.VerseText, &p.Status); err != nil {
 			http.Error(w, "could not read journals", http.StatusInternalServerError)
 			return
 		}
@@ -51,8 +53,12 @@ func (a *App) JournalList(w http.ResponseWriter, r *http.Request) {
 
 // ---- GET /journal/new (step 1: ask which verse to reflect on) ----
 
+type journalNewData struct {
+	UserID int64
+}
+
 func (a *App) JournalNewPage(w http.ResponseWriter, r *http.Request) {
-	a.render(w, "journal_new.html", nil)
+	a.render(w, "journal_new.html", journalNewData{UserID: middleware.UserID(r)})
 }
 
 // ---- POST /journal (create entry from verse, then fetch AI background) ----
@@ -66,10 +72,28 @@ func (a *App) JournalCreate(w http.ResponseWriter, r *http.Request) {
 	verseRef := r.FormValue("verse_ref")
 	verseText := r.FormValue("verse_text")
 	location := r.FormValue("location")
+	dateStr := r.FormValue("entry_date")
+	timeStr := r.FormValue("entry_time")
 
-	if verseText == "" {
-		http.Error(w, "verse text is required", http.StatusBadRequest)
+	if verseRef == "" {
+		http.Error(w, "Referensi ayat wajib diisi", http.StatusBadRequest)
 		return
+	}
+	if verseText == "" {
+		http.Error(w, "Teks ayat wajib diisi", http.StatusBadRequest)
+		return
+	}
+	if utf8.RuneCountInString(verseText) > 1000 {
+		http.Error(w, "Teks ayat terlalu panjang (maksimal 1000 karakter)", http.StatusBadRequest)
+		return
+	}
+
+	now := time.Now()
+	if _, err := time.Parse("2006-01-02", dateStr); err != nil {
+		dateStr = now.Format("2006-01-02")
+	}
+	if _, err := time.Parse("15:04:05", timeStr); err != nil {
+		timeStr = now.Format("15:04:05")
 	}
 
 	var nextDay int
@@ -96,9 +120,9 @@ func (a *App) JournalCreate(w http.ResponseWriter, r *http.Request) {
 	err = a.DB.QueryRowContext(r.Context(), `
 		INSERT INTO journal_entries
 			(user_id, day_number, entry_date, entry_time, location, verse_ref, verse_text, ai_background)
-		VALUES ($1, $2, CURRENT_DATE, CURRENT_TIME, $3, $4, $5, $6)
+		VALUES ($1, $2, $3::date, $4::time, $5, $6, $7, $8)
 		RETURNING id`,
-		userID, nextDay, location, verseRef, verseText, background,
+		userID, nextDay, dateStr, timeStr, location, verseRef, verseText, background,
 	).Scan(&entryID)
 	if err != nil {
 		http.Error(w, "could not create journal entry", http.StatusInternalServerError)
@@ -117,8 +141,9 @@ func (a *App) JournalCreate(w http.ResponseWriter, r *http.Request) {
 // ---- GET /journal/{id} (view/continue a devotion session) ----
 
 type journalViewData struct {
-	Entry    models.JournalEntry
-	Messages []models.JournalMessage
+	Entry          models.JournalEntry
+	Messages       []models.JournalMessage
+	CompletedCount int
 }
 
 func (a *App) JournalView(w http.ResponseWriter, r *http.Request) {
@@ -146,7 +171,12 @@ func (a *App) JournalView(w http.ResponseWriter, r *http.Request) {
 		messages = append(messages, m)
 	}
 
-	a.render(w, "journal_view.html", journalViewData{Entry: entry, Messages: messages})
+	var completedCount int
+	_ = a.DB.QueryRowContext(r.Context(),
+		`SELECT COUNT(*) FROM journal_entries WHERE user_id = $1 AND status = 'completed'`,
+		entry.UserID).Scan(&completedCount)
+
+	a.render(w, "journal_view.html", journalViewData{Entry: entry, Messages: messages, CompletedCount: completedCount})
 }
 
 // ---- POST /journal/{id}/reflect (save "apa yang didapat setelah membaca") ----
@@ -161,6 +191,10 @@ func (a *App) JournalReflect(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	reflection := r.FormValue("reflection")
+	if utf8.RuneCountInString(reflection) > 500 {
+		http.Error(w, "Refleksi terlalu panjang (maksimal 500 karakter)", http.StatusBadRequest)
+		return
+	}
 
 	_, err := a.DB.ExecContext(r.Context(),
 		`UPDATE journal_entries SET reflection = $1, updated_at = now() WHERE id = $2`,
@@ -181,6 +215,7 @@ func (a *App) JournalReflect(w http.ResponseWriter, r *http.Request) {
 // ---- POST /journal/{id}/discuss (the "Ask AI" loop) ----
 
 func (a *App) JournalDiscuss(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.UserID(r)
 	entry, ok := a.loadOwnedEntry(w, r)
 	if !ok {
 		return
@@ -192,6 +227,10 @@ func (a *App) JournalDiscuss(w http.ResponseWriter, r *http.Request) {
 	question := r.FormValue("message")
 	if question == "" {
 		http.Redirect(w, r, "/journal/"+strconv.FormatInt(entry.ID, 10), http.StatusSeeOther)
+		return
+	}
+	if utf8.RuneCountInString(question) > 500 {
+		http.Error(w, "Pesan terlalu panjang (maksimal 500 karakter)", http.StatusBadRequest)
 		return
 	}
 
@@ -216,8 +255,12 @@ func (a *App) JournalDiscuss(w http.ResponseWriter, r *http.Request) {
 	rows.Close()
 	history = append(history, struct{ Role, Content string }{"user", question})
 
+	var originalLang bool
+	_ = a.DB.QueryRowContext(r.Context(),
+		`SELECT discuss_original_lang FROM users WHERE id = $1`, userID).Scan(&originalLang)
+
 	msgs := toChatMessages(history)
-	answer, err := a.AI.Discuss(r.Context(), msgs)
+	answer, err := a.AI.Discuss(r.Context(), msgs, originalLang)
 	if err != nil {
 		answer = "Maaf, AI sedang tidak bisa dihubungi. Coba lagi sebentar. (" + err.Error() + ")"
 	}
@@ -244,6 +287,10 @@ func (a *App) JournalComplete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	step := r.FormValue("practical_step")
+	if utf8.RuneCountInString(step) > 500 {
+		http.Error(w, "Langkah praktis terlalu panjang (maksimal 500 karakter)", http.StatusBadRequest)
+		return
+	}
 
 	_, err := a.DB.ExecContext(r.Context(), `
 		UPDATE journal_entries
@@ -255,7 +302,37 @@ func (a *App) JournalComplete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
+	// Build full session context for closing message
+	rows, err := a.DB.QueryContext(r.Context(),
+		`SELECT role, content FROM journal_messages WHERE entry_id = $1 ORDER BY created_at ASC`,
+		entry.ID)
+	if err == nil {
+		history := []struct{ Role, Content string }{
+			{"user", "Ayat yang aku renungkan (" + entry.VerseRef + "): " + entry.VerseText},
+		}
+		for rows.Next() {
+			var role, content string
+			if err := rows.Scan(&role, &content); err == nil {
+				history = append(history, struct{ Role, Content string }{role, content})
+			}
+		}
+		rows.Close()
+		if entry.Reflection != "" {
+			history = append(history, struct{ Role, Content string }{"user", "Refleksiku: " + entry.Reflection})
+		}
+		if step != "" {
+			history = append(history, struct{ Role, Content string }{"user", "Langkah praktis yang aku tulis: " + step})
+		}
+
+		closing, aiErr := a.AI.ClosingMessage(r.Context(), toChatMessages(history))
+		if aiErr == nil && closing != "" {
+			_, _ = a.DB.ExecContext(r.Context(),
+				`INSERT INTO journal_messages (entry_id, role, content) VALUES ($1, 'ai', $2)`,
+				entry.ID, closing)
+		}
+	}
+
+	http.Redirect(w, r, "/journal/"+strconv.FormatInt(entry.ID, 10), http.StatusSeeOther)
 }
 
 // ---- POST /journal/{id}/delete ----

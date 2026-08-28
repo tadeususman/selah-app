@@ -50,11 +50,18 @@ func (a *App) Logout(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 
-// Register is a minimal, unlinked (no nav link) sign-up endpoint —
-// since this is a personal single-user app, the expectation is you
-// create your one account once (e.g. via `POST /register`) and then
-// only ever use /login afterwards. Feel free to remove this route
-// entirely after creating your account.
+type registerPageData struct {
+	Error string
+}
+
+func (a *App) RegisterPage(w http.ResponseWriter, r *http.Request) {
+	if _, ok := a.Sessions.UserID(r); ok {
+		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
+		return
+	}
+	a.render(w, "register.html", registerPageData{})
+}
+
 func (a *App) RegisterSubmit(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "bad form", http.StatusBadRequest)
@@ -65,7 +72,11 @@ func (a *App) RegisterSubmit(w http.ResponseWriter, r *http.Request) {
 	name := r.FormValue("name")
 
 	if email == "" || password == "" {
-		http.Error(w, "email and password required", http.StatusBadRequest)
+		a.render(w, "register.html", registerPageData{Error: "Email dan password wajib diisi."})
+		return
+	}
+	if len(password) < 8 {
+		a.render(w, "register.html", registerPageData{Error: "Password minimal 8 karakter."})
 		return
 	}
 
@@ -79,9 +90,9 @@ func (a *App) RegisterSubmit(w http.ResponseWriter, r *http.Request) {
 		`INSERT INTO users (email, password_hash, name) VALUES ($1, $2, $3)`,
 		email, string(hash), name)
 	if err != nil {
-		http.Error(w, "could not create user (maybe email already exists)", http.StatusBadRequest)
+		a.render(w, "register.html", registerPageData{Error: "Email sudah terdaftar."})
 		return
 	}
 
-	http.Redirect(w, r, "/login", http.StatusSeeOther)
+	http.Redirect(w, r, "/login?registered=1", http.StatusSeeOther)
 }

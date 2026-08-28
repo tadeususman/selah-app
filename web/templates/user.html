@@ -1,0 +1,190 @@
+{{define "user.html"}}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <title>Pengaturan · selah,</title>
+  {{template "head" .}}
+</head>
+<body>
+  <main class="page">
+    <header class="page-header">
+      <p class="brand-wordmark brand-small">selah<span class="dot">,</span></p>
+      <h1>Pengaturan</h1>
+      <p class="page-sub">{{.Email}}</p>
+    </header>
+
+    {{if .FlashOK}}<div class="flash-ok">{{.FlashOK}}</div>{{end}}
+    {{if .FlashErr}}<div class="flash-err">{{.FlashErr}}</div>{{end}}
+
+    <section class="admin-section">
+      <h3>Email Login</h3>
+      <form method="POST" action="/user/email" class="stacked-form">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" value="{{.Email}}" required autocomplete="email">
+        <button type="submit" class="btn-secondary">Simpan Email</button>
+      </form>
+    </section>
+
+    <section class="admin-section">
+      <h3>Nama Tampilan</h3>
+      <form method="POST" action="/user/name" class="stacked-form">
+        <label for="name">Nama</label>
+        <input id="name" name="name" type="text" value="{{.Name}}" required>
+        <button type="submit" class="btn-primary">Simpan Nama</button>
+      </form>
+    </section>
+
+    <section class="admin-section">
+      <h3>Ganti Password</h3>
+      <form method="POST" action="/user/password" class="stacked-form">
+        <label for="old_password">Password Sekarang</label>
+        <input id="old_password" name="old_password" type="password" required autocomplete="current-password">
+        <label for="new_password">Password Baru</label>
+        <input id="new_password" name="new_password" type="password" required autocomplete="new-password" minlength="8">
+        <label for="new_password2">Konfirmasi Password Baru</label>
+        <input id="new_password2" name="new_password2" type="password" required autocomplete="new-password" minlength="8">
+        <button type="submit" class="btn-secondary">Ganti Password</button>
+      </form>
+    </section>
+
+    {{if .IsAdmin}}
+    <section class="admin-section">
+      <h3>Admin</h3>
+      <a href="/admin" class="btn-secondary" style="display:inline-block;padding:9px 18px;border-radius:10px;font-size:13px;font-weight:600;text-decoration:none">Panel Admin →</a>
+    </section>
+    {{end}}
+
+    <section class="admin-section">
+      <h3>Preferensi Diskusi</h3>
+      <form method="POST" action="/user/prefs">
+        <label class="toggle-row">
+          <span class="toggle-label">
+            <span class="toggle-label-title">Diskusi dengan bahasa asli</span>
+            <span class="toggle-label-desc">Teman Selah akan menyertakan analisis kata Ibrani/Yunani saat berdiskusi ayat</span>
+          </span>
+          <input type="checkbox" name="discuss_original_lang" class="toggle-checkbox" {{if .DiscussOriginalLang}}checked{{end}} onchange="this.form.submit()">
+          <span class="toggle-switch"></span>
+        </label>
+      </form>
+    </section>
+
+    <section class="admin-section">
+      <h3>Changelog</h3>
+      <button class="changelog-badge" onclick="document.getElementById('cl-all').style.display='flex'">v{{.Version}}</button>
+    </section>
+
+    <!-- Changelog modal: semua versi -->
+    <div id="cl-all" class="modal-backdrop" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+      <div class="modal-card changelog-modal" style="max-height:80vh;overflow-y:auto">
+
+        <div class="changelog-modal-header">
+          <span class="about-version">v0.3.4</span>
+          <span class="changelog-date">Agt 2026</span>
+        </div>
+        <ul class="changelog-list" style="margin-bottom:20px">
+          <li>Nama app diperbarui: selah. → selah,</li>
+          <li>Logo baru dengan varian tema terang dan gelap</li>
+          <li>Icon install Android menggunakan logo dark</li>
+          <li>Favicon browser mengikuti tema OS (terang/gelap)</li>
+          <li>Deteksi lokasi: format kota - kelurahan, tanpa RT/RW</li>
+        </ul>
+
+        <div class="changelog-modal-header">
+          <span class="about-version" style="background:var(--text-muted)">v0.3.2</span>
+          <span class="changelog-date">Agt 2026</span>
+        </div>
+        <ul class="changelog-list" style="margin-bottom:20px">
+          <li>Ayat yang di-pin otomatis dipotong 3 baris, bisa diperluas</li>
+          <li>Tombol "Tulis" dan "Tanya" tidak muncul bersamaan saat salah satu aktif</li>
+          <li>Langkah singkat kini opsional saat menyelesaikan journal</li>
+          <li>Pesan tunggu muncul saat Teman Selah menyiapkan penutup</li>
+          <li>Teman Selah tidak selalu balik tanya setelah menjawab</li>
+          <li>Doa penutup memakai kata ganti Engkau/Mu untuk Tuhan</li>
+          <li>Halaman daftar: petunjuk password dan tombol lihat/sembunyikan</li>
+          <li>Tombol tambah journal di halaman daftar kini konsisten dengan dashboard</li>
+        </ul>
+
+        <div class="changelog-modal-header">
+          <span class="about-version" style="background:var(--text-muted)">v0.3.1</span>
+          <span class="changelog-date">Agt 2026</span>
+        </div>
+        <ul class="changelog-list" style="margin-bottom:20px">
+          <li>Tur onboarding untuk user baru di dashboard</li>
+          <li>Panduan singkat saat buka halaman journal baru</li>
+          <li>Pesan loading acak saat menunggu Teman Selah</li>
+          <li>Progress bar navigasi antar halaman</li>
+          <li>Sapaan waktu (pagi/siang/sore/malam) di dashboard</li>
+          <li>Tombol tambah journal dengan label</li>
+          <li>Tampilan login lebih baik di layar lebar</li>
+        </ul>
+
+        <div class="changelog-modal-header">
+          <span class="about-version" style="background:var(--text-muted)">v0.3.0</span>
+          <span class="changelog-date">Agt 2026</span>
+        </div>
+        <ul class="changelog-list" style="margin-bottom:20px">
+          <li>Multi-user: registrasi akun terbuka</li>
+          <li>Panel admin untuk manajemen pengguna</li>
+          <li>Tombol "Renungkan Ayat Ini"</li>
+          <li>Logo icon dihapus dari halaman login/daftar</li>
+        </ul>
+
+        <div class="changelog-modal-header">
+          <span class="about-version" style="background:var(--text-muted)">v0.2.0</span>
+          <span class="changelog-date">Agt 2026</span>
+        </div>
+        <ul class="changelog-list" style="margin-bottom:20px">
+          <li>Tombol tema gelap/terang di pojok kanan atas</li>
+          <li>Loading inline (typing bubble) untuk semua proses AI</li>
+          <li>Timestamp WIB pada setiap bubble pesan</li>
+          <li>Ayat ter-pin di atas saat scroll</li>
+          <li>Pesan penutup dari Teman Selah saat selesai</li>
+          <li>Pencarian di halaman Daily Journal</li>
+          <li>Ambil teks ayat otomatis via SABDA (TB)</li>
+        </ul>
+
+        <div class="changelog-modal-header">
+          <span class="about-version" style="background:var(--text-muted)">v0.1.0</span>
+          <span class="changelog-date">Jul 2026</span>
+        </div>
+        <ul class="changelog-list">
+          <li>Rilis pertama — journal harian dengan Teman Selah</li>
+          <li>Diskusi ayat, refleksi, dan langkah praktis</li>
+          <li>Tema gelap & terang</li>
+          <li>Deteksi lokasi otomatis</li>
+        </ul>
+
+        <button class="modal-btn-cancel" style="margin-top:20px;width:100%" onclick="document.getElementById('cl-all').style.display='none'">Tutup</button>
+      </div>
+    </div>
+
+    <section class="admin-section about-section">
+      <div class="about-icon">
+        <img id="about-icon-img" src="/static/apple-touch-icon.png" alt="selah, icon" width="64" height="64">
+      </div>
+      <div class="about-wordmark brand-wordmark brand-hero">selah<span class="dot">,</span></div>
+      <div class="about-tagline">ruang jeda untuk merenung.</div>
+      <div class="about-meta">
+        <span class="about-version" style="background:var(--gold)">v{{.Version}}</span>
+        <span class="about-sep">·</span>
+        <span>{{.Year}}</span>
+      </div>
+    </section>
+  </main>
+
+  {{template "nav" .}}
+
+  <script>
+    (function() {
+      function updateAboutIcon() {
+        var theme = document.documentElement.dataset.theme || 'light';
+        var img = document.getElementById('about-icon-img');
+        if (img) img.src = theme === 'dark' ? '/static/apple-touch-icon-dark.png' : '/static/apple-touch-icon.png';
+      }
+      updateAboutIcon();
+      new MutationObserver(updateAboutIcon).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    })();
+  </script>
+</body>
+</html>
+{{end}}

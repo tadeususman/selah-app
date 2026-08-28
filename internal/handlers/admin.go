@@ -1,133 +1,214 @@
 package handlers
 
 import (
+	"crypto/rand"
 	"net/http"
+	"net/url"
+	"strconv"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
-	appconfig "journalflow/internal/config"
 	"journalflow/internal/middleware"
 )
 
+type adminUser struct {
+	ID        int64
+	Email     string
+	Name      string
+	IsAdmin   bool
+	CreatedAt time.Time
+	Journals  int
+}
+
 type adminPageData struct {
-	Email    string
-	Name     string
-	Version  string
-	Year     int
-	FlashOK  string
-	FlashErr string
+	Users      []adminUser
+	FlashOK    string
+	FlashErr   string
+	ResetEmail string
+	ResetPW    string
+}
+
+func (a *App) requireAdmin(w http.ResponseWriter, r *http.Request) bool {
+	userID := middleware.UserID(r)
+	var isAdmin bool
+	err := a.DB.QueryRowContext(r.Context(),
+		`SELECT is_admin FROM users WHERE id = $1`, userID).Scan(&isAdmin)
+	if err != nil || !isAdmin {
+		http.Error(w, "Akses ditolak", http.StatusForbidden)
+		return false
+	}
+	return true
 }
 
 func (a *App) AdminPage(w http.ResponseWriter, r *http.Request) {
-	userID := middleware.UserID(r)
-	var name, email string
-	err := a.DB.QueryRowContext(r.Context(),
-		`SELECT name, email FROM users WHERE id = $1`, userID).Scan(&name, &email)
-	if err != nil {
-		http.Error(w, "could not load user", http.StatusInternalServerError)
+	if !a.requireAdmin(w, r) {
 		return
 	}
-	data := adminPageData{Name: name, Email: email, Version: appconfig.Version, Year: time.Now().Year()}
+
+	rows, err := a.DB.QueryContext(r.Context(), `
+		SELECT u.id, u.email, u.name, u.is_admin, u.created_at,
+		       COUNT(j.id) AS journals
+		FROM users u
+		LEFT JOIN journal_entries j ON j.user_id = u.id
+		GROUP BY u.id
+		ORDER BY u.created_at ASC`)
+	if err != nil {
+		http.Error(w, "could not load users", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var users []adminUser
+	for rows.Next() {
+		var u adminUser
+		if err := rows.Scan(&u.ID, &u.Email, &u.Name, &u.IsAdmin, &u.CreatedAt, &u.Journals); err != nil {
+			continue
+		}
+		users = append(users, u)
+	}
+
+	data := adminPageData{Users: users}
 	switch r.URL.Query().Get("ok") {
-	case "email":
-		data.FlashOK = "Email berhasil diperbarui."
-	case "name":
-		data.FlashOK = "Nama berhasil diperbarui."
-	case "password":
-		data.FlashOK = "Password berhasil diganti."
+	case "created":
+		data.FlashOK = "User berhasil ditambahkan."
+	case "deleted":
+		data.FlashOK = "User berhasil dihapus."
+	case "toggled":
+		data.FlashOK = "Role user berhasil diubah."
+	case "reset":
+		data.ResetEmail = r.URL.Query().Get("email")
+		data.ResetPW = r.URL.Query().Get("newpw")
 	}
 	switch r.URL.Query().Get("err") {
-	case "wrong_password":
-		data.FlashErr = "Password sekarang salah."
-	case "mismatch":
-		data.FlashErr = "Konfirmasi password baru tidak cocok."
-	case "short":
-		data.FlashErr = "Password baru minimal 8 karakter."
+	case "duplicate":
+		data.FlashErr = "Email sudah terdaftar."
 	}
 	a.render(w, "admin.html", data)
 }
 
-func (a *App) AdminUpdateEmail(w http.ResponseWriter, r *http.Request) {
-	userID := middleware.UserID(r)
+func (a *App) AdminCreateUser(w http.ResponseWriter, r *http.Request) {
+	if !a.requireAdmin(w, r) {
+		return
+	}
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "bad form", http.StatusBadRequest)
 		return
 	}
 	email := r.FormValue("email")
-	if email == "" {
-		http.Redirect(w, r, "/admin?err=empty", http.StatusSeeOther)
-		return
-	}
-	_, err := a.DB.ExecContext(r.Context(),
-		`UPDATE users SET email = $1 WHERE id = $2`, email, userID)
-	if err != nil {
-		http.Error(w, "could not update email", http.StatusInternalServerError)
-		return
-	}
-	http.Redirect(w, r, "/admin?ok=email", http.StatusSeeOther)
-}
-
-func (a *App) AdminUpdateName(w http.ResponseWriter, r *http.Request) {
-	userID := middleware.UserID(r)
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, "bad form", http.StatusBadRequest)
-		return
-	}
 	name := r.FormValue("name")
-	if name == "" {
+	password := r.FormValue("password")
+	isAdmin := r.FormValue("is_admin") == "1"
+
+	if email == "" || password == "" {
 		http.Redirect(w, r, "/admin?err=empty", http.StatusSeeOther)
 		return
 	}
-	_, err := a.DB.ExecContext(r.Context(),
-		`UPDATE users SET name = $1 WHERE id = $2`, name, userID)
-	if err != nil {
-		http.Error(w, "could not update name", http.StatusInternalServerError)
-		return
-	}
-	http.Redirect(w, r, "/admin?ok=name", http.StatusSeeOther)
-}
 
-func (a *App) AdminUpdatePassword(w http.ResponseWriter, r *http.Request) {
-	userID := middleware.UserID(r)
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, "bad form", http.StatusBadRequest)
-		return
-	}
-	oldPw := r.FormValue("old_password")
-	newPw := r.FormValue("new_password")
-	newPw2 := r.FormValue("new_password2")
-
-	if len(newPw) < 8 {
-		http.Redirect(w, r, "/admin?err=short", http.StatusSeeOther)
-		return
-	}
-	if newPw != newPw2 {
-		http.Redirect(w, r, "/admin?err=mismatch", http.StatusSeeOther)
-		return
-	}
-
-	var hash string
-	err := a.DB.QueryRowContext(r.Context(),
-		`SELECT password_hash FROM users WHERE id = $1`, userID).Scan(&hash)
-	if err != nil {
-		http.Error(w, "could not load user", http.StatusInternalServerError)
-		return
-	}
-	if bcrypt.CompareHashAndPassword([]byte(hash), []byte(oldPw)) != nil {
-		http.Redirect(w, r, "/admin?err=wrong_password", http.StatusSeeOther)
-		return
-	}
-
-	newHash, err := bcrypt.GenerateFromPassword([]byte(newPw), bcrypt.DefaultCost)
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		http.Error(w, "could not hash password", http.StatusInternalServerError)
 		return
 	}
+
 	_, err = a.DB.ExecContext(r.Context(),
-		`UPDATE users SET password_hash = $1 WHERE id = $2`, string(newHash), userID)
+		`INSERT INTO users (email, password_hash, name, is_admin) VALUES ($1, $2, $3, $4)`,
+		email, string(hash), name, isAdmin)
 	if err != nil {
-		http.Error(w, "could not update password", http.StatusInternalServerError)
+		http.Redirect(w, r, "/admin?err=duplicate", http.StatusSeeOther)
 		return
 	}
-	http.Redirect(w, r, "/admin?ok=password", http.StatusSeeOther)
+	http.Redirect(w, r, "/admin?ok=created", http.StatusSeeOther)
+}
+
+func (a *App) AdminDeleteUser(w http.ResponseWriter, r *http.Request) {
+	if !a.requireAdmin(w, r) {
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "bad form", http.StatusBadRequest)
+		return
+	}
+	targetID, err := strconv.ParseInt(r.FormValue("user_id"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid user id", http.StatusBadRequest)
+		return
+	}
+	currentUserID := middleware.UserID(r)
+	if targetID == currentUserID {
+		http.Redirect(w, r, "/admin?err=self", http.StatusSeeOther)
+		return
+	}
+	_, _ = a.DB.ExecContext(r.Context(), `DELETE FROM users WHERE id = $1`, targetID)
+	http.Redirect(w, r, "/admin?ok=deleted", http.StatusSeeOther)
+}
+
+func (a *App) AdminResetPassword(w http.ResponseWriter, r *http.Request) {
+	if !a.requireAdmin(w, r) {
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "bad form", http.StatusBadRequest)
+		return
+	}
+	targetID, err := strconv.ParseInt(r.FormValue("user_id"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid user id", http.StatusBadRequest)
+		return
+	}
+
+	var email string
+	_ = a.DB.QueryRowContext(r.Context(), `SELECT email FROM users WHERE id = $1`, targetID).Scan(&email)
+
+	newPw, err := generateTempPassword()
+	if err != nil {
+		http.Error(w, "could not generate password", http.StatusInternalServerError)
+		return
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(newPw), bcrypt.DefaultCost)
+	if err != nil {
+		http.Error(w, "could not hash password", http.StatusInternalServerError)
+		return
+	}
+
+	_, err = a.DB.ExecContext(r.Context(),
+		`UPDATE users SET password_hash = $1 WHERE id = $2`, string(hash), targetID)
+	if err != nil {
+		http.Error(w, "could not reset password", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r,
+		"/admin?ok=reset&email="+url.QueryEscape(email)+"&newpw="+url.QueryEscape(newPw),
+		http.StatusSeeOther)
+}
+
+func generateTempPassword() (string, error) {
+	const chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+	b := make([]byte, 10)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	for i, v := range b {
+		b[i] = chars[int(v)%len(chars)]
+	}
+	return string(b), nil
+}
+
+func (a *App) AdminToggleAdmin(w http.ResponseWriter, r *http.Request) {
+	if !a.requireAdmin(w, r) {
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "bad form", http.StatusBadRequest)
+		return
+	}
+	targetID, err := strconv.ParseInt(r.FormValue("user_id"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid user id", http.StatusBadRequest)
+		return
+	}
+	_, _ = a.DB.ExecContext(r.Context(),
+		`UPDATE users SET is_admin = NOT is_admin WHERE id = $1`, targetID)
+	http.Redirect(w, r, "/admin?ok=toggled", http.StatusSeeOther)
 }

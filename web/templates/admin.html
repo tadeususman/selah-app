@@ -2,61 +2,71 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <title>Pengaturan · selah.</title>
+  <title>Admin · selah,</title>
   {{template "head" .}}
 </head>
 <body>
   <main class="page">
     <header class="page-header">
-      <p class="brand-wordmark brand-small">selah<span class="dot">.</span></p>
-      <h1>Pengaturan</h1>
-      <p class="page-sub">{{.Email}}</p>
+      <p class="brand-wordmark brand-small">selah<span class="dot">,</span></p>
+      <h1>Admin</h1>
+      <p class="page-sub">Manajemen pengguna</p>
     </header>
 
     {{if .FlashOK}}<div class="flash-ok">{{.FlashOK}}</div>{{end}}
     {{if .FlashErr}}<div class="flash-err">{{.FlashErr}}</div>{{end}}
+    {{if .ResetPW}}
+    <div class="flash-ok flash-reset">
+      <div>Password <strong>{{.ResetEmail}}</strong> berhasil direset.</div>
+      <div style="margin-top:8px">Password baru:</div>
+      <div class="reset-pw-badge">{{.ResetPW}}</div>
+      <div style="margin-top:6px;font-size:11px;opacity:0.8">Sampaikan ke pengguna dan minta segera diganti.</div>
+    </div>
+    {{end}}
 
     <section class="admin-section">
-      <h3>Email Login</h3>
-      <form method="POST" action="/admin/email" class="stacked-form">
-        <label for="email">Email</label>
-        <input id="email" name="email" type="email" value="{{.Email}}" required autocomplete="email">
-        <button type="submit" class="btn-secondary">Simpan Email</button>
+      <h3>Tambah Pengguna</h3>
+      <form method="POST" action="/admin/users/create" class="stacked-form">
+        <label for="new-name">Nama</label>
+        <input id="new-name" name="name" type="text" autocomplete="off">
+        <label for="new-email">Email</label>
+        <input id="new-email" name="email" type="email" required autocomplete="off">
+        <label for="new-password">Password</label>
+        <input id="new-password" name="password" type="password" required minlength="8" autocomplete="new-password">
+        <label class="admin-checkbox-label">
+          <input type="checkbox" name="is_admin" value="1"> Admin
+        </label>
+        <button type="submit" class="btn-primary">Buat Akun</button>
       </form>
     </section>
 
     <section class="admin-section">
-      <h3>Nama Tampilan</h3>
-      <form method="POST" action="/admin/name" class="stacked-form">
-        <label for="name">Nama</label>
-        <input id="name" name="name" type="text" value="{{.Name}}" required>
-        <button type="submit" class="btn-primary">Simpan Nama</button>
-      </form>
-    </section>
-
-    <section class="admin-section">
-      <h3>Ganti Password</h3>
-      <form method="POST" action="/admin/password" class="stacked-form">
-        <label for="old_password">Password Sekarang</label>
-        <input id="old_password" name="old_password" type="password" required autocomplete="current-password">
-        <label for="new_password">Password Baru</label>
-        <input id="new_password" name="new_password" type="password" required autocomplete="new-password" minlength="8">
-        <label for="new_password2">Konfirmasi Password Baru</label>
-        <input id="new_password2" name="new_password2" type="password" required autocomplete="new-password" minlength="8">
-        <button type="submit" class="btn-secondary">Ganti Password</button>
-      </form>
-    </section>
-
-    <section class="admin-section about-section">
-      <div class="about-icon">
-        <img src="/static/icon.svg" alt="selah. icon" width="64" height="64">
-      </div>
-      <div class="about-wordmark brand-wordmark brand-hero">selah<span class="dot">.</span></div>
-      <div class="about-tagline">ruang jeda untuk merenung.</div>
-      <div class="about-meta">
-        <span class="about-version">v{{.Version}}</span>
-        <span class="about-sep">·</span>
-        <span>{{.Year}}</span>
+      <h3>Pengguna ({{len .Users}})</h3>
+      <div class="admin-user-list">
+        {{range .Users}}
+        <div class="admin-user-card">
+          <div class="admin-user-info">
+            <span class="admin-user-name">{{if .Name}}{{.Name}}{{else}}<em>—</em>{{end}}</span>
+            {{if .IsAdmin}}<span class="admin-badge">admin</span>{{end}}
+            <span class="admin-user-email">{{.Email}}</span>
+            <span class="admin-user-meta">{{.Journals}} journal · bergabung {{.CreatedAt.Format "2 Jan 2006"}}</span>
+          </div>
+          <div class="admin-user-actions">
+            <form method="POST" action="/admin/users/toggle-admin" style="display:inline">
+              <input type="hidden" name="user_id" value="{{.ID}}">
+              <button type="submit" class="btn-tiny btn-secondary">{{if .IsAdmin}}Cabut Admin{{else}}Jadikan Admin{{end}}</button>
+            </form>
+            <form method="POST" action="/admin/users/reset-password" style="display:inline" onsubmit="return confirm('Reset password {{.Email}}?')">
+              <input type="hidden" name="user_id" value="{{.ID}}">
+              <button type="submit" class="btn-tiny btn-warning">Reset PW</button>
+            </form>
+            <form method="POST" action="/admin/users/delete" style="display:inline" onsubmit="return confirm('Hapus {{.Email}}?')">
+              <input type="hidden" name="user_id" value="{{.ID}}">
+              <button type="submit" class="btn-tiny btn-danger">Hapus</button>
+            </form>
+          </div>
+        </div>
+        {{end}}
       </div>
     </section>
   </main>

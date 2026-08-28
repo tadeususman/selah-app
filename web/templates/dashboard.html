@@ -2,14 +2,15 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <title>Dashboard · selah.</title>
+  <title>Dashboard · selah,</title>
   {{template "head" .}}
 </head>
 <body>
   <main class="page">
     <header class="page-header">
-      <p class="brand-wordmark brand-small">selah<span class="dot">.</span></p>
-      <h1 class="greeting">Halo, {{.UserName}} 👋</h1>
+      <p class="brand-wordmark brand-small">selah<span class="dot">,</span></p>
+      <p class="greeting-time">{{.Greeting}},</p>
+      <h1 class="greeting">{{.UserName}} 👋</h1>
     </header>
 
     <div class="section-title-row">
@@ -34,10 +35,119 @@
       {{end}}
     </div>
 
-    <a href="/journal/new" class="fab" aria-label="Tambah journal baru">+</a>
+    <a href="/journal/new" class="fab" aria-label="Tambah journal baru">
+      <span class="fab-plus">+</span>
+      <span class="fab-label">Tambah Daily Journal</span>
+    </a>
   </main>
 
   {{template "nav" .}}
+
+  <script>
+  (function() {
+    var tourKey = 'selah-tour-v1-{{.UserID}}';
+    if (localStorage.getItem(tourKey)) return;
+
+    var steps = [
+      {
+        title: 'Selamat datang di selah, 🙏',
+        body: 'selah adalah ruang jeda harianmu untuk merenungkan firman Tuhan bersama Teman Selah.',
+        btn: 'Lihat tur singkat',
+      },
+      {
+        target: '.fab',
+        title: 'Tambah Journal Baru',
+        body: 'Ketuk tombol ini, masukkan ayat favoritmu, lalu Teman Selah akan membantu merenungkannya.',
+        btn: 'Lanjut',
+      },
+      {
+        target: '.bottom-nav',
+        title: 'Navigasi',
+        body: 'Journal untuk semua riwayat renungan, Pengaturan untuk profil dan ganti password.',
+        btn: 'Lanjut',
+      },
+      {
+        title: 'Siap memulai! ✨',
+        body: 'Yuk tulis renungan pertama kamu sekarang. Pilih ayat favoritmu dan Teman Selah siap menemanimu.',
+        btn: 'Mulai Renungan Pertama',
+        href: '/journal/new',
+        hideSkip: true,
+      },
+    ];
+
+    var cur = 0;
+
+    // Overlay — dark background, blocks clicks on page
+    var overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.65);';
+
+    // Spotlight — visual cutout over target element, sits inside overlay
+    var spotlight = document.createElement('div');
+    spotlight.style.cssText = 'position:fixed;z-index:9001;border-radius:16px;pointer-events:none;display:none;';
+
+    // Card — the tooltip, sits on top of everything
+    var card = document.createElement('div');
+    card.className = 'tour-tooltip';
+    card.style.cssText = 'position:fixed;z-index:9002;width:' + Math.min(300, window.innerWidth - 32) + 'px;';
+
+    document.body.append(overlay, spotlight, card);
+
+    function render(idx) {
+      var step = steps[idx];
+      var pad = 10;
+
+      if (step.target) {
+        var el = document.querySelector(step.target);
+        var r = el.getBoundingClientRect();
+
+        // Spotlight: box-shadow creates dark overlay with cutout over target
+        spotlight.style.display = 'block';
+        spotlight.style.top    = (r.top  - pad) + 'px';
+        spotlight.style.left   = (r.left - pad) + 'px';
+        spotlight.style.width  = (r.width  + pad * 2) + 'px';
+        spotlight.style.height = (r.height + pad * 2) + 'px';
+        spotlight.style.boxShadow = '0 0 0 9999px rgba(0,0,0,0.65)';
+
+        // Card always anchored at bottom-center (above nav bar), safe on all screen sizes
+        var tw = Math.min(380, window.innerWidth - 32);
+        card.style.width = tw + 'px';
+        card.style.left = ((window.innerWidth - tw) / 2) + 'px';
+        card.style.top = 'auto';
+        card.style.bottom = '90px';
+        card.style.transform = 'none';
+      } else {
+        spotlight.style.display = 'none';
+        card.style.width = Math.min(300, window.innerWidth - 32) + 'px';
+        card.style.top = '50%';
+        card.style.left = '50%';
+        card.style.bottom = 'auto';
+        card.style.transform = 'translate(-50%,-50%)';
+      }
+
+      card.innerHTML =
+        '<div class="tour-step-num">Langkah ' + (idx + 1) + ' dari ' + steps.length + '</div>' +
+        '<h3 class="tour-title">' + step.title + '</h3>' +
+        '<p class="tour-body">' + step.body + '</p>' +
+        '<div class="tour-actions">' +
+          (step.hideSkip ? '' : '<button class="tour-skip">Lewati</button>') +
+          '<button class="tour-next">' + step.btn + '</button>' +
+        '</div>';
+
+      if (!step.hideSkip) card.querySelector('.tour-skip').onclick = finish;
+      card.querySelector('.tour-next').onclick = function() {
+        if (step.href) { finish(); location.href = step.href; }
+        else { cur++; if (cur < steps.length) render(cur); else finish(); }
+      };
+    }
+
+    function finish() {
+      localStorage.setItem(tourKey, '1');
+      [overlay, spotlight, card].forEach(function(el) { el.remove(); });
+    }
+
+    render(0);
+  })();
+  </script>
 </body>
 </html>
 {{end}}

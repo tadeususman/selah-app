@@ -2,20 +2,13 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <title>{{idDate .Entry.EntryDate}} · selah.</title>
+  <title>{{idDate .Entry.EntryDate}} · selah,</title>
   {{template "head" .}}
 </head>
 <body>
   <main class="page">
     <header class="page-header">
-      <div class="page-header-row">
-        <a href="/dashboard" class="back-link">← Kembali</a>
-        <button type="button" class="btn-icon-trash" onclick="openDeleteModal()" title="Hapus journal">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
-            <path d="M9 3v1H4v2h1v13a2 2 0 002 2h10a2 2 0 002-2V6h1V4h-5V3H9zm0 5h2v9H9V8zm4 0h2v9h-2V8z"/>
-          </svg>
-        </button>
-      </div>
+      <a href="/dashboard" class="back-link">← Kembali</a>
 
       <!-- Delete confirmation modal -->
       <div id="delete-modal" class="modal-backdrop" style="display:none" onclick="if(event.target===this)closeDeleteModal()">
@@ -30,15 +23,39 @@
         </div>
       </div>
       <h1>{{idDate .Entry.EntryDate}}</h1>
-      <p class="page-sub">
-        {{idDay .Entry.EntryDate}} · {{.Entry.EntryTime.Format "15:04"}}{{if .Entry.Location}} · {{.Entry.Location}}{{end}}
-        {{if eq .Entry.Status "completed"}} · <span class="badge-done">Selesai ✓</span>{{end}}
-      </p>
+      <div class="entry-meta-row">
+        <p class="page-sub">
+          {{idDay .Entry.EntryDate}} · {{.Entry.EntryTime.Format "15:04"}}{{if .Entry.Location}} · {{.Entry.Location}}{{end}}
+          {{if eq .Entry.Status "completed"}} · <span class="badge-done">Selesai ✓</span>{{end}}
+        </p>
+        <button type="button" class="btn-icon-trash" onclick="openDeleteModal()" title="Hapus journal">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+            <path d="M9 3v1H4v2h1v13a2 2 0 002 2h10a2 2 0 002-2V6h1V4h-5V3H9zm0 5h2v9H9V8zm4 0h2v9h-2V8z"/>
+          </svg>
+        </button>
+      </div>
     </header>
 
     <section class="verse-box">
       {{if .Entry.VerseRef}}<div class="verse-ref">{{.Entry.VerseRef}}</div>{{end}}
-      <p class="verse-text">{{.Entry.VerseText}}</p>
+      <p class="verse-text" id="verse-text-pin">{{.Entry.VerseText}}</p>
+      <button type="button" class="verse-expand-btn" id="verse-expand-btn" onclick="toggleVerseExpand()" style="display:none">Selengkapnya</button>
+      {{if and (lt .CompletedCount 3) (ne .Entry.Status "completed")}}
+      <div class="progress-stepper verse-stepper">
+        <div class="stepper-step done">
+          <div class="stepper-circle">✓</div>
+          <div class="stepper-label">Baca Ayat</div>
+        </div>
+        <div class="stepper-step {{if .Entry.Reflection}}done{{else}}active{{end}}">
+          <div class="stepper-circle">{{if .Entry.Reflection}}✓{{else}}2{{end}}</div>
+          <div class="stepper-label">Tulis Refleksi</div>
+        </div>
+        <div class="stepper-step {{if .Entry.Reflection}}active{{else}}pending{{end}}">
+          <div class="stepper-circle">3</div>
+          <div class="stepper-label">Langkah Praktis</div>
+        </div>
+      </div>
+      {{end}}
     </section>
 
     {{if .Messages}}
@@ -47,6 +64,7 @@
         <div class="bubble bubble-{{.Role}}">
           <div class="bubble-label">{{if eq .Role "ai"}}Teman Selah{{else}}Kamu{{end}}</div>
           <div class="bubble-content">{{.Content}}</div>
+          <div class="bubble-time">{{msgTime .CreatedAt}}</div>
         </div>
       {{end}}
     </section>
@@ -59,8 +77,8 @@
       </section>
     {{else}}
 
-      <div class="action-btns">
-        <button class="action-btn" onclick="togglePanel('panel-ask')">
+      <div class="action-btns" id="action-btns">
+        <button class="action-btn" id="btn-ask" onclick="togglePanel('panel-ask')">
           <span class="action-btn-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
               <path d="M20 2H4a2 2 0 00-2 2v18l4-4h14a2 2 0 002-2V4a2 2 0 00-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
@@ -68,7 +86,20 @@
           </span>
           <span>Ada yang mau ditanya ke Teman Selah?</span>
         </button>
-        <button class="action-btn" onclick="togglePanel('panel-write')">
+        {{if not .Entry.Reflection}}
+        <button class="action-btn action-btn-primary" id="btn-write" onclick="togglePanel('panel-write')">
+          <span class="action-btn-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+              <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+            </svg>
+          </span>
+          <span class="action-btn-text">
+            <span>Tulis apa yang kamu dapat</span>
+            <span class="action-btn-sub">Diperlukan untuk menyelesaikan journal</span>
+          </span>
+        </button>
+        {{else}}
+        <button class="action-btn" id="btn-write" onclick="togglePanel('panel-write')">
           <span class="action-btn-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
               <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
@@ -76,29 +107,72 @@
           </span>
           <span>Tulis apa yang kamu dapat</span>
         </button>
+        {{end}}
       </div>
 
       <div id="panel-ask" class="action-panel" style="display:none">
+        <div class="panel-header-label">Tanya Teman Selah</div>
         <form method="POST" action="/journal/{{.Entry.ID}}/discuss" class="stacked-form" id="discuss-form">
-          <textarea name="message" rows="3" placeholder="Tanyakan ke Teman Selah..." required autofocus></textarea>
-          <button type="submit" class="btn-secondary" id="discuss-submit">Kirim</button>
+          <textarea name="message" id="discuss-msg" rows="3" placeholder="Tanyakan ke Teman Selah..." required></textarea>
+          <div class="char-counter" id="discuss-counter">0 / 500</div>
+          <div class="panel-actions">
+            <button type="button" class="btn-ghost" onclick="closePanel()">Batal</button>
+            <button type="submit" class="btn-secondary" id="discuss-submit">Kirim</button>
+          </div>
         </form>
       </div>
 
       <div id="panel-write" class="action-panel" style="display:none">
-        <form method="POST" action="/journal/{{.Entry.ID}}/reflect" class="stacked-form">
-          <textarea name="reflection" rows="5" placeholder="Tulis refleksimu di sini..." required></textarea>
-          <button type="submit" class="btn-primary">Simpan</button>
+        <div class="panel-header-label">Tulis apa yang kamu dapat</div>
+        <form method="POST" action="/journal/{{.Entry.ID}}/reflect" class="stacked-form" id="reflect-form">
+          <textarea name="reflection" id="reflect-text" rows="5" placeholder="Tulis refleksimu di sini..."></textarea>
+          <div class="char-counter" id="reflect-counter">0 / 500</div>
+          <div class="panel-actions">
+            <button type="button" class="btn-ghost" onclick="closePanel()">Batal</button>
+            <button type="submit" class="btn-primary" id="reflect-submit">Simpan</button>
+          </div>
         </form>
       </div>
 
       {{if .Entry.Reflection}}
       <section class="action-box" style="margin-top:8px">
-        <h3>Langkah praktis apa yang bisa dilakukan?</h3>
-        <form method="POST" action="/journal/{{.Entry.ID}}/complete" class="stacked-form">
-          <textarea name="practical_step" rows="4" placeholder="Tulis langkah praktismu..." required></textarea>
-          <button type="submit" class="btn-primary">Selesaikan Journal</button>
-        </form>
+        <div id="step-choice">
+          <p class="step-choice-label">Mau tambah langkah singkat?</p>
+          <div class="step-choice-btns">
+            <button type="button" class="action-btn" onclick="showStepForm()">
+              <span class="action-btn-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                  <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                </svg>
+              </span>
+              <span class="action-btn-text">
+                <span>Tulis langkah singkat</span>
+                <span class="action-btn-sub">Opsional</span>
+              </span>
+            </button>
+            <form method="POST" action="/journal/{{.Entry.ID}}/complete" id="skip-form" style="display:contents">
+              <input type="hidden" name="practical_step" value="">
+              <button type="submit" class="action-btn action-btn-primary" id="skip-submit">
+                <span class="action-btn-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                  </svg>
+                </span>
+                <span>Selesaikan Journal</span>
+              </button>
+            </form>
+          </div>
+        </div>
+        <div id="step-form-box" style="display:none">
+          <form method="POST" action="/journal/{{.Entry.ID}}/complete" class="stacked-form" id="complete-form">
+            <textarea name="practical_step" id="step-text" rows="4" placeholder="Tulis langkah singkatmu..."></textarea>
+            <div class="char-counter" id="step-counter">0 / 500</div>
+            <div class="panel-actions">
+              <button type="button" class="btn-ghost" onclick="hideStepForm()">Batal</button>
+              <button type="submit" class="btn-primary" id="complete-submit">Simpan & Selesaikan</button>
+            </div>
+          </form>
+        </div>
       </section>
       {{end}}
 
@@ -107,15 +181,6 @@
 
   {{template "nav" .}}
 
-  <!-- Loading overlay -->
-  <div id="loading-overlay" style="display:none">
-    <div class="loading-card">
-      <div class="loading-spinner"></div>
-      <p class="loading-label">Teman Selah sedang berpikir…</p>
-      <p class="loading-sub">Biasanya butuh 15–30 detik</p>
-    </div>
-  </div>
-
   <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
   <script>
     marked.use({ breaks: true, gfm: true });
@@ -123,20 +188,147 @@
       el.innerHTML = marked.parse(el.textContent);
     });
 
-    // Loading state for discuss form
+    // Scroll to last bubble on load
+    var bubbles = document.querySelectorAll('.bubble');
+    if (bubbles.length) bubbles[bubbles.length - 1].scrollIntoView({ behavior: 'smooth', block: 'end' });
+
+    function initCounter(textareaId, counterId, max) {
+      var el = document.getElementById(textareaId);
+      var counter = document.getElementById(counterId);
+      if (!el || !counter) return;
+      function update() {
+        var len = el.value.length;
+        counter.textContent = len + ' / ' + max;
+        counter.classList.toggle('over', len > max);
+      }
+      el.addEventListener('input', update);
+      return function() { return el.value.length <= max; };
+    }
+
+    var discussValid  = initCounter('discuss-msg',  'discuss-counter', 500);
+    var reflectValid  = initCounter('reflect-text',  'reflect-counter', 500);
+    var stepValid     = initCounter('step-text',     'step-counter',    500);
+
     var discussForm = document.getElementById('discuss-form');
-    var overlay = document.getElementById('loading-overlay');
     if (discussForm) {
-      discussForm.addEventListener('submit', function() {
-        var btn = document.getElementById('discuss-submit');
-        btn.disabled = true;
-        overlay.style.display = 'flex';
+      discussForm.addEventListener('submit', function(e) {
+        if (discussValid && !discussValid()) {
+          e.preventDefault();
+          document.getElementById('discuss-counter').scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return;
+        }
+        var textarea = this.querySelector('textarea[name="message"]');
+        var message = textarea.value.trim();
+        if (!message) return;
+
+        // Find or create thread section
+        var thread = document.querySelector('.thread');
+        if (!thread) {
+          thread = document.createElement('section');
+          thread.className = 'thread';
+          var actionBtns = document.querySelector('.action-btns');
+          actionBtns.parentNode.insertBefore(thread, actionBtns);
+        }
+
+        // Append user bubble
+        var userBubble = document.createElement('div');
+        userBubble.className = 'bubble bubble-user';
+        var userContent = document.createElement('div');
+        userContent.className = 'bubble-content';
+        userContent.textContent = message;
+        userBubble.innerHTML = '<div class="bubble-label">Kamu</div>';
+        userBubble.appendChild(userContent);
+        thread.appendChild(userBubble);
+
+        // Append AI typing bubble
+        var typingBubble = document.createElement('div');
+        typingBubble.className = 'bubble bubble-ai';
+        typingBubble.innerHTML = '<div class="bubble-label">Teman Selah</div><div class="bubble-content typing-dots"><span></span><span></span><span></span></div>';
+        thread.appendChild(typingBubble);
+        typingBubble.scrollIntoView({ behavior: 'smooth', block: 'end' });
+
+        document.getElementById('discuss-submit').disabled = true;
+        textarea.readOnly = true;
       });
     }
-    // Hide overlay if user navigates back (bfcache restore)
-    window.addEventListener('pageshow', function(e) {
-      if (e.persisted) overlay.style.display = 'none';
-    });
+
+    var reflectForm = document.getElementById('reflect-form');
+    if (reflectForm) {
+      reflectForm.addEventListener('submit', function(e) {
+        if (reflectValid && !reflectValid()) {
+          e.preventDefault();
+          document.getElementById('reflect-counter').scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return;
+        }
+        document.getElementById('reflect-submit').disabled = true;
+      });
+    }
+
+    var closingWaitingMessages = [
+      'Baik, tunggu sebentar ya...',
+      'Teman Selah sedang menyiapkan penutup...',
+      'Sebentar lagi...',
+      'Sedang merenungkan perjalanan hari ini...',
+      'Hampir selesai...',
+    ];
+
+    function showClosingBubble(userText, anchorEl) {
+      var thread = document.querySelector('.thread');
+      if (!thread) {
+        thread = document.createElement('section');
+        thread.className = 'thread';
+        anchorEl.parentNode.insertBefore(thread, anchorEl);
+      }
+      if (userText) {
+        var userBubble = document.createElement('div');
+        userBubble.className = 'bubble bubble-user';
+        var uc = document.createElement('div');
+        uc.className = 'bubble-content';
+        uc.textContent = userText;
+        userBubble.innerHTML = '<div class="bubble-label">Kamu</div>';
+        userBubble.appendChild(uc);
+        thread.appendChild(userBubble);
+      }
+      var typingBubble = document.createElement('div');
+      typingBubble.className = 'bubble bubble-ai';
+      typingBubble.innerHTML = '<div class="bubble-label">Teman Selah</div><div class="bubble-content typing-dots"><span></span><span></span><span></span></div><div class="bubble-waiting-msg" id="closing-waiting-msg"></div>';
+      thread.appendChild(typingBubble);
+      typingBubble.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      var msgEl = document.getElementById('closing-waiting-msg');
+      var idx = 0;
+      msgEl.textContent = closingWaitingMessages[0];
+      setInterval(function() {
+        idx = (idx + 1) % closingWaitingMessages.length;
+        msgEl.style.opacity = '0';
+        setTimeout(function() {
+          msgEl.textContent = closingWaitingMessages[idx];
+          msgEl.style.opacity = '1';
+        }, 300);
+      }, 6000);
+    }
+
+    var completeForm = document.getElementById('complete-form');
+    if (completeForm) {
+      completeForm.addEventListener('submit', function(e) {
+        if (stepValid && !stepValid()) {
+          e.preventDefault();
+          document.getElementById('step-counter').scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return;
+        }
+        var userStep = completeForm.querySelector('textarea[name="practical_step"]').value.trim();
+        showClosingBubble(userStep, completeForm.closest('section'));
+        document.getElementById('complete-submit').disabled = true;
+      });
+    }
+
+    var skipForm = document.getElementById('skip-form');
+    if (skipForm) {
+      skipForm.addEventListener('submit', function(e) {
+        var skipBtn = document.getElementById('skip-submit');
+        if (skipBtn) skipBtn.disabled = true;
+        showClosingBubble('', skipForm.closest('section'));
+      });
+    }
 
     function openDeleteModal() {
       document.getElementById('delete-modal').style.display = 'flex';
@@ -147,22 +339,65 @@
 
     function togglePanel(id) {
       var panels = document.querySelectorAll('.action-panel');
-      var btns = document.querySelectorAll('.action-btn');
+      var btnAsk = document.getElementById('btn-ask');
+      var btnWrite = document.getElementById('btn-write');
       var target = document.getElementById(id);
       var isOpen = target.style.display !== 'none';
 
-      // Close all
       panels.forEach(function(p) { p.style.display = 'none'; });
-      btns.forEach(function(b) { b.classList.remove('active'); });
+      if (btnAsk) { btnAsk.style.display = ''; btnAsk.classList.remove('active'); }
+      if (btnWrite) { btnWrite.style.display = ''; btnWrite.classList.remove('active'); }
 
       if (!isOpen) {
         target.style.display = 'block';
-        // Mark the clicked button active
-        var idx = id === 'panel-ask' ? 0 : 1;
-        btns[idx].classList.add('active');
-        target.querySelector('textarea').focus();
+        if (id === 'panel-ask') {
+          if (btnAsk) btnAsk.classList.add('active');
+          if (btnWrite) btnWrite.style.display = 'none';
+        } else {
+          if (btnWrite) btnWrite.classList.add('active');
+          if (btnAsk) btnAsk.style.display = 'none';
+        }
+        var ta = target.querySelector('textarea');
+        if (ta) ta.focus();
       }
     }
+
+    function closePanel() {
+      var panels = document.querySelectorAll('.action-panel');
+      panels.forEach(function(p) { p.style.display = 'none'; });
+      var btnAsk = document.getElementById('btn-ask');
+      var btnWrite = document.getElementById('btn-write');
+      if (btnAsk) { btnAsk.style.display = ''; btnAsk.classList.remove('active'); }
+      if (btnWrite) { btnWrite.style.display = ''; btnWrite.classList.remove('active'); }
+    }
+
+    function showStepForm() {
+      document.getElementById('step-choice').style.display = 'none';
+      document.getElementById('step-form-box').style.display = 'block';
+      var ta = document.getElementById('step-text');
+      if (ta) ta.focus();
+    }
+
+    function hideStepForm() {
+      document.getElementById('step-choice').style.display = '';
+      document.getElementById('step-form-box').style.display = 'none';
+    }
+
+    function toggleVerseExpand() {
+      var pin = document.getElementById('verse-text-pin');
+      var btn = document.getElementById('verse-expand-btn');
+      pin.classList.toggle('expanded');
+      btn.textContent = pin.classList.contains('expanded') ? 'Lebih sedikit' : 'Selengkapnya';
+    }
+
+    // Show expand button only if verse text is actually truncated
+    (function() {
+      var pin = document.getElementById('verse-text-pin');
+      var btn = document.getElementById('verse-expand-btn');
+      if (pin && btn && pin.scrollHeight > pin.clientHeight + 2) {
+        btn.style.display = 'inline';
+      }
+    })();
   </script>
 </body>
 </html>

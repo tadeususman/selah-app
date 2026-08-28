@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <title>Semua Journal · selah.</title>
+  <title>Semua Journal · selah,</title>
   {{template "head" .}}
 </head>
 <body>
@@ -11,28 +11,59 @@
       <h1>Daily Journal</h1>
     </header>
 
-    <div class="entry-list">
+    <div class="search-wrap">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="search-icon"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+      <input type="search" id="search-input" class="search-input" placeholder="Cari ayat atau kata...">
+    </div>
+
+    <div class="entry-list" id="entry-list">
       {{if not .Entries}}
         <p class="empty-state">Belum ada journal. Tekan + untuk mulai.</p>
       {{end}}
       {{range .Entries}}
-      <a href="/journal/{{.ID}}" class="entry-card entry-card-list">
-        <div class="list-card-left">
-          <div class="entry-card-title">{{.EntryDate.Day}}</div>
-          <div class="entry-card-day">{{idDay .EntryDate}}</div>
-        </div>
-        <div class="list-card-right">
-          {{if .VerseRef}}<div class="list-verse-ref">{{.VerseRef}}</div>{{end}}
-          <div class="list-verse-text">{{.VerseText}}</div>
-        </div>
-      </a>
+        <a href="/journal/{{.ID}}" class="entry-card entry-card-list"
+           data-search="{{.VerseRef}} {{.VerseText}}">
+          <div class="list-card-left">
+            <div class="list-card-month">{{idMonthShort .EntryDate}}</div>
+            <div class="entry-card-title">{{.EntryDate.Day}}</div>
+            <div class="entry-card-day">{{idDay .EntryDate}}</div>
+          </div>
+          <div class="list-card-right">
+            {{if .VerseRef}}<div class="list-verse-ref">{{.VerseRef}}</div>{{end}}
+            <div class="list-verse-text">{{.VerseText}}</div>
+            <div class="list-card-meta">
+              {{.EntryTime.Format "15:04"}}{{if .Location}} · {{.Location}}{{end}} · {{if eq .Status "completed"}}<span class="meta-done">Selesai ✓</span>{{else}}<span class="meta-draft">Lanjutkan →</span>{{end}}
+            </div>
+          </div>
+        </a>
       {{end}}
+      <p class="empty-state" id="no-results" style="display:none">Tidak ada journal yang cocok.</p>
     </div>
 
-    <a href="/journal/new" class="fab" aria-label="Tambah journal baru">+</a>
+    <a href="/journal/new" class="fab" aria-label="Tambah journal baru">
+      <span class="fab-plus">+</span>
+      <span class="fab-label">Tambah Daily Journal</span>
+    </a>
   </main>
 
   {{template "nav" .}}
+
+  <script>
+    var searchInput = document.getElementById('search-input');
+    searchInput.addEventListener('input', function() {
+      var q = this.value.toLowerCase().trim();
+      var cards = document.querySelectorAll('.entry-card-list');
+      var anyVisible = false;
+
+      cards.forEach(function(card) {
+        var match = !q || card.dataset.search.toLowerCase().includes(q);
+        card.style.display = match ? '' : 'none';
+        if (match) anyVisible = true;
+      });
+
+      document.getElementById('no-results').style.display = anyVisible || !q ? 'none' : '';
+    });
+  </script>
 </body>
 </html>
 {{end}}

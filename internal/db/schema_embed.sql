@@ -8,8 +8,11 @@ CREATE TABLE IF NOT EXISTS users (
     email         TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
     name          TEXT NOT NULL DEFAULT '',
+    is_admin      BOOLEAN NOT NULL DEFAULT false,
     created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS discuss_original_lang BOOLEAN NOT NULL DEFAULT false;
 
 -- One row per devotion session ("Day N" in the reference UI).
 CREATE TABLE IF NOT EXISTS journal_entries (

@@ -8,6 +8,7 @@ import (
 
 type loginPageData struct {
 	Error string
+	Info  string
 }
 
 func (a *App) LoginPage(w http.ResponseWriter, r *http.Request) {
@@ -16,7 +17,11 @@ func (a *App) LoginPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 		return
 	}
-	a.render(w, "login.html", loginPageData{})
+	data := loginPageData{}
+	if r.URL.Query().Get("deleted") == "1" {
+		data.Info = "Akun kamu berhasil dihapus. Sampai jumpa."
+	}
+	a.render(w, "login.html", data)
 }
 
 func (a *App) LoginSubmit(w http.ResponseWriter, r *http.Request) {

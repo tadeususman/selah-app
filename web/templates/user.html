@@ -68,6 +68,26 @@
       </form>
     </section>
 
+    <section class="admin-section danger-section">
+      <h3>Hapus Akun</h3>
+      <p class="danger-desc">Semua data journal dan riwayat diskusi akan dihapus permanen dan tidak bisa dipulihkan.</p>
+      <button type="button" class="btn-danger" onclick="document.getElementById('delete-account-modal').style.display='flex'">Hapus Akun Saya</button>
+    </section>
+
+    <div id="delete-account-modal" class="modal-backdrop" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+      <div class="modal-card" style="max-width:320px">
+        <h3 style="font-size:15px;font-weight:700;color:#c0392b;margin:0 0 8px">Hapus Akun Permanen</h3>
+        <p style="font-size:13px;color:var(--text-muted);margin:0 0 16px">Masukkan password untuk konfirmasi. Tindakan ini tidak bisa dibatalkan.</p>
+        <form method="POST" action="/user/delete">
+          <input type="password" name="password" placeholder="Password kamu" required autocomplete="current-password" style="width:100%;box-sizing:border-box;margin-bottom:12px">
+          <div style="display:flex;gap:8px">
+            <button type="button" class="modal-btn-cancel" style="flex:1" onclick="document.getElementById('delete-account-modal').style.display='none'">Batal</button>
+            <button type="submit" class="btn-danger" style="flex:1">Ya, Hapus</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <section class="admin-section">
       <h3>Changelog</h3>
       <button class="changelog-badge" onclick="document.getElementById('cl-all').style.display='flex'">v{{.Version}}</button>
@@ -78,8 +98,32 @@
       <div class="modal-card changelog-modal" style="max-height:80vh;overflow-y:auto">
 
         <div class="changelog-modal-header">
-          <span class="about-version">v0.3.4</span>
-          <span class="changelog-date">Agt 2026</span>
+          <span class="about-version">v0.3.6</span>
+          <span class="changelog-date">28 Agt 2026</span>
+        </div>
+        <ul class="changelog-list" style="margin-bottom:20px">
+          <li>Admin: halaman pengguna terpisah, tidak makin panjang</li>
+          <li>Admin: info user lebih rapi — journal, bergabung, aktif terakhir</li>
+          <li>Admin: pencarian user langsung di halaman</li>
+          <li>Waktu "aktif terakhir" ditampilkan dalam WIB</li>
+        </ul>
+
+        <div class="changelog-modal-header">
+          <span class="about-version" style="background:var(--text-muted)">v0.3.5</span>
+          <span class="changelog-date">28 Agt 2026</span>
+        </div>
+        <ul class="changelog-list" style="margin-bottom:20px">
+          <li>Rate limit: maksimal 10 journal per hari</li>
+          <li>Koordinat lokasi disimpan di database (untuk fitur peta)</li>
+          <li>Fallback otomatis ke Groq saat Claude tidak tersedia</li>
+          <li>Backup database harian otomatis (simpan 7 hari)</li>
+          <li>Fitur hapus akun dengan konfirmasi password</li>
+          <li>Admin: halaman statistik pemakaian AI (Claude vs Groq)</li>
+        </ul>
+
+        <div class="changelog-modal-header">
+          <span class="about-version" style="background:var(--text-muted)">v0.3.4</span>
+          <span class="changelog-date">28 Agt 2026</span>
         </div>
         <ul class="changelog-list" style="margin-bottom:20px">
           <li>Nama app diperbarui: selah. → selah,</li>
@@ -91,7 +135,7 @@
 
         <div class="changelog-modal-header">
           <span class="about-version" style="background:var(--text-muted)">v0.3.2</span>
-          <span class="changelog-date">Agt 2026</span>
+          <span class="changelog-date">27 Agt 2026</span>
         </div>
         <ul class="changelog-list" style="margin-bottom:20px">
           <li>Ayat yang di-pin otomatis dipotong 3 baris, bisa diperluas</li>
@@ -106,7 +150,7 @@
 
         <div class="changelog-modal-header">
           <span class="about-version" style="background:var(--text-muted)">v0.3.1</span>
-          <span class="changelog-date">Agt 2026</span>
+          <span class="changelog-date">26 Agt 2026</span>
         </div>
         <ul class="changelog-list" style="margin-bottom:20px">
           <li>Tur onboarding untuk user baru di dashboard</li>
@@ -120,7 +164,7 @@
 
         <div class="changelog-modal-header">
           <span class="about-version" style="background:var(--text-muted)">v0.3.0</span>
-          <span class="changelog-date">Agt 2026</span>
+          <span class="changelog-date">25 Agt 2026</span>
         </div>
         <ul class="changelog-list" style="margin-bottom:20px">
           <li>Multi-user: registrasi akun terbuka</li>
@@ -131,7 +175,7 @@
 
         <div class="changelog-modal-header">
           <span class="about-version" style="background:var(--text-muted)">v0.2.0</span>
-          <span class="changelog-date">Agt 2026</span>
+          <span class="changelog-date">20 Agt 2026</span>
         </div>
         <ul class="changelog-list" style="margin-bottom:20px">
           <li>Tombol tema gelap/terang di pojok kanan atas</li>
@@ -145,7 +189,7 @@
 
         <div class="changelog-modal-header">
           <span class="about-version" style="background:var(--text-muted)">v0.1.0</span>
-          <span class="changelog-date">Jul 2026</span>
+          <span class="changelog-date">15 Jul 2026</span>
         </div>
         <ul class="changelog-list">
           <li>Rilis pertama — journal harian dengan Teman Selah</li>

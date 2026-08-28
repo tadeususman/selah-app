@@ -1,0 +1,98 @@
+{{define "admin_users.html"}}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <title>Pengguna · Admin · selah,</title>
+  {{template "head" .}}
+</head>
+<body>
+  <main class="page">
+    <header class="page-header">
+      <a href="/admin" class="back-link">← Admin</a>
+      <h1>Pengguna ({{len .Users}})</h1>
+    </header>
+
+    {{if .FlashOK}}<div class="flash-ok">{{.FlashOK}}</div>{{end}}
+    {{if .FlashErr}}<div class="flash-err">{{.FlashErr}}</div>{{end}}
+    {{if .ResetPW}}
+    <div class="flash-ok flash-reset">
+      <div>Password <strong>{{.ResetEmail}}</strong> berhasil direset.</div>
+      <div style="margin-top:8px">Password baru:</div>
+      <div class="reset-pw-badge">{{.ResetPW}}</div>
+      <div style="margin-top:6px;font-size:11px;opacity:0.8">Sampaikan ke pengguna dan minta segera diganti.</div>
+    </div>
+    {{end}}
+
+    <section class="admin-section">
+      <h3>Tambah Pengguna</h3>
+      <form method="POST" action="/admin/users/create" class="stacked-form">
+        <label for="new-name">Nama</label>
+        <input id="new-name" name="name" type="text" autocomplete="off">
+        <label for="new-email">Email</label>
+        <input id="new-email" name="email" type="email" required autocomplete="off">
+        <label for="new-password">Password</label>
+        <input id="new-password" name="password" type="password" required minlength="8" autocomplete="new-password">
+        <label class="admin-checkbox-label">
+          <input type="checkbox" name="is_admin" value="1"> Admin
+        </label>
+        <button type="submit" class="btn-primary">Buat Akun</button>
+      </form>
+    </section>
+
+    <section class="admin-section">
+      <div class="search-wrap" style="margin-bottom:12px">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="search-icon"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+        <input type="search" id="user-search" class="search-input" placeholder="Cari nama atau email...">
+      </div>
+      <div class="admin-user-list" id="user-list">
+        {{range .Users}}
+        <div class="admin-user-card" data-search="{{.Name}} {{.Email}}">
+          <div class="admin-user-info">
+            <div class="admin-user-name-row">
+              <span class="admin-user-name">{{if .Name}}{{.Name}}{{else}}<em>—</em>{{end}}</span>
+              {{if .IsAdmin}}<span class="admin-badge">admin</span>{{end}}
+            </div>
+            <span class="admin-user-email">{{.Email}}</span>
+            <span class="admin-user-meta">{{.Journals}} journal</span>
+            <span class="admin-user-meta">Bergabung {{.CreatedAt.Format "2 Jan 2006"}}</span>
+            <span class="admin-user-meta">{{if .LastActive}}Aktif terakhir {{wibDateTime .LastActive}}{{else}}Belum ada journal{{end}}</span>
+          </div>
+          <div class="admin-user-actions">
+            <form method="POST" action="/admin/users/toggle-admin" style="display:inline">
+              <input type="hidden" name="user_id" value="{{.ID}}">
+              <button type="submit" class="btn-tiny btn-secondary">{{if .IsAdmin}}Cabut Admin{{else}}Jadikan Admin{{end}}</button>
+            </form>
+            <form method="POST" action="/admin/users/reset-password" style="display:inline" onsubmit="return confirm('Reset password {{.Email}}?')">
+              <input type="hidden" name="user_id" value="{{.ID}}">
+              <button type="submit" class="btn-tiny btn-warning">Reset PW</button>
+            </form>
+            <form method="POST" action="/admin/users/delete" style="display:inline" onsubmit="return confirm('Hapus {{.Email}}?')">
+              <input type="hidden" name="user_id" value="{{.ID}}">
+              <button type="submit" class="btn-tiny btn-danger">Hapus</button>
+            </form>
+          </div>
+        </div>
+        {{end}}
+      </div>
+      <p id="no-user-results" style="display:none;color:var(--text-muted);font-size:13px;text-align:center;padding:16px 0">Tidak ada pengguna yang cocok.</p>
+    </section>
+  </main>
+
+  {{template "nav" .}}
+
+  <script>
+    document.getElementById('user-search').addEventListener('input', function() {
+      var q = this.value.toLowerCase().trim();
+      var cards = document.querySelectorAll('.admin-user-card');
+      var any = false;
+      cards.forEach(function(c) {
+        var match = !q || c.dataset.search.toLowerCase().includes(q);
+        c.style.display = match ? '' : 'none';
+        if (match) any = true;
+      });
+      document.getElementById('no-user-results').style.display = (!any && q) ? '' : 'none';
+    });
+  </script>
+</body>
+</html>
+{{end}}

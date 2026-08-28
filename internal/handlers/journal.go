@@ -13,6 +13,8 @@ import (
 	"journalflow/internal/models"
 )
 
+const dailyJournalLimit = 10
+
 // ---- GET /journal (all entries, for the bottom-nav "Journal" tab) ----
 
 type journalListData struct {
@@ -55,10 +57,15 @@ func (a *App) JournalList(w http.ResponseWriter, r *http.Request) {
 
 type journalNewData struct {
 	UserID int64
+	Error  string
 }
 
 func (a *App) JournalNewPage(w http.ResponseWriter, r *http.Request) {
-	a.render(w, "journal_new.html", journalNewData{UserID: middleware.UserID(r)})
+	data := journalNewData{UserID: middleware.UserID(r)}
+	if r.URL.Query().Get("err") == "rate_limit" {
+		data.Error = "Kamu sudah membuat 10 journal hari ini. Coba lagi besok ya. 🙏"
+	}
+	a.render(w, "journal_new.html", data)
 }
 
 // ---- POST /journal (create entry from verse, then fetch AI background) ----
@@ -69,11 +76,30 @@ func (a *App) JournalCreate(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "bad form", http.StatusBadRequest)
 		return
 	}
+	// Rate limit: max 10 journals per day per user
+	var todayCount int
+	_ = a.DB.QueryRowContext(r.Context(),
+		`SELECT COUNT(*) FROM journal_entries WHERE user_id = $1 AND entry_date = CURRENT_DATE`,
+		userID).Scan(&todayCount)
+	if todayCount >= dailyJournalLimit {
+		http.Redirect(w, r, "/journal/new?err=rate_limit", http.StatusSeeOther)
+		return
+	}
+
 	verseRef := r.FormValue("verse_ref")
 	verseText := r.FormValue("verse_text")
 	location := r.FormValue("location")
 	dateStr := r.FormValue("entry_date")
 	timeStr := r.FormValue("entry_time")
+
+	// Coordinates — optional, only present if user allowed geolocation
+	var lat, lon *float64
+	if v, err := strconv.ParseFloat(r.FormValue("lat"), 64); err == nil {
+		lat = &v
+	}
+	if v, err := strconv.ParseFloat(r.FormValue("lon"), 64); err == nil {
+		lon = &v
+	}
 
 	if verseRef == "" {
 		http.Error(w, "Referensi ayat wajib diisi", http.StatusBadRequest)
@@ -119,10 +145,10 @@ func (a *App) JournalCreate(w http.ResponseWriter, r *http.Request) {
 	var entryID int64
 	err = a.DB.QueryRowContext(r.Context(), `
 		INSERT INTO journal_entries
-			(user_id, day_number, entry_date, entry_time, location, verse_ref, verse_text, ai_background)
-		VALUES ($1, $2, $3::date, $4::time, $5, $6, $7, $8)
+			(user_id, day_number, entry_date, entry_time, location, verse_ref, verse_text, ai_background, latitude, longitude)
+		VALUES ($1, $2, $3::date, $4::time, $5, $6, $7, $8, $9, $10)
 		RETURNING id`,
-		userID, nextDay, dateStr, timeStr, location, verseRef, verseText, background,
+		userID, nextDay, dateStr, timeStr, location, verseRef, verseText, background, lat, lon,
 	).Scan(&entryID)
 	if err != nil {
 		http.Error(w, "could not create journal entry", http.StatusInternalServerError)

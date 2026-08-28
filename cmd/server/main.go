@@ -83,12 +83,15 @@ func main() {
 		r.Post("/user/name", app.UserUpdateName)
 		r.Post("/user/password", app.UserUpdatePassword)
 		r.Post("/user/prefs", app.UserUpdatePrefs)
+		r.Post("/user/delete", app.UserDeleteAccount)
 
 		r.Get("/admin", app.AdminPage)
+		r.Get("/admin/users", app.AdminUsersPage)
 		r.Post("/admin/users/create", app.AdminCreateUser)
 		r.Post("/admin/users/delete", app.AdminDeleteUser)
 		r.Post("/admin/users/toggle-admin", app.AdminToggleAdmin)
 		r.Post("/admin/users/reset-password", app.AdminResetPassword)
+		r.Get("/admin/ai-stats", app.AdminAIStats)
 	})
 
 	log.Printf("JournalFlow listening on :%s", cfg.AppPort)

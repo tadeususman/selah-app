@@ -49,9 +49,13 @@
       </div>
     </div>
 
+    {{if .Error}}<p class="form-error" style="margin-bottom:12px">{{.Error}}</p>{{end}}
+
     <form method="POST" action="/journal" class="stacked-form">
       <input type="hidden" name="entry_date" id="entry-date">
       <input type="hidden" name="entry_time" id="entry-time">
+      <input type="hidden" name="lat" id="lat-input">
+      <input type="hidden" name="lon" id="lon-input">
       <div class="location-tag-wrap">
         <button type="button" id="loc-btn" class="location-pin-btn" title="Deteksi lokasi otomatis">
           <svg id="loc-icon" class="location-pin-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
@@ -316,6 +320,8 @@
       navigator.geolocation.getCurrentPosition(
         function(pos) {
           var lat = pos.coords.latitude, lon = pos.coords.longitude;
+          document.getElementById('lat-input').value = lat;
+          document.getElementById('lon-input').value = lon;
           fetch('https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lon + '&format=json&accept-language=id')
             .then(function(r) { return r.json(); })
             .then(function(data) {

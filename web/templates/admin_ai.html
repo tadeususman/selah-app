@@ -1,0 +1,98 @@
+{{define "admin_ai.html"}}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <title>AI Stats · Admin · selah,</title>
+  {{template "head" .}}
+</head>
+<body>
+  <main class="page">
+    <header class="page-header">
+      <a href="/admin" class="back-link">← Admin</a>
+      <p class="brand-wordmark brand-small">selah<span class="dot">,</span></p>
+      <h1>Pemakaian AI</h1>
+    </header>
+
+    {{if .Error}}
+      <div class="flash-err">{{.Error}}</div>
+    {{else}}
+      <div id="ai-stats-root"></div>
+      <script>
+        var raw = {{.StatsJSON}};
+        var root = document.getElementById('ai-stats-root');
+
+        function card(title, content) {
+          return '<div class="admin-section" style="margin-bottom:12px"><h3 style="margin-bottom:10px">' + title + '</h3>' + content + '</div>';
+        }
+        function badge(label, val, color) {
+          return '<span style="display:inline-block;background:' + color + ';color:#fff;border-radius:8px;padding:3px 10px;font-size:12px;font-weight:700;margin-right:6px;margin-bottom:4px">' + label + ': ' + val + '</span>';
+        }
+        function row(label, val) {
+          return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--text-muted)">' + label + '</span><span style="font-weight:600">' + val + '</span></div>';
+        }
+
+        var html = '';
+
+        // Summary cards
+        var byProv = raw.by_provider || {};
+        var provHtml = '';
+        provHtml += badge('Claude', byProv.claude || 0, '#2C4468');
+        provHtml += badge('Groq', byProv.groq || 0, '#1a7a4a');
+        if (byProv.error) provHtml += badge('Error', byProv.error, '#c0392b');
+        provHtml += '<br><small style="color:var(--text-muted);font-size:11px">Total: ' + (raw.total || 0) + ' panggilan</small>';
+        html += card('Semua Waktu — per Provider', provHtml);
+
+        // Today
+        var today = raw.today || {};
+        var todayHtml = '';
+        todayHtml += badge('Claude', today.claude || 0, '#2C4468');
+        todayHtml += badge('Groq', today.groq || 0, '#1a7a4a');
+        if (today.error) todayHtml += badge('Error', today.error, '#c0392b');
+        html += card('Hari Ini', todayHtml);
+
+        // Per app
+        var byApp = raw.by_app || {};
+        var appHtml = '';
+        Object.keys(byApp).forEach(function(a) {
+          appHtml += row(a, byApp[a] + ' panggilan');
+        });
+        if (appHtml) html += card('Per Aplikasi', appHtml);
+
+        // Avg response time
+        var avgMs = raw.avg_ms || {};
+        if (Object.keys(avgMs).length) {
+          var msHtml = '';
+          Object.keys(avgMs).forEach(function(p) {
+            msHtml += row(p, (avgMs[p] / 1000).toFixed(1) + ' detik rata-rata');
+          });
+          html += card('Waktu Respons Rata-rata', msHtml);
+        }
+
+        // Recent 20
+        var recent = (raw.recent || []).slice().reverse();
+        if (recent.length) {
+          var recHtml = '<div style="overflow-x:auto"><table style="width:100%;font-size:12px;border-collapse:collapse">';
+          recHtml += '<tr style="color:var(--text-muted);text-align:left"><th style="padding:4px 6px">Waktu</th><th style="padding:4px 6px">App</th><th style="padding:4px 6px">Provider</th><th style="padding:4px 6px">Durasi</th><th style="padding:4px 6px">Status</th></tr>';
+          recent.forEach(function(e) {
+            var ts = new Date(e.ts).toLocaleString('id-ID', {timeZone:'Asia/Jakarta',hour:'2-digit',minute:'2-digit',day:'numeric',month:'short'});
+            var provColor = e.provider === 'claude' ? '#2C4468' : e.provider === 'groq' ? '#1a7a4a' : '#c0392b';
+            recHtml += '<tr style="border-top:1px solid var(--border)">';
+            recHtml += '<td style="padding:5px 6px;color:var(--text-muted)">' + ts + '</td>';
+            recHtml += '<td style="padding:5px 6px">' + (e.app || '-') + '</td>';
+            recHtml += '<td style="padding:5px 6px"><span style="background:' + provColor + ';color:#fff;border-radius:4px;padding:1px 6px;font-size:11px">' + (e.provider || '-') + '</span></td>';
+            recHtml += '<td style="padding:5px 6px">' + ((e.ms || 0) / 1000).toFixed(1) + 's</td>';
+            recHtml += '<td style="padding:5px 6px">' + (e.ok ? '✓' : '✗') + '</td>';
+            recHtml += '</tr>';
+          });
+          recHtml += '</table></div>';
+          html += card('20 Panggilan Terakhir', recHtml);
+        }
+
+        root.innerHTML = html;
+      </script>
+    {{end}}
+  </main>
+  {{template "nav" .}}
+</body>
+</html>
+{{end}}

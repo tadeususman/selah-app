@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"crypto/rand"
+	"encoding/json"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -12,12 +13,13 @@ import (
 )
 
 type adminUser struct {
-	ID        int64
-	Email     string
-	Name      string
-	IsAdmin   bool
-	CreatedAt time.Time
-	Journals  int
+	ID         int64
+	Email      string
+	Name       string
+	IsAdmin    bool
+	CreatedAt  time.Time
+	LastActive *time.Time
+	Journals   int
 }
 
 type adminPageData struct {
@@ -44,10 +46,18 @@ func (a *App) AdminPage(w http.ResponseWriter, r *http.Request) {
 	if !a.requireAdmin(w, r) {
 		return
 	}
+	a.render(w, "admin.html", nil)
+}
+
+func (a *App) AdminUsersPage(w http.ResponseWriter, r *http.Request) {
+	if !a.requireAdmin(w, r) {
+		return
+	}
 
 	rows, err := a.DB.QueryContext(r.Context(), `
 		SELECT u.id, u.email, u.name, u.is_admin, u.created_at,
-		       COUNT(j.id) AS journals
+		       COUNT(j.id) AS journals,
+		       MAX(j.created_at) AS last_active
 		FROM users u
 		LEFT JOIN journal_entries j ON j.user_id = u.id
 		GROUP BY u.id
@@ -61,7 +71,7 @@ func (a *App) AdminPage(w http.ResponseWriter, r *http.Request) {
 	var users []adminUser
 	for rows.Next() {
 		var u adminUser
-		if err := rows.Scan(&u.ID, &u.Email, &u.Name, &u.IsAdmin, &u.CreatedAt, &u.Journals); err != nil {
+		if err := rows.Scan(&u.ID, &u.Email, &u.Name, &u.IsAdmin, &u.CreatedAt, &u.Journals, &u.LastActive); err != nil {
 			continue
 		}
 		users = append(users, u)
@@ -82,8 +92,10 @@ func (a *App) AdminPage(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Query().Get("err") {
 	case "duplicate":
 		data.FlashErr = "Email sudah terdaftar."
+	case "self":
+		data.FlashErr = "Tidak bisa menghapus akun sendiri."
 	}
-	a.render(w, "admin.html", data)
+	a.render(w, "admin_users.html", data)
 }
 
 func (a *App) AdminCreateUser(w http.ResponseWriter, r *http.Request) {
@@ -100,7 +112,7 @@ func (a *App) AdminCreateUser(w http.ResponseWriter, r *http.Request) {
 	isAdmin := r.FormValue("is_admin") == "1"
 
 	if email == "" || password == "" {
-		http.Redirect(w, r, "/admin?err=empty", http.StatusSeeOther)
+		http.Redirect(w, r, "/admin/users?err=empty", http.StatusSeeOther)
 		return
 	}
 
@@ -114,10 +126,10 @@ func (a *App) AdminCreateUser(w http.ResponseWriter, r *http.Request) {
 		`INSERT INTO users (email, password_hash, name, is_admin) VALUES ($1, $2, $3, $4)`,
 		email, string(hash), name, isAdmin)
 	if err != nil {
-		http.Redirect(w, r, "/admin?err=duplicate", http.StatusSeeOther)
+		http.Redirect(w, r, "/admin/users?err=duplicate", http.StatusSeeOther)
 		return
 	}
-	http.Redirect(w, r, "/admin?ok=created", http.StatusSeeOther)
+	http.Redirect(w, r, "/admin/users?ok=created", http.StatusSeeOther)
 }
 
 func (a *App) AdminDeleteUser(w http.ResponseWriter, r *http.Request) {
@@ -135,11 +147,11 @@ func (a *App) AdminDeleteUser(w http.ResponseWriter, r *http.Request) {
 	}
 	currentUserID := middleware.UserID(r)
 	if targetID == currentUserID {
-		http.Redirect(w, r, "/admin?err=self", http.StatusSeeOther)
+		http.Redirect(w, r, "/admin/users?err=self", http.StatusSeeOther)
 		return
 	}
 	_, _ = a.DB.ExecContext(r.Context(), `DELETE FROM users WHERE id = $1`, targetID)
-	http.Redirect(w, r, "/admin?ok=deleted", http.StatusSeeOther)
+	http.Redirect(w, r, "/admin/users?ok=deleted", http.StatusSeeOther)
 }
 
 func (a *App) AdminResetPassword(w http.ResponseWriter, r *http.Request) {
@@ -179,7 +191,7 @@ func (a *App) AdminResetPassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r,
-		"/admin?ok=reset&email="+url.QueryEscape(email)+"&newpw="+url.QueryEscape(newPw),
+		"/admin/users?ok=reset&email="+url.QueryEscape(email)+"&newpw="+url.QueryEscape(newPw),
 		http.StatusSeeOther)
 }
 
@@ -210,5 +222,32 @@ func (a *App) AdminToggleAdmin(w http.ResponseWriter, r *http.Request) {
 	}
 	_, _ = a.DB.ExecContext(r.Context(),
 		`UPDATE users SET is_admin = NOT is_admin WHERE id = $1`, targetID)
-	http.Redirect(w, r, "/admin?ok=toggled", http.StatusSeeOther)
+	http.Redirect(w, r, "/admin/users?ok=toggled", http.StatusSeeOther)
+}
+
+type adminAIStatsData struct {
+	StatsJSON string
+	Error     string
+}
+
+func (a *App) AdminAIStats(w http.ResponseWriter, r *http.Request) {
+	if !a.requireAdmin(w, r) {
+		return
+	}
+	raw, err := a.AI.Stats(r.Context())
+	data := adminAIStatsData{}
+	if err != nil {
+		data.Error = "Bridge tidak bisa dihubungi: " + err.Error()
+	} else {
+		var pretty interface{}
+		if json.Unmarshal(raw, &pretty) == nil {
+			if b, e := json.MarshalIndent(pretty, "", "  "); e == nil {
+				data.StatsJSON = string(b)
+			}
+		}
+		if data.StatsJSON == "" {
+			data.StatsJSON = string(raw)
+		}
+	}
+	a.render(w, "admin_ai.html", data)
 }

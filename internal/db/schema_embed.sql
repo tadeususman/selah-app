@@ -13,6 +13,8 @@ CREATE TABLE IF NOT EXISTS users (
 );
 ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS discuss_original_lang BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE journal_entries ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION;
+ALTER TABLE journal_entries ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION;
 
 -- One row per devotion session ("Day N" in the reference UI).
 CREATE TABLE IF NOT EXISTS journal_entries (

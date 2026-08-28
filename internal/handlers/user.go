@@ -48,6 +48,8 @@ func (a *App) UserPage(w http.ResponseWriter, r *http.Request) {
 		data.FlashErr = "Konfirmasi password baru tidak cocok."
 	case "short":
 		data.FlashErr = "Password baru minimal 8 karakter."
+	case "wrong_password_delete":
+		data.FlashErr = "Password salah. Akun tidak dihapus."
 	}
 	a.render(w, "user.html", data)
 }
@@ -151,4 +153,34 @@ func (a *App) UserUpdatePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.Redirect(w, r, "/user?ok=password", http.StatusSeeOther)
+}
+
+func (a *App) UserDeleteAccount(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.UserID(r)
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "bad form", http.StatusBadRequest)
+		return
+	}
+	password := r.FormValue("password")
+
+	var hash string
+	err := a.DB.QueryRowContext(r.Context(),
+		`SELECT password_hash FROM users WHERE id = $1`, userID).Scan(&hash)
+	if err != nil {
+		http.Error(w, "could not load user", http.StatusInternalServerError)
+		return
+	}
+	if bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)) != nil {
+		http.Redirect(w, r, "/user?err=wrong_password_delete", http.StatusSeeOther)
+		return
+	}
+
+	// Destroy session first, then delete user (cascades to all data)
+	a.Sessions.Destroy(w, r)
+	_, err = a.DB.ExecContext(r.Context(), `DELETE FROM users WHERE id = $1`, userID)
+	if err != nil {
+		http.Error(w, "could not delete account", http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, "/login?deleted=1", http.StatusSeeOther)
 }

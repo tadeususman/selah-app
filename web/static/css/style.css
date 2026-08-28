@@ -257,6 +257,24 @@ a { color: inherit; text-decoration: none; }
   font-size: 13px;
   margin-bottom: 12px;
 }
+.form-info {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin-bottom: 12px;
+  background: var(--card-bg);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+.danger-section h3 { color: var(--danger); }
+.danger-desc { font-size: 13px; color: var(--text-muted); margin: 0 0 12px; }
+.modal-card input[type="password"] {
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  background: var(--input-bg);
+  color: var(--text);
+}
 
 .auth-switch {
   text-align: center;
@@ -619,6 +637,29 @@ input:focus, textarea:focus {
 
 /* ---------- Admin page ---------- */
 
+.admin-hub {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 4px;
+}
+.admin-hub-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  box-shadow: 0 4px 14px var(--shadow-card);
+  text-decoration: none;
+  color: var(--text);
+  transition: box-shadow 0.15s;
+}
+.admin-hub-card:hover { box-shadow: 0 6px 20px var(--shadow); }
+.admin-hub-icon { color: var(--navy); flex-shrink: 0; }
+.admin-hub-label { font-size: 15px; font-weight: 700; color: var(--navy-dark); margin-bottom: 2px; }
+.admin-hub-desc { font-size: 12px; color: var(--text-muted); }
+
 .admin-section {
   background: var(--card);
   border-radius: var(--radius);
@@ -660,9 +701,10 @@ input:focus, textarea:focus {
   border-bottom: 1px solid var(--border);
 }
 .admin-user-card:last-child { border-bottom: none; padding-bottom: 0; }
-.admin-user-info { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.admin-user-info { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
+.admin-user-name-row { display: flex; align-items: center; gap: 6px; }
 .admin-user-name { font-size: 14px; font-weight: 600; color: var(--navy-dark); }
-.admin-user-email { font-size: 12px; color: var(--text-muted); word-break: break-all; }
+.admin-user-email { font-size: 12px; color: var(--text-muted); word-break: break-all; margin-bottom: 2px; }
 .admin-user-meta { font-size: 11px; color: var(--text-muted); }
 .admin-badge {
   display: inline-block;

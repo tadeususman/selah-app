@@ -16,6 +16,7 @@
     <h2 class="auth-sheet-title">Masuk</h2>
 
     {{if .Error}}<p class="form-error">{{.Error}}</p>{{end}}
+    {{if .Info}}<p class="form-info">{{.Info}}</p>{{end}}
 
     <form method="POST" action="/login" class="auth-form-new">
       <div class="auth-field">

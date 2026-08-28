@@ -39,8 +39,9 @@ type ChatMessage struct {
 }
 
 type bridgeRequest struct {
-	Prompt string `json:"prompt"`
-	App    string `json:"app"`
+	Prompt   string `json:"prompt"`
+	App      string `json:"app"`
+	Provider string `json:"provider,omitempty"`
 }
 
 type bridgeResponse struct {
@@ -50,6 +51,7 @@ type bridgeResponse struct {
 
 // send builds a single text prompt from the system instruction + message
 // history and hands it to the bridge's /ask endpoint.
+// The bridge already handles Groq fallback automatically when Claude fails.
 func (c *Client) send(ctx context.Context, system string, history []ChatMessage) (string, error) {
 	var sb strings.Builder
 	if system != "" {
@@ -96,6 +98,20 @@ func (c *Client) send(ctx context.Context, system string, history []ChatMessage)
 		return "", fmt.Errorf("bridge error: %s", parsed.Error)
 	}
 	return parsed.Output, nil
+}
+
+// Stats fetches aggregated AI usage statistics from the bridge.
+func (c *Client) Stats(ctx context.Context) (json.RawMessage, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.bridgeURL+"/stats", nil)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("bridge tidak bisa dihubungi: %w", err)
+	}
+	defer resp.Body.Close()
+	return io.ReadAll(resp.Body)
 }
 
 const backgroundSystemPrompt = `Kamu adalah sahabat yang kebetulan paham teologi Alkitab secara mendalam — bukan ceramah, tapi ngobrol serius soal Firman.

@@ -51,6 +51,14 @@ func LoadTemplates(dir string) *template.Template {
 			loc, _ := time.LoadLocation("Asia/Jakarta")
 			return t.In(loc).Format("15:04")
 		},
+		// date+time in WIB for nullable time
+		"wibDateTime": func(t *time.Time) string {
+			if t == nil {
+				return ""
+			}
+			loc, _ := time.LoadLocation("Asia/Jakarta")
+			return t.In(loc).Format("2 Jan 2006, 15:04")
+		},
 		// short month + 2-digit year: "Agt 26"
 		"idMonthShort": func(t time.Time) string {
 			return fmt.Sprintf("%s %02d", idMonths[t.Month()], t.Year()%100)

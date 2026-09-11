@@ -93,7 +93,19 @@
       <div class="modal-card changelog-modal" style="max-height:80vh;overflow-y:auto">
 
         <div class="changelog-modal-header">
-          <span class="about-version">v0.5.0</span>
+          <span class="about-version">v0.5.1</span>
+          <span class="changelog-date">12 Sep 2026</span>
+        </div>
+        <ul class="changelog-list" style="margin-bottom:20px">
+          <li>Tombol <strong>✦ Pilihkan Ayat</strong> — kalau belum tahu mau renungkan ayat apa, Teman Selah langsung carikan satu ayat untukmu</li>
+          <li>Ceritakan perasaan atau situasimu di kolom teks, Teman Selah akan rekomendasikan ayat yang relevan</li>
+          <li>Mengisi referensi atau teks ayat sekarang saling mengunci kolom yang lain agar tidak bentrok</li>
+          <li>Panduan penggunaan (tombol ?) diperbarui sesuai fitur terbaru</li>
+          {{if .IsAdmin}}<li>Nada Teman Selah diperbarui — lebih natural seperti teman saat teduh, larangan eksplisit pola AI (pujian pembuka, kata tentunya/pastinya, dll)</li>{{end}}
+        </ul>
+
+        <div class="changelog-modal-header">
+          <span class="about-version" style="background:var(--text-muted)">v0.5.0</span>
           <span class="changelog-date">3 Sep 2026</span>
         </div>
         <ul class="changelog-list" style="margin-bottom:20px">

@@ -77,6 +77,7 @@ func main() {
 
 		r.Get("/api/verse", app.VerseFetch)
 		r.Get("/api/verse/search", app.VerseSearch)
+		r.Post("/api/verse/recommend", app.VerseRecommend)
 
 		r.Get("/user", app.UserPage)
 		r.Post("/user/email", app.UserUpdateEmail)

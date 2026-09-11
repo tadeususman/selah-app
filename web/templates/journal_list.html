@@ -14,6 +14,26 @@
     <div class="search-wrap">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="search-icon"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
       <input type="search" id="search-input" class="search-input" placeholder="Cari ayat atau kata...">
+      <button id="date-filter-btn" class="date-filter-btn" aria-label="Filter tanggal" title="Filter tanggal">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M19 4h-1V2h-2v2H8V2H6v2H5C3.89 4 3 4.9 3 6v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zm0-13H5V6h14v1zM7 11h5v5H7z"/></svg>
+      </button>
+    </div>
+
+    <div class="date-filter-panel" id="date-filter-panel" style="display:none">
+      <div class="date-filter-row">
+        <div class="date-filter-field">
+          <label class="date-filter-label">Dari</label>
+          <input type="date" id="date-from" class="date-filter-input">
+        </div>
+        <div class="date-filter-field">
+          <label class="date-filter-label">Sampai</label>
+          <input type="date" id="date-to" class="date-filter-input">
+        </div>
+      </div>
+      <div class="date-filter-actions">
+        <button id="date-filter-apply" class="date-filter-apply">Cari</button>
+        <button id="date-filter-reset" class="date-filter-reset" style="display:none">Reset</button>
+      </div>
     </div>
 
     <div class="entry-list" id="entry-list">
@@ -22,7 +42,8 @@
       {{end}}
       {{range .Entries}}
         <a href="/journal/{{.ID}}" class="entry-card entry-card-list"
-           data-search="{{.VerseRef}} {{.VerseText}}">
+           data-search="{{.VerseRef}} {{.VerseText}}"
+           data-date="{{.EntryDate.Format "2006-01-02"}}">
           <div class="list-card-left">
             <div class="list-card-month">{{idMonthShort .EntryDate}}</div>
             <div class="entry-card-title">{{.EntryDate.Day}}</div>
@@ -50,18 +71,53 @@
 
   <script>
     var searchInput = document.getElementById('search-input');
-    searchInput.addEventListener('input', function() {
-      var q = this.value.toLowerCase().trim();
+    var dateFrom = document.getElementById('date-from');
+    var dateTo = document.getElementById('date-to');
+    var resetBtn = document.getElementById('date-filter-reset');
+    var activeFrom = '', activeTo = '';
+
+    function applyFilters() {
+      var q = searchInput.value.toLowerCase().trim();
       var cards = document.querySelectorAll('.entry-card-list');
       var anyVisible = false;
 
       cards.forEach(function(card) {
-        var match = !q || card.dataset.search.toLowerCase().includes(q);
-        card.style.display = match ? '' : 'none';
-        if (match) anyVisible = true;
+        var matchText = !q || card.dataset.search.toLowerCase().includes(q);
+        var matchDate = true;
+        if (activeFrom || activeTo) {
+          var d = card.dataset.date;
+          if (activeFrom && d < activeFrom) matchDate = false;
+          if (activeTo && d > activeTo) matchDate = false;
+        }
+        var show = matchText && matchDate;
+        card.style.display = show ? '' : 'none';
+        if (show) anyVisible = true;
       });
 
-      document.getElementById('no-results').style.display = anyVisible || !q ? 'none' : '';
+      document.getElementById('no-results').style.display = anyVisible || (!q && !activeFrom && !activeTo) ? 'none' : '';
+    }
+
+    searchInput.addEventListener('input', applyFilters);
+
+    document.getElementById('date-filter-btn').addEventListener('click', function() {
+      var panel = document.getElementById('date-filter-panel');
+      var open = panel.style.display === 'none';
+      panel.style.display = open ? '' : 'none';
+      this.classList.toggle('active', open);
+    });
+
+    document.getElementById('date-filter-apply').addEventListener('click', function() {
+      activeFrom = dateFrom.value;
+      activeTo = dateTo.value;
+      resetBtn.style.display = (activeFrom || activeTo) ? '' : 'none';
+      applyFilters();
+    });
+
+    resetBtn.addEventListener('click', function() {
+      activeFrom = ''; activeTo = '';
+      dateFrom.value = ''; dateTo.value = '';
+      resetBtn.style.display = 'none';
+      applyFilters();
     });
   </script>
 </body>

@@ -25,13 +25,39 @@
       </div>
       <div class="auth-field">
         <label for="password">Password</label>
-        <input id="password" type="password" name="password" required autocomplete="current-password">
+        <div class="password-field-wrap">
+          <input id="password" type="password" name="password" required autocomplete="current-password">
+          <button type="button" class="btn-show-password" id="toggle-pw" onclick="togglePw()" title="Lihat password">
+            <svg id="icon-eye" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+              <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5a5 5 0 110-10 5 5 0 010 10zm0-8a3 3 0 100 6 3 3 0 000-6z"/>
+            </svg>
+            <svg id="icon-eye-off" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18" style="display:none">
+              <path d="M12 7a5 5 0 014.878 6.122l-1.516-1.516A3 3 0 009.394 8.878L7.878 7.362A4.978 4.978 0 0112 7zm0 10c-2.757 0-5.27-1.227-7.005-3.19L3.22 12.035C4.817 14.38 7.235 16.074 10 16.77V17a2 2 0 104 0v-.23c2.765-.696 5.183-2.39 6.78-4.735l-1.775-1.775C17.27 12.827 14.757 17 12 17zM3.71 2.29L2.3 3.7l18 18 1.41-1.41L3.71 2.29z"/>
+            </svg>
+          </button>
+        </div>
       </div>
       <button type="submit" class="auth-btn">Masuk</button>
     </form>
     <p class="auth-switch">Belum punya akun? <a href="/register">Daftar</a></p>
   </div>
 
+  <script>
+    function togglePw() {
+      var input = document.getElementById('password');
+      var eyeOn = document.getElementById('icon-eye');
+      var eyeOff = document.getElementById('icon-eye-off');
+      if (input.type === 'password') {
+        input.type = 'text';
+        eyeOn.style.display = 'none';
+        eyeOff.style.display = '';
+      } else {
+        input.type = 'password';
+        eyeOn.style.display = '';
+        eyeOff.style.display = 'none';
+      }
+    }
+  </script>
 </body>
 </html>
 {{end}}

@@ -19,33 +19,60 @@
           <div class="hint-step">
             <div class="hint-num">1</div>
             <div class="hint-text">
-              Tahu referensinya? Isi <strong>Referensi ayat</strong> lalu ketuk <strong>Ambil ayat</strong><br>
-              <span style="color:var(--text-muted);font-size:11px">— atau —</span><br>
-              Ingat kata-kata ayatnya? Ketik frasa di kolom <strong>Teks ayat</strong>, lalu ketuk <strong>Cari ayat</strong>
+              <strong>Pilih ayat</strong> — ada beberapa cara:<br>
+              <span style="display:block;margin-top:6px">Tahu referensinya → isi kolom <strong>Referensi ayat</strong>, ketuk <strong>Ambil ayat</strong></span>
+              <span style="display:block;margin-top:4px">Ingat kata-katanya → tulis frasa di <strong>Teks ayat</strong>, ketuk <strong>Cari ayat</strong></span>
+              <span style="display:block;margin-top:4px">Belum tahu → ceritakan apa yang sedang kamu rasakan di <strong>Teks ayat</strong>, ketuk <strong>Cari ayat</strong> — Teman Selah akan carikan</span>
+              <span style="display:block;margin-top:4px">Mau dicarikan langsung → ketuk tombol <strong>✦ Pilihkan Ayat</strong> di samping kolom referensi</span>
             </div>
           </div>
           <div class="hint-arrow">↓</div>
           <div class="hint-step">
             <div class="hint-num">2</div>
-            <div class="hint-text">Setelah referensi dan teks terisi, ketuk <strong>Renungkan Ayat Ini</strong> — Teman Selah akan memberi latar belakang ayat</div>
+            <div class="hint-text">Ketuk <strong>Renungkan Ayat Ini</strong> — Teman Selah akan memberi latar belakang dan konteks ayatnya</div>
           </div>
           <div class="hint-arrow">↓</div>
           <div class="hint-step">
             <div class="hint-num">3</div>
-            <div class="hint-text"><strong>Diskusi</strong> lebih dalam dengan Teman Selah jika ada yang ingin ditanyakan <span style="color:var(--text-muted);font-size:11px">(opsional)</span></div>
+            <div class="hint-text"><strong>Diskusi</strong> dengan Teman Selah kalau ada yang ingin digali lebih dalam <span style="color:var(--text-muted);font-size:11px">(opsional)</span></div>
           </div>
           <div class="hint-arrow">↓</div>
           <div class="hint-step">
             <div class="hint-num">4</div>
-            <div class="hint-text"><strong>Tulis refleksi</strong> — apa yang kamu dapat dari perenungan ini</div>
+            <div class="hint-text"><strong>Tulis refleksi</strong> — apa yang kamu terima dari perenungan ini</div>
           </div>
           <div class="hint-arrow">↓</div>
           <div class="hint-step">
             <div class="hint-num hint-num-last">✓</div>
-            <div class="hint-text"><strong>Langkah singkat</strong> <span style="color:var(--text-muted);font-size:11px">(opsional)</span> atau langsung <strong>Selesaikan Journal</strong></div>
+            <div class="hint-text">Tambahkan <strong>langkah praktis</strong> <span style="color:var(--text-muted);font-size:11px">(opsional)</span>, lalu ketuk <strong>Selesaikan Journal</strong></div>
           </div>
         </div>
         <button class="btn-primary" style="width:100%;margin-top:20px" onclick="closeHint()">Mengerti, mulai renungan</button>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="daily-verse-modal" style="display:none" onclick="if(event.target===this)closeDailyModal()">
+      <div class="modal-card" style="text-align:left;max-width:360px">
+        <div style="font-size:14px;font-weight:700;color:var(--navy-dark);margin:0 0 16px;display:flex;align-items:center;gap:6px">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16" style="flex-shrink:0"><path d="M9 4.5a.75.75 0 0 1 .721.544l.813 2.846a3.75 3.75 0 0 0 2.576 2.576l2.846.813a.75.75 0 0 1 0 1.442l-2.846.813a3.75 3.75 0 0 0-2.576 2.576l-.813 2.846a.75.75 0 0 1-1.442 0l-.813-2.846a3.75 3.75 0 0 0-2.576-2.576l-2.846-.813a.75.75 0 0 1 0-1.442l2.846-.813A3.75 3.75 0 0 0 7.466 7.89l.813-2.846A.75.75 0 0 1 9 4.5ZM18 1.5a.75.75 0 0 1 .728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 0 1 0 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 0 1-1.456 0l-.258-1.036a2.625 2.625 0 0 0-1.91-1.91l-1.036-.258a.75.75 0 0 1 0-1.456l1.036-.258a2.625 2.625 0 0 0 1.91-1.91l.258-1.036A.75.75 0 0 1 18 1.5ZM16.5 15a.75.75 0 0 1 .712.513l.394 1.183c.15.447.5.799.948.948l1.183.394a.75.75 0 0 1 0 1.422l-1.183.395c-.447.15-.799.5-.948.948l-.395 1.183a.75.75 0 0 1-1.422 0l-.395-1.183a1.5 1.5 0 0 0-.948-.948l-1.183-.395a.75.75 0 0 1 0-1.422l1.183-.395c.447-.15.799-.5.948-.948l.395-1.183A.75.75 0 0 1 16.5 15Z"/></svg>
+          Ayat untuk hari ini
+        </div>
+        <div id="daily-loading" style="display:flex;align-items:center;gap:10px">
+          <svg class="location-spinner" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2.5" style="width:18px;height:18px;flex-shrink:0">
+            <circle cx="12" cy="12" r="9" stroke-opacity="0.2"/>
+            <path d="M12 3a9 9 0 019 9" stroke-linecap="round"/>
+          </svg>
+          <span style="font-size:13px;color:var(--text-muted);font-weight:600">Teman Selah sedang memilihkan…</span>
+        </div>
+        <div id="daily-error" class="fetch-status-error" style="display:none"></div>
+        <div id="daily-content" style="display:none">
+          <div id="daily-verse-ref" style="font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px"></div>
+          <div id="daily-verse-text" style="font-size:14px;color:var(--text);line-height:1.65;font-style:italic"></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:20px">
+          <button class="btn-ghost" onclick="closeDailyModal()" style="flex-shrink:0;margin-top:0">Tutup</button>
+          <button class="btn-primary" id="daily-confirm-btn" onclick="confirmDailyVerse()" style="flex:1;margin-top:0" disabled>Pilih Ayat</button>
+        </div>
       </div>
     </div>
 
@@ -66,27 +93,37 @@
             <path d="M12 3a9 9 0 019 9" stroke-linecap="round"/>
           </svg>
         </button>
-        <input type="text" id="location-input" name="location" class="location-input" placeholder="Tambah lokasi..." maxlength="200">
+        <input type="text" id="location-input" name="location" class="location-input" placeholder="Ketuk icon pin disamping atau ketik lokasi (opsional)" maxlength="200">
       </div>
 
       <label>Referensi ayat</label>
       <div class="verse-ref-wrap">
-        <input type="text" name="verse_ref" id="verse-ref" placeholder="mis. Mazmur 23:1-3" maxlength="100" required autofocus>
+        <input type="text" name="verse_ref" id="verse-ref" placeholder="Ketik Mazmur 23:1-2 — atau klik Pilihkan Ayat" maxlength="100" required autofocus>
         <button type="button" id="fetch-verse-btn" class="btn-fetch-verse">Ambil ayat</button>
       </div>
       <div id="fetch-status" style="display:none"></div>
 
       <label>Teks ayat</label>
-      <textarea name="verse_text" id="verse-text" rows="6" placeholder="Ketik atau tempel ayat di sini. Tidak tahu referensinya? Tulis frasa yang kamu ingat — tidak harus sama persis." required></textarea>
+      <textarea name="verse_text" id="verse-text" rows="6" placeholder="Ketik atau tempel ayat di sini. Tidak tahu referensinya? Tulis frasa yang kamu ingat, atau ceritakan apa yang sedang kamu rasakan — Teman Selah akan carikan ayatnya." required></textarea>
       <div class="char-counter" id="verse-text-counter">0 / 1000</div>
       <div class="fetch-status-info" id="verse-too-long" style="display:none">Teks ayat terlalu panjang. Mohon gunakan ayat yang lebih spesifik, misalnya beberapa ayat saja. Konteks yang lebih luas bisa didiskusikan dengan Teman Selah nanti.</div>
 
       <div id="verse-search-results" class="verse-search-results" style="display:none"></div>
 
-      <button type="button" class="btn-primary" id="search-verse-btn" style="display:none">Cari ayat</button>
+      <div id="search-row" style="display:none;flex-direction:row;gap:8px;align-items:center">
+        <button type="button" class="btn-ghost" onclick="resetInput()" style="margin-top:0;flex-shrink:0">Ulangi</button>
+        <button type="button" class="btn-primary" id="search-verse-btn" style="flex:1;margin-top:0">Cari ayat</button>
+      </div>
+      <div id="search-loading" style="display:none;align-items:center;justify-content:center;gap:10px;margin-top:16px">
+        <svg class="location-spinner" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2.5" style="width:18px;height:18px;flex-shrink:0">
+          <circle cx="12" cy="12" r="9" stroke-opacity="0.2"/>
+          <path d="M12 3a9 9 0 019 9" stroke-linecap="round"/>
+        </svg>
+        <span style="font-size:13px;color:var(--text-muted);font-weight:600">Teman Selah sedang mencari ayatnya…</span>
+      </div>
       <div id="submit-row" style="display:none;flex-direction:row;gap:8px;align-items:center;">
         <button type="button" class="btn-ghost" id="reset-btn" onclick="resetForm()">Ganti Ayat</button>
-        <button type="submit" class="btn-primary" id="submit-btn" style="flex:1">Renungkan Ayat Ini</button>
+        <button type="submit" class="btn-primary" id="submit-btn" style="flex:1;margin-top:0">Renungkan Ayat Ini</button>
       </div>
     </form>
 
@@ -126,28 +163,74 @@
     }
 
     var VERSE_MAX = 1000;
+    var VERSE_TEXT_PLACEHOLDER = "Ketik atau tempel ayat di sini. Tidak tahu referensinya? Tulis frasa yang kamu ingat, atau ceritakan apa yang sedang kamu rasakan — Teman Selah akan carikan ayatnya.";
+    var SPARKLE_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="vertical-align:-2px;margin-right:5px;flex-shrink:0;color:var(--gold)"><path d="M9 4.5a.75.75 0 0 1 .721.544l.813 2.846a3.75 3.75 0 0 0 2.576 2.576l2.846.813a.75.75 0 0 1 0 1.442l-2.846.813a3.75 3.75 0 0 0-2.576 2.576l-.813 2.846a.75.75 0 0 1-1.442 0l-.813-2.846a3.75 3.75 0 0 0-2.576-2.576l-2.846-.813a.75.75 0 0 1 0-1.442l2.846-.813A3.75 3.75 0 0 0 7.466 7.89l.813-2.846A.75.75 0 0 1 9 4.5ZM18 1.5a.75.75 0 0 1 .728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 0 1 0 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 0 1-1.456 0l-.258-1.036a2.625 2.625 0 0 0-1.91-1.91l-1.036-.258a.75.75 0 0 1 0-1.456l1.036-.258a2.625 2.625 0 0 0 1.91-1.91l.258-1.036A.75.75 0 0 1 18 1.5ZM16.5 15a.75.75 0 0 1 .712.513l.394 1.183c.15.447.5.799.948.948l1.183.394a.75.75 0 0 1 0 1.422l-1.183.395c-.447.15-.799.5-.948.948l-.395 1.183a.75.75 0 0 1-1.422 0l-.395-1.183a1.5 1.5 0 0 0-.948-.948l-1.183-.395a.75.75 0 0 1 0-1.422l1.183-.395c.447-.15.799-.5.948-.948l.395-1.183A.75.75 0 0 1 16.5 15Z"/></svg>';
     var verseRefEl  = document.getElementById('verse-ref');
     var verseTextEl = document.getElementById('verse-text');
     var verseCounter = document.getElementById('verse-text-counter');
     var verseTooLong = document.getElementById('verse-too-long');
     var searchBtn   = document.getElementById('search-verse-btn');
+    var searchRow   = document.getElementById('search-row');
     var submitBtn   = document.getElementById('submit-btn');
     var submitRow   = document.getElementById('submit-row');
+
+    function updateTextareaHint() {
+      var hasRef  = verseRefEl.value.trim() !== '';
+      var hasText = verseTextEl.value.trim() !== '';
+      var fetchBtn = document.getElementById('fetch-verse-btn');
+
+      // ref diisi, teks belum → textarea readonly
+      if (hasRef && !hasText) {
+        verseTextEl.readOnly = true;
+        verseTextEl.placeholder = "Ketuk 'Ambil ayat' untuk mengisi teks secara otomatis";
+        verseTextEl.style.opacity = '0.45';
+        verseTextEl.style.cursor = 'not-allowed';
+      } else {
+        verseTextEl.readOnly = false;
+        verseTextEl.placeholder = VERSE_TEXT_PLACEHOLDER;
+        verseTextEl.style.opacity = '';
+        verseTextEl.style.cursor = '';
+      }
+
+      // teks diisi, ref belum → ref readonly + tombol ambil disabled
+      if (hasText && !hasRef) {
+        verseRefEl.readOnly = true;
+        verseRefEl.style.opacity = '0.45';
+        verseRefEl.style.cursor = 'not-allowed';
+        fetchBtn.disabled = true;
+      } else {
+        verseRefEl.readOnly = false;
+        verseRefEl.style.opacity = '';
+        verseRefEl.style.cursor = '';
+        fetchBtn.disabled = false;
+      }
+    }
 
     function updateBottomBtn() {
       var ref  = verseRefEl.value.trim();
       var text = verseTextEl.value.trim();
       var valid = text.length > 0 && text.length <= VERSE_MAX;
       if (ref && valid) {
-        searchBtn.style.display = 'none';
+        searchRow.style.display = 'none';
         submitRow.style.display = 'flex';
       } else if (!ref && text) {
-        searchBtn.style.display = '';
+        searchRow.style.display = 'flex';
         submitRow.style.display = 'none';
       } else {
-        searchBtn.style.display = 'none';
+        searchRow.style.display = 'none';
         submitRow.style.display = 'none';
       }
+    }
+
+    function resetInput() {
+      verseTextEl.value = '';
+      document.getElementById('fetch-status').style.display = 'none';
+      var resultsEl = document.getElementById('verse-search-results');
+      resultsEl.style.display = 'none';
+      resultsEl.innerHTML = '';
+      updateVerseCounter();
+      updateTextareaHint();
+      verseTextEl.focus();
     }
 
     function resetForm() {
@@ -158,6 +241,8 @@
       resultsEl.style.display = 'none';
       resultsEl.innerHTML = '';
       updateVerseCounter();
+      updateFetchBtn();
+      updateTextareaHint();
       verseRefEl.focus();
     }
 
@@ -166,11 +251,21 @@
       verseCounter.textContent = len + ' / ' + VERSE_MAX;
       verseCounter.classList.toggle('over', len > VERSE_MAX);
       verseTooLong.style.display = len > VERSE_MAX ? '' : 'none';
+      var resultsEl = document.getElementById('verse-search-results');
+      if (resultsEl.style.display !== 'none') {
+        resultsEl.style.display = 'none';
+        resultsEl.innerHTML = '';
+        document.getElementById('fetch-status').style.display = 'none';
+      }
       updateBottomBtn();
+      updateFetchBtn();
+      updateTextareaHint();
     }
 
-    verseRefEl.addEventListener('input', updateBottomBtn);
+    verseRefEl.addEventListener('input', function() { updateBottomBtn(); updateFetchBtn(); updateTextareaHint(); });
     verseTextEl.addEventListener('input', updateVerseCounter);
+    updateFetchBtn();
+    updateTextareaHint();
 
     var form = document.querySelector('form');
     form.addEventListener('submit', function(e) {
@@ -203,9 +298,101 @@
       }, 10000);
     });
 
+    var _dailyVerseRef = '';
+    var _dailyVerseText = '';
+
+    function updateFetchBtn() {
+      var fetchBtn = document.getElementById('fetch-verse-btn');
+      if (verseRefEl.value.trim() === '') {
+        fetchBtn.innerHTML = SPARKLE_SVG + 'Pilihkan Ayat';
+      } else {
+        fetchBtn.innerHTML = 'Ambil ayat';
+      }
+    }
+
+    function openDailyModal() {
+      document.getElementById('daily-verse-modal').style.display = 'flex';
+      refreshDailyVerse();
+    }
+
+    function closeDailyModal() {
+      document.getElementById('daily-verse-modal').style.display = 'none';
+      updateFetchBtn();
+    }
+
+    function refreshDailyVerse() {
+      document.getElementById('daily-loading').style.display = 'flex';
+      document.getElementById('daily-error').style.display = 'none';
+      document.getElementById('daily-content').style.display = 'none';
+      document.getElementById('daily-confirm-btn').disabled = true;
+      fetchDailyVerse();
+    }
+
+    function confirmDailyVerse() {
+      verseRefEl.value = _dailyVerseRef;
+      verseTextEl.value = _dailyVerseText;
+      updateVerseCounter();
+      updateFetchBtn();
+      updateTextareaHint();
+      closeDailyModal();
+      submitRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function fetchDailyVerse() {
+      var loading = document.getElementById('daily-loading');
+      var errorEl = document.getElementById('daily-error');
+      var contentEl = document.getElementById('daily-content');
+      var confirmBtn = document.getElementById('daily-confirm-btn');
+
+      var body = 'q=';
+      if (_dailyVerseRef) body += '&exclude=' + encodeURIComponent(_dailyVerseRef);
+      fetch('/api/verse/recommend', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: body
+      })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.error) {
+            loading.style.display = 'none';
+            errorEl.textContent = data.error;
+            errorEl.style.display = '';
+            return null;
+          }
+          var rec = data.recommendations[0];
+          return fetch('/api/verse?ref=' + encodeURIComponent(rec.ref))
+            .then(function(r) { return r.json(); })
+            .then(function(vdata) { return { ref: rec.ref, text: vdata.text || '' }; })
+            .catch(function() { return { ref: rec.ref, text: '' }; });
+        })
+        .then(function(verse) {
+          if (!verse) return;
+          loading.style.display = 'none';
+          if (!verse.text) {
+            errorEl.textContent = 'Tidak bisa memuat teks ayat. Coba ganti ayat.';
+            errorEl.style.display = '';
+            return;
+          }
+          _dailyVerseRef = verse.ref;
+          _dailyVerseText = verse.text;
+          document.getElementById('daily-verse-ref').textContent = verse.ref;
+          document.getElementById('daily-verse-text').textContent = verse.text;
+          contentEl.style.display = '';
+          confirmBtn.disabled = false;
+        })
+        .catch(function() {
+          loading.style.display = 'none';
+          errorEl.textContent = 'Gagal menghubungi Teman Selah, coba lagi.';
+          errorEl.style.display = '';
+        });
+    }
+
     document.getElementById('fetch-verse-btn').addEventListener('click', function() {
       var ref = verseRefEl.value.trim();
-      if (!ref) { verseRefEl.focus(); return; }
+      if (!ref) {
+        openDailyModal();
+        return;
+      }
 
       var btn = this;
       var status = document.getElementById('fetch-status');
@@ -237,14 +424,15 @@
         })
         .finally(function() {
           btn.disabled = false;
-          btn.textContent = 'Ambil ayat';
+          updateFetchBtn();
         });
     });
 
-    searchBtn.addEventListener('click', function() {
+    function runVerseSearch() {
       var query = verseTextEl.value.trim();
       var status = document.getElementById('fetch-status');
       var resultsEl = document.getElementById('verse-search-results');
+      var searchLoading = document.getElementById('search-loading');
 
       var words = query.split(/\s+/).filter(function(w) { return w.length > 0; });
       if (words.length < 3) {
@@ -255,9 +443,9 @@
       }
 
       var fetchBtn = document.getElementById('fetch-verse-btn');
-      searchBtn.disabled = true;
       fetchBtn.disabled = true;
-      searchBtn.textContent = 'Mencari…';
+      searchRow.style.display = 'none';
+      searchLoading.style.display = 'flex';
       status.style.display = 'none';
       resultsEl.style.display = 'none';
       resultsEl.innerHTML = '';
@@ -270,7 +458,7 @@
             status.className = 'fetch-status-error';
             status.style.display = '';
           } else {
-            var html = '<div class="verse-search-label">Pilih ayat yang sesuai</div>';
+            var html = '<div class="verse-search-label">' + (data.label || 'Pilih ayat yang sesuai') + '</div>';
             data.options.forEach(function(opt) {
               html += '<button type="button" class="verse-option-card" data-ref="' +
                 opt.ref.replace(/"/g, '&quot;') + '" data-text="' +
@@ -300,11 +488,13 @@
           status.style.display = '';
         })
         .finally(function() {
-          searchBtn.disabled = false;
           fetchBtn.disabled = false;
-          searchBtn.textContent = 'Cari ayat';
+          searchLoading.style.display = 'none';
+          searchRow.style.display = 'flex';
         });
-    });
+    }
+
+    searchBtn.addEventListener('click', runVerseSearch);
 
     document.getElementById('loc-btn').addEventListener('click', function() {
       if (!navigator.geolocation) {

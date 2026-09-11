@@ -63,6 +63,18 @@ func LoadTemplates(dir string) *template.Template {
 		"idMonthShort": func(t time.Time) string {
 			return fmt.Sprintf("%s %02d", idMonths[t.Month()], t.Year()%100)
 		},
+		// format integer with dot thousand separator: 36389 → "36.389"
+		"fmtInt": func(n int) string {
+			s := fmt.Sprintf("%d", n)
+			out := []byte{}
+			for i, c := range s {
+				if i > 0 && (len(s)-i)%3 == 0 {
+					out = append(out, '.')
+				}
+				out = append(out, byte(c))
+			}
+			return string(out)
+		},
 	}
 
 	pattern := filepath.Join(dir, "*.html")

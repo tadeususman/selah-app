@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"encoding/xml"
 	"errors"
@@ -72,6 +73,39 @@ func (a *App) VerseFetch(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"text": text})
 }
 
+// ---- POST /api/verse/recommend (AI-powered verse recommendation) ----
+
+func (a *App) VerseRecommend(w http.ResponseWriter, r *http.Request) {
+	writeErr := func(code int, msg string) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(code)
+		json.NewEncoder(w).Encode(map[string]string{"error": msg})
+	}
+
+	if err := r.ParseForm(); err != nil {
+		writeErr(http.StatusBadRequest, "bad form")
+		return
+	}
+	userInput := strings.TrimSpace(r.FormValue("q"))
+	var exclude []string
+	if ex := strings.TrimSpace(r.FormValue("exclude")); ex != "" {
+		for _, ref := range strings.Split(ex, ",") {
+			if ref = strings.TrimSpace(ref); ref != "" {
+				exclude = append(exclude, ref)
+			}
+		}
+	}
+
+	recs, err := a.AI.RecommendVerse(r.Context(), userInput, exclude)
+	if err != nil {
+		writeErr(http.StatusInternalServerError, "Teman Selah sedang tidak bisa dihubungi. Coba lagi sebentar.")
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{"recommendations": recs})
+}
+
 // ---- GET /api/verse/search?q=... (AI-powered phrase search) ----
 
 type verseOption struct {
@@ -96,7 +130,21 @@ func (a *App) VerseSearch(w http.ResponseWriter, r *http.Request) {
 	refs, err := a.AI.SearchVerse(r.Context(), query)
 	if err != nil {
 		if errors.Is(err, ai.ErrNotRelevant) {
-			writeErr(http.StatusBadRequest, "Pencarian ini hanya untuk ayat Alkitab atau tema iman Kristen. Coba gunakan frasa dari Alkitab, misalnya \"kasihilah sesamamu\" atau tema seperti \"pengampunan\".")
+			// Input tidak cocok sebagai frasa Alkitab — coba rekomendasikan ayat berdasarkan konteks yang ditulis
+			options, fetchErr := a.fetchVerseOptions(r.Context(), query)
+			if errors.Is(fetchErr, ai.ErrNotRelevant) {
+				writeErr(http.StatusBadRequest, "Teman Selah hanya bisa membantu mencari ayat atau merekomendasikan ayat berdasarkan situasi hidupmu. Coba ceritakan apa yang sedang kamu rasakan atau pikirkan hari ini.")
+				return
+			}
+			if fetchErr != nil || len(options) == 0 {
+				writeErr(http.StatusNotFound, "Ayat tidak ditemukan. Coba tulis frasa dari Alkitab atau ceritakan situasimu.")
+				return
+			}
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"options": options,
+				"label":   "Rekomendasi dari Teman Selah",
+			})
 			return
 		}
 		writeErr(http.StatusInternalServerError, "Teman Selah tidak bisa membantu saat ini, coba lagi.")
@@ -107,9 +155,20 @@ func (a *App) VerseSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	options, _ := a.fetchVerseTexts(refs)
+	if len(options) == 0 {
+		writeErr(http.StatusNotFound, "Ayat tidak ditemukan. Coba gunakan frasa yang berbeda.")
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{"options": options})
+}
+
+// fetchVerseTexts fetches verse text from SABDA for each ref and returns options (max 3).
+func (a *App) fetchVerseTexts(refs []string) ([]verseOption, error) {
 	client := &http.Client{Timeout: 10 * time.Second}
 	var options []verseOption
-
 	for _, ref := range refs {
 		if len(options) >= 3 {
 			break
@@ -141,12 +200,19 @@ func (a *App) VerseSearch(w http.ResponseWriter, r *http.Request) {
 		}
 		options = append(options, verseOption{Ref: ref, Text: text})
 	}
+	return options, nil
+}
 
-	if len(options) == 0 {
-		writeErr(http.StatusNotFound, "Ayat tidak ditemukan. Coba gunakan frasa yang berbeda.")
-		return
+// fetchVerseOptions calls RecommendVerse then fetches the actual verse texts.
+// Returns ErrNotRelevant (from ai package) if the input is unrelated to life or faith.
+func (a *App) fetchVerseOptions(ctx context.Context, userInput string) ([]verseOption, error) {
+	recs, err := a.AI.RecommendVerse(ctx, userInput, nil)
+	if err != nil {
+		return nil, err
 	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{"options": options})
+	refs := make([]string, 0, len(recs))
+	for _, r := range recs {
+		refs = append(refs, r.Ref)
+	}
+	return a.fetchVerseTexts(refs)
 }

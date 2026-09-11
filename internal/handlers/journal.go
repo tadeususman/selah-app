@@ -30,7 +30,8 @@ func (a *App) JournalList(w http.ResponseWriter, r *http.Request) {
 		       COALESCE(verse_ref, ''), verse_text, status
 		FROM journal_entries
 		WHERE user_id = $1
-		ORDER BY entry_date DESC, day_number DESC`,
+		ORDER BY entry_date DESC, day_number DESC
+		LIMIT 15`,
 		userID)
 	if err != nil {
 		http.Error(w, "could not load journals", http.StatusInternalServerError)
@@ -231,7 +232,7 @@ func (a *App) JournalReflect(w http.ResponseWriter, r *http.Request) {
 	}
 	if reflection != "" {
 		_, _ = a.DB.ExecContext(r.Context(),
-			`INSERT INTO journal_messages (entry_id, role, content) VALUES ($1, 'user', $2)`,
+			`INSERT INTO journal_messages (entry_id, role, content) VALUES ($1, 'reflection', $2)`,
 			entry.ID, reflection)
 	}
 

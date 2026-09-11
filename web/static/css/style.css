@@ -476,6 +476,87 @@ input:focus, textarea:focus {
 }
 .search-input::placeholder { color: var(--text-muted); }
 .search-input::-webkit-search-cancel-button { cursor: pointer; }
+.date-filter-btn {
+  background: none;
+  border: none;
+  border-left: 1px solid var(--border);
+  padding: 0 0 0 12px;
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.date-filter-btn:hover { color: var(--navy); }
+.date-filter-btn.active { color: var(--navy); }
+.date-filter-panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  margin-top: -10px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.date-filter-row {
+  display: flex;
+  gap: 10px;
+}
+.date-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+}
+.date-filter-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.date-filter-input {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 13px;
+  background: var(--cream);
+  color: var(--text);
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
+  outline: none;
+}
+.date-filter-input:focus { border-color: var(--navy); }
+.date-filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.date-filter-apply {
+  background: var(--navy);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 0;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  flex: 1;
+  font-weight: 500;
+}
+.date-filter-apply:hover { filter: brightness(1.1); }
+.date-filter-reset {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+  text-decoration: underline;
+  font-family: inherit;
+}
 
 /* ---------- Month divider ---------- */
 
@@ -1050,9 +1131,6 @@ input:focus, textarea:focus {
   outline: none;
   border: none !important;
 }
-.location-input::placeholder {
-  color: var(--text-muted);
-}
 
 /* ---------- 2-action buttons (journal view) ---------- */
 
@@ -1385,7 +1463,6 @@ input:focus, textarea:focus {
 .nav-item.active, .nav-item-btn:hover { color: var(--navy); }
 .nav-icon { font-size: 18px; }
 .nav-icon-svg { width: 18px; height: 18px; }
-.nav-logout-form { margin: 0; flex: 1; }
 
 /* ---------- Typing dots (inline AI loading) ---------- */
 

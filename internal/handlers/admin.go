@@ -225,16 +225,43 @@ func (a *App) AdminToggleAdmin(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/admin/users?ok=toggled", http.StatusSeeOther)
 }
 
+type adminAIPeriodStats struct {
+	From          string
+	To            string
+	Total         int
+	InputTokens   int
+	OutputTokens  int
+	CostUSD       float64
+}
+
+type adminAIUserStat struct {
+	Name        string
+	Journals    int
+	AIResponses int
+	LastActive  string
+}
+
+type adminAIDailyStat struct {
+	Date  string
+	Count int
+}
+
 type adminAIStatsData struct {
-	StatsJSON string
-	Error     string
+	StatsJSON   string
+	Error       string
+	UserStats   []adminAIUserStat
+	DailyStats  []adminAIDailyStat
+	Period      *adminAIPeriodStats
 }
 
 func (a *App) AdminAIStats(w http.ResponseWriter, r *http.Request) {
 	if !a.requireAdmin(w, r) {
 		return
 	}
-	raw, err := a.AI.Stats(r.Context())
+	from := r.URL.Query().Get("from")
+	to := r.URL.Query().Get("to")
+
+	raw, err := a.AI.Stats(r.Context(), "", "")
 	data := adminAIStatsData{}
 	if err != nil {
 		data.Error = "Bridge tidak bisa dihubungi: " + err.Error()
@@ -249,5 +276,73 @@ func (a *App) AdminAIStats(w http.ResponseWriter, r *http.Request) {
 			data.StatsJSON = string(raw)
 		}
 	}
+
+	if from != "" || to != "" {
+		praw, perr := a.AI.Stats(r.Context(), from, to)
+		if perr == nil {
+			var ps struct {
+				Total        int     `json:"total"`
+				InputTokens  int     `json:"total_input_tokens"`
+				OutputTokens int     `json:"total_output_tokens"`
+				CostUSD      float64 `json:"total_cost_usd"`
+			}
+			if json.Unmarshal(praw, &ps) == nil {
+				data.Period = &adminAIPeriodStats{
+					From:         from,
+					To:           to,
+					Total:        ps.Total,
+					InputTokens:  ps.InputTokens,
+					OutputTokens: ps.OutputTokens,
+					CostUSD:      ps.CostUSD,
+				}
+			}
+		}
+	}
+
+	rows, err := a.DB.QueryContext(r.Context(), `
+		SELECT u.name,
+		       COUNT(DISTINCT j.id) AS journals,
+		       COUNT(CASE WHEN m.role = 'ai' THEN 1 END) AS ai_responses,
+		       MAX(j.created_at) AS last_active
+		FROM users u
+		LEFT JOIN journal_entries j ON j.user_id = u.id
+		LEFT JOIN journal_messages m ON m.entry_id = j.id
+		GROUP BY u.id, u.name
+		ORDER BY ai_responses DESC
+		LIMIT 10`)
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var s adminAIUserStat
+			var lastActive *time.Time
+			if rows.Scan(&s.Name, &s.Journals, &s.AIResponses, &lastActive) == nil {
+				if lastActive != nil {
+					s.LastActive = lastActive.In(time.FixedZone("WIB", 7*3600)).Format("2 Jan, 15:04")
+				} else {
+					s.LastActive = "—"
+				}
+				data.UserStats = append(data.UserStats, s)
+			}
+		}
+	}
+
+	drows, err := a.DB.QueryContext(r.Context(), `
+		SELECT to_char(m.created_at AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD') AS day,
+		       COUNT(*) AS cnt
+		FROM journal_messages m
+		WHERE m.role = 'ai'
+		  AND m.created_at >= NOW() - INTERVAL '12 months'
+		GROUP BY day
+		ORDER BY day ASC`)
+	if err == nil {
+		defer drows.Close()
+		for drows.Next() {
+			var s adminAIDailyStat
+			if drows.Scan(&s.Date, &s.Count) == nil {
+				data.DailyStats = append(data.DailyStats, s)
+			}
+		}
+	}
+
 	a.render(w, "admin_ai.html", data)
 }

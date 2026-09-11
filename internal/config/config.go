@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-const Version = "0.3.6"
+const Version = "0.5.1"
 
 type Config struct {
 	AppPort   string

@@ -43,6 +43,23 @@
 
   {{template "nav" .}}
 
+  <!-- Changelog popup -->
+  <div id="cl-popup" class="modal-backdrop" style="display:none" onclick="if(event.target===this)closeCl()">
+    <div class="modal-card changelog-modal">
+      <div class="changelog-modal-header">
+        <span class="about-version">v0.5.0</span>
+        <span class="changelog-date">3 Sep 2026</span>
+      </div>
+      <p class="modal-title" style="text-align:left;margin-bottom:12px">✨ Yang baru di selah,</p>
+      <ul class="changelog-list" style="margin-bottom:20px">
+        <li>Navigasi bawah lebih simetris — icon Logout sejajar dengan icon lain</li>
+        <li>Halaman Journal hanya tampil 15 renungan terbaru</li>
+        <li>Filter tanggal di halaman Journal — ketuk icon kalender untuk cari berdasarkan rentang tanggal</li>
+      </ul>
+      <button onclick="closeCl()" style="width:100%;padding:12px;border-radius:12px;border:none;background:var(--navy);color:white;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer">Tutup</button>
+    </div>
+  </div>
+
   <script>
   (function() {
     var tourKey = 'selah-tour-v1-{{.UserID}}';
@@ -147,6 +164,17 @@
 
     render(0);
   })();
+
+  // Changelog popup — muncul sekali per versi, hanya setelah tur selesai
+  var clKey = 'selah-cl-{{.UserID}}-v0.5.0';
+  var tourKey = 'selah-tour-v1-{{.UserID}}';
+  function closeCl() {
+    localStorage.setItem(clKey, '1');
+    document.getElementById('cl-popup').style.display = 'none';
+  }
+  if (!localStorage.getItem(clKey) && localStorage.getItem(tourKey)) {
+    document.getElementById('cl-popup').style.display = 'flex';
+  }
   </script>
 </body>
 </html>

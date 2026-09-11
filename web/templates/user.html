@@ -88,25 +88,75 @@
       </div>
     </div>
 
-    <section class="admin-section">
-      <h3>Changelog</h3>
-      <button class="changelog-badge" onclick="document.getElementById('cl-all').style.display='flex'">v{{.Version}}</button>
-    </section>
-
     <!-- Changelog modal: semua versi -->
     <div id="cl-all" class="modal-backdrop" style="display:none" onclick="if(event.target===this)this.style.display='none'">
       <div class="modal-card changelog-modal" style="max-height:80vh;overflow-y:auto">
 
         <div class="changelog-modal-header">
-          <span class="about-version">v0.3.6</span>
+          <span class="about-version">v0.5.0</span>
+          <span class="changelog-date">3 Sep 2026</span>
+        </div>
+        <ul class="changelog-list" style="margin-bottom:20px">
+          <li>Navigasi bawah lebih simetris — icon Logout sejajar dengan icon lain</li>
+          <li>Halaman Journal hanya tampil 15 renungan terbaru</li>
+          <li>Filter tanggal di halaman Journal — ketuk icon kalender untuk cari berdasarkan rentang tanggal</li>
+        </ul>
+
+        <div class="changelog-modal-header">
+          <span class="about-version" style="background:var(--text-muted)">v0.4.0</span>
+          <span class="changelog-date">2 Sep 2026</span>
+        </div>
+        <ul class="changelog-list" style="margin-bottom:20px">
+          <li>Judul respons Teman Selah kini konsisten: nama ayat diikuti frasa singkat yang relevan</li>
+          <li>Setelah kirim pesan diskusi, tombol dan input langsung hilang — hanya bubble loading yang terlihat</li>
+          {{if .IsAdmin}}<li>Halaman statistik AI admin diperbarui: chart per bulan navigasi kiri/kanan, filter periode, pemakaian per user, dan tracking token</li>{{end}}
+        </ul>
+
+        <div class="changelog-modal-header">
+          <span class="about-version" style="background:var(--text-muted)">v0.3.9</span>
+          <span class="changelog-date">2 Sep 2026</span>
+        </div>
+        <ul class="changelog-list" style="margin-bottom:20px">
+          <li>Placeholder field lokasi diperbarui — lebih jelas mengarahkan user untuk ketuk icon pin atau ketik lokasi manual</li>
+        </ul>
+
+        <div class="changelog-modal-header">
+          <span class="about-version" style="background:var(--text-muted)">v0.3.8</span>
+          <span class="changelog-date">1 Sep 2026</span>
+        </div>
+        <ul class="changelog-list" style="margin-bottom:20px">
+          <li>Input langkah singkat tampil langsung sebagai panel — tanpa tombol pilihan perantara</li>
+          <li>Tombol "Tanya" dan "Tulis apa yang kamu dapat" tidak muncul saat sudah di tahap langkah singkat</li>
+          <li>Refleksi muncul sebagai bubble "Renunganku" setelah disimpan, sebelum mengisi langkah singkat</li>
+          <li>Tombol "Lewati" kini langsung memunculkan proses penutup Teman Selah</li>
+        </ul>
+
+        <div class="changelog-modal-header">
+          <span class="about-version" style="background:var(--text-muted)">v0.3.7</span>
           <span class="changelog-date">28 Agt 2026</span>
         </div>
         <ul class="changelog-list" style="margin-bottom:20px">
-          <li>Admin: halaman pengguna terpisah, tidak makin panjang</li>
-          <li>Admin: info user lebih rapi — journal, bergabung, aktif terakhir</li>
-          <li>Admin: pencarian user langsung di halaman</li>
+          <li>Tombol "Ganti Ayat" dan "Renungkan Ayat Ini" kini sejajar</li>
+          <li>Loading spinner saat mencari ayat, menggantikan teks tombol</li>
+          <li>Langkah Praktis tidak ditampilkan jika tidak diisi</li>
+          <li>Saat selesaikan journal, tombol aksi langsung hilang — tinggal loading Teman Selah</li>
+          <li>Teman Selah sesekali tanya balik dalam diskusi, seperti sahabat yang peduli</li>
+          <li>Pesan penutup lebih natural, tidak template — menyebut detail spesifik sesi</li>
+          <li>Doa penutup konsisten memakai "kami" — berdoa bersama berdua</li>
+        </ul>
+
+        {{if .IsAdmin}}
+        <div class="changelog-modal-header">
+          <span class="about-version" style="background:var(--text-muted)">v0.3.6</span>
+          <span class="changelog-date">28 Agt 2026</span>
+        </div>
+        <ul class="changelog-list" style="margin-bottom:20px">
+          <li>Halaman pengguna admin terpisah, tidak makin panjang</li>
+          <li>Info user lebih rapi — journal, bergabung, aktif terakhir</li>
+          <li>Pencarian user langsung di halaman admin</li>
           <li>Waktu "aktif terakhir" ditampilkan dalam WIB</li>
         </ul>
+        {{end}}
 
         <div class="changelog-modal-header">
           <span class="about-version" style="background:var(--text-muted)">v0.3.5</span>
@@ -114,11 +164,13 @@
         </div>
         <ul class="changelog-list" style="margin-bottom:20px">
           <li>Rate limit: maksimal 10 journal per hari</li>
+          <li>Fitur hapus akun dengan konfirmasi password</li>
+          {{if .IsAdmin}}
           <li>Koordinat lokasi disimpan di database (untuk fitur peta)</li>
           <li>Fallback otomatis ke Groq saat Claude tidak tersedia</li>
           <li>Backup database harian otomatis (simpan 7 hari)</li>
-          <li>Fitur hapus akun dengan konfirmasi password</li>
-          <li>Admin: halaman statistik pemakaian AI (Claude vs Groq)</li>
+          <li>Halaman statistik pemakaian AI (Claude vs Groq)</li>
+          {{end}}
         </ul>
 
         <div class="changelog-modal-header">
@@ -168,9 +220,9 @@
         </div>
         <ul class="changelog-list" style="margin-bottom:20px">
           <li>Multi-user: registrasi akun terbuka</li>
-          <li>Panel admin untuk manajemen pengguna</li>
           <li>Tombol "Renungkan Ayat Ini"</li>
           <li>Logo icon dihapus dari halaman login/daftar</li>
+          {{if .IsAdmin}}<li>Panel admin untuk manajemen pengguna</li>{{end}}
         </ul>
 
         <div class="changelog-modal-header">
@@ -209,7 +261,7 @@
       <div class="about-wordmark brand-wordmark brand-hero">selah<span class="dot">,</span></div>
       <div class="about-tagline">ruang jeda untuk merenung.</div>
       <div class="about-meta">
-        <span class="about-version" style="background:var(--gold)">v{{.Version}}</span>
+        <button class="about-version" style="background:var(--gold);border:none;cursor:pointer" onclick="document.getElementById('cl-all').style.display='flex'">v{{.Version}}</button>
         <span class="about-sep">·</span>
         <span>{{.Year}}</span>
       </div>

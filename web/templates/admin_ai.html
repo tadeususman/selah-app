@@ -13,12 +13,154 @@
       <h1>Pemakaian AI</h1>
     </header>
 
+    <div class="admin-section" style="margin-bottom:12px">
+      <h3 style="margin-bottom:10px">Filter Periode</h3>
+      <form method="GET" action="/admin/ai-stats" style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label style="font-size:12px;color:var(--text-muted)">Dari</label>
+          <input type="date" name="from" value="{{if .Period}}{{.Period.From}}{{end}}" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--card-bg);color:var(--text);font-size:13px">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label style="font-size:12px;color:var(--text-muted)">Sampai</label>
+          <input type="date" name="to" value="{{if .Period}}{{.Period.To}}{{end}}" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--card-bg);color:var(--text);font-size:13px">
+        </div>
+        <button type="submit" class="btn-secondary" style="height:34px;padding:0 16px;font-size:13px">Lihat</button>
+        {{if .Period}}<a href="/admin/ai-stats" style="height:34px;display:flex;align-items:center;font-size:13px;color:var(--text-muted)">Reset</a>{{end}}
+      </form>
+      {{if .Period}}
+      <div style="margin-top:12px;padding:12px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;font-size:13px;line-height:2">
+        <div style="font-weight:600;margin-bottom:4px">{{.Period.From}} — {{.Period.To}}</div>
+        <div>Total panggilan: <strong>{{.Period.Total}}</strong></div>
+        <div>Token input: <strong>{{fmtInt .Period.InputTokens}}</strong></div>
+        <div>Token output: <strong>{{fmtInt .Period.OutputTokens}}</strong></div>
+        <div>Estimasi biaya: <strong>${{printf "%.4f" .Period.CostUSD}}</strong></div>
+      </div>
+      {{end}}
+    </div>
+
+    {{if .DailyStats}}
+    <div class="admin-section" style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <button id="chart-prev" onclick="chartNav(-1)" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-muted);padding:0 4px">‹</button>
+        <span id="chart-month-label" style="font-weight:600;font-size:14px"></span>
+        <button id="chart-next" onclick="chartNav(1)" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--text-muted);padding:0 4px">›</button>
+      </div>
+      <canvas id="daily-chart" style="width:100%;height:180px;max-height:180px"></canvas>
+      <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+      <script>
+        (function() {
+          var raw = [{{range .DailyStats}}{d:"{{.Date}}",c:{{.Count}}},{{end}}];
+
+          // Group by YYYY-MM
+          var byMonth = {};
+          raw.forEach(function(e) {
+            var ym = e.d.slice(0, 7);
+            if (!byMonth[ym]) byMonth[ym] = {};
+            byMonth[ym][e.d] = e.c;
+          });
+          var months = Object.keys(byMonth).sort();
+          var cur = months.length - 1;
+
+          var MONTH_ID = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
+
+          function monthLabel(ym) {
+            var parts = ym.split('-');
+            return MONTH_ID[parseInt(parts[1], 10) - 1] + ' ' + parts[0];
+          }
+
+          function daysInMonth(ym) {
+            var parts = ym.split('-');
+            return new Date(parseInt(parts[0]), parseInt(parts[1]), 0).getDate();
+          }
+
+          var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+          var gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
+          var textColor = isDark ? '#aaa' : '#888';
+
+          var ctx = document.getElementById('daily-chart').getContext('2d');
+          var chart = new Chart(ctx, {
+            type: 'line',
+            data: { labels: [], datasets: [{ data: [], borderColor: '#2C4468', backgroundColor: 'rgba(44,68,104,0.12)', borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#2C4468', fill: true, tension: 0.3 }] },
+            options: {
+              responsive: true, maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: {
+                x: { ticks: { color: textColor, font: { size: 11 } }, grid: { color: gridColor } },
+                y: { ticks: { color: textColor, font: { size: 11 }, stepSize: 1 }, grid: { color: gridColor }, beginAtZero: true }
+              }
+            }
+          });
+
+          function render() {
+            var ym = months[cur];
+            var today = new Date();
+            var todayYM = today.getFullYear() + '-' + (today.getMonth() < 9 ? '0' : '') + (today.getMonth() + 1);
+            var maxDay = (ym === todayYM) ? today.getDate() : daysInMonth(ym);
+            var labels = [], data = [];
+            for (var d = 1; d <= maxDay; d++) {
+              var key = ym + '-' + (d < 10 ? '0' : '') + d;
+              labels.push(d);
+              data.push(byMonth[ym][key] || 0);
+            }
+            chart.data.labels = labels;
+            chart.data.datasets[0].data = data;
+            chart.update();
+            document.getElementById('chart-month-label').textContent = monthLabel(ym);
+            document.getElementById('chart-prev').style.visibility = cur > 0 ? 'visible' : 'hidden';
+            document.getElementById('chart-next').style.visibility = cur < months.length - 1 ? 'visible' : 'hidden';
+          }
+
+          window.chartNav = function(dir) {
+            cur = Math.max(0, Math.min(months.length - 1, cur + dir));
+            render();
+          };
+
+          render();
+        })();
+      </script>
+    </div>
+    {{end}}
+
+    {{if .UserStats}}
+    <div class="admin-section" style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px">
+        <h3 style="margin:0">Pemakaian per User</h3>
+        <input type="search" id="user-search" placeholder="Cari nama..." oninput="filterUsers()" style="padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--card-bg);color:var(--text);font-size:12px;width:140px">
+      </div>
+      <table id="user-table" style="width:100%;font-size:13px;border-collapse:collapse">
+        <tr style="color:var(--text-muted);text-align:left">
+          <th style="padding:4px 6px">Nama</th>
+          <th style="padding:4px 6px;text-align:right">Journal</th>
+          <th style="padding:4px 6px;text-align:right">Respons AI</th>
+          <th style="padding:4px 6px">Terakhir Aktif</th>
+        </tr>
+        {{range .UserStats}}
+        <tr class="user-row" style="border-top:1px solid var(--border)">
+          <td style="padding:5px 6px;font-weight:600">{{.Name}}</td>
+          <td style="padding:5px 6px;text-align:right">{{.Journals}}</td>
+          <td style="padding:5px 6px;text-align:right">{{.AIResponses}}</td>
+          <td style="padding:5px 6px;color:var(--text-muted);font-size:12px">{{.LastActive}}</td>
+        </tr>
+        {{end}}
+      </table>
+    </div>
+    <script>
+      function filterUsers() {
+        var q = document.getElementById('user-search').value.toLowerCase();
+        document.querySelectorAll('#user-table .user-row').forEach(function(row) {
+          var name = row.cells[0].textContent.toLowerCase();
+          row.style.display = name.includes(q) ? '' : 'none';
+        });
+      }
+    </script>
+    {{end}}
+
     {{if .Error}}
       <div class="flash-err">{{.Error}}</div>
     {{else}}
       <div id="ai-stats-root"></div>
       <script>
-        var raw = {{.StatsJSON}};
+        var raw = JSON.parse({{.StatsJSON}});
         var root = document.getElementById('ai-stats-root');
 
         function card(title, content) {
@@ -33,59 +175,54 @@
 
         var html = '';
 
-        // Summary cards
-        var byProv = raw.by_provider || {};
+        // Filter all recent to selah only
+        var recent = (raw.recent || []).filter(function(e) { return e.app === 'selah'; }).slice().reverse();
+
+        {{if not .Period}}
+        // Total selah
+        var selahTotal = (raw.by_app || {}).selah || 0;
         var provHtml = '';
-        provHtml += badge('Claude', byProv.claude || 0, '#2C4468');
-        provHtml += badge('Groq', byProv.groq || 0, '#1a7a4a');
-        if (byProv.error) provHtml += badge('Error', byProv.error, '#c0392b');
-        provHtml += '<br><small style="color:var(--text-muted);font-size:11px">Total: ' + (raw.total || 0) + ' panggilan</small>';
-        html += card('Semua Waktu — per Provider', provHtml);
-
-        // Today
-        var today = raw.today || {};
-        var todayHtml = '';
-        todayHtml += badge('Claude', today.claude || 0, '#2C4468');
-        todayHtml += badge('Groq', today.groq || 0, '#1a7a4a');
-        if (today.error) todayHtml += badge('Error', today.error, '#c0392b');
-        html += card('Hari Ini', todayHtml);
-
-        // Per app
-        var byApp = raw.by_app || {};
-        var appHtml = '';
-        Object.keys(byApp).forEach(function(a) {
-          appHtml += row(a, byApp[a] + ' panggilan');
-        });
-        if (appHtml) html += card('Per Aplikasi', appHtml);
-
-        // Avg response time
-        var avgMs = raw.avg_ms || {};
-        if (Object.keys(avgMs).length) {
-          var msHtml = '';
-          Object.keys(avgMs).forEach(function(p) {
-            msHtml += row(p, (avgMs[p] / 1000).toFixed(1) + ' detik rata-rata');
-          });
-          html += card('Waktu Respons Rata-rata', msHtml);
+        var todayStr = new Date().toISOString().slice(0, 10);
+        var todayCount = recent.filter(function(e) { return e.ts && e.ts.slice(0, 10) === todayStr; }).length;
+        provHtml += badge('Total', selahTotal, '#2C4468');
+        provHtml += badge('Hari Ini', todayCount, '#1a7a4a');
+        var selahErrors = recent.filter(function(e) { return !e.ok; }).length;
+        if (selahErrors) provHtml += badge('Error', selahErrors, '#c0392b');
+        var selahMs = recent.filter(function(e) { return e.ok && e.ms; });
+        if (selahMs.length) {
+          var avgSec = (selahMs.reduce(function(s, e) { return s + e.ms; }, 0) / selahMs.length / 1000).toFixed(1);
+          provHtml += '<br><small style="color:var(--text-muted);font-size:11px">Rata-rata respons (recent): ' + avgSec + ' detik</small>';
         }
+        var selahInTok = recent.reduce(function(s, e) { return s + (e.input_tokens || 0); }, 0);
+        var selahOutTok = recent.reduce(function(s, e) { return s + (e.output_tokens || 0); }, 0);
+        var selahCost = recent.reduce(function(s, e) { return s + (e.cost_usd || 0); }, 0);
+        if (selahInTok || selahOutTok) {
+          provHtml += '<div style="margin-top:8px;font-size:12px;color:var(--text-muted);line-height:1.8">'
+            + '<div>Token input (recent): <strong style="color:var(--text)">' + selahInTok.toLocaleString('id-ID') + '</strong></div>'
+            + '<div>Token output (recent): <strong style="color:var(--text)">' + selahOutTok.toLocaleString('id-ID') + '</strong></div>'
+            + '<div>Estimasi biaya (recent): <strong style="color:var(--text)">$' + selahCost.toFixed(4) + '</strong></div>'
+            + '</div>';
+        }
+        html += card('Pemakaian Selah', provHtml);
+        {{end}}
 
-        // Recent 20
-        var recent = (raw.recent || []).slice().reverse();
-        if (recent.length) {
+        // Recent selah calls — max 5
+        var recentSlice = recent.slice(0, 5);
+        if (recentSlice.length) {
           var recHtml = '<div style="overflow-x:auto"><table style="width:100%;font-size:12px;border-collapse:collapse">';
-          recHtml += '<tr style="color:var(--text-muted);text-align:left"><th style="padding:4px 6px">Waktu</th><th style="padding:4px 6px">App</th><th style="padding:4px 6px">Provider</th><th style="padding:4px 6px">Durasi</th><th style="padding:4px 6px">Status</th></tr>';
-          recent.forEach(function(e) {
+          recHtml += '<tr style="color:var(--text-muted);text-align:left"><th style="padding:4px 6px">Waktu</th><th style="padding:4px 6px">Provider</th><th style="padding:4px 6px">Durasi</th><th style="padding:4px 6px">Status</th></tr>';
+          recentSlice.forEach(function(e) {
             var ts = new Date(e.ts).toLocaleString('id-ID', {timeZone:'Asia/Jakarta',hour:'2-digit',minute:'2-digit',day:'numeric',month:'short'});
             var provColor = e.provider === 'claude' ? '#2C4468' : e.provider === 'groq' ? '#1a7a4a' : '#c0392b';
             recHtml += '<tr style="border-top:1px solid var(--border)">';
             recHtml += '<td style="padding:5px 6px;color:var(--text-muted)">' + ts + '</td>';
-            recHtml += '<td style="padding:5px 6px">' + (e.app || '-') + '</td>';
             recHtml += '<td style="padding:5px 6px"><span style="background:' + provColor + ';color:#fff;border-radius:4px;padding:1px 6px;font-size:11px">' + (e.provider || '-') + '</span></td>';
             recHtml += '<td style="padding:5px 6px">' + ((e.ms || 0) / 1000).toFixed(1) + 's</td>';
             recHtml += '<td style="padding:5px 6px">' + (e.ok ? '✓' : '✗') + '</td>';
             recHtml += '</tr>';
           });
           recHtml += '</table></div>';
-          html += card('20 Panggilan Terakhir', recHtml);
+          html += card('Panggilan Terakhir (Selah)', recHtml);
         }
 
         root.innerHTML = html;

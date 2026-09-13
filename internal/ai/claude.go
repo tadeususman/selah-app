@@ -11,6 +11,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"journalflow/internal/middleware"
 )
 
 const (
@@ -27,6 +29,7 @@ var ErrNotRelevant = errors.New("query tidak relevan dengan Alkitab")
 type UsageRecord struct {
 	Provider     string
 	Model        string
+	UserID       int64
 	InputTokens  int
 	OutputTokens int
 	CostUSD      float64
@@ -231,6 +234,7 @@ func (c *Client) sendQwen(ctx context.Context, system string, history []ChatMess
 		c.cfg.OnUsage(UsageRecord{
 			Provider:     ProviderQwen,
 			Model:        c.cfg.QwenModel,
+			UserID:       middleware.UserIDFromCtx(ctx),
 			InputTokens:  parsed.Usage.PromptTokens,
 			OutputTokens: parsed.Usage.CompletionTokens,
 			CostUSD:      calcCost(c.cfg.QwenModel, parsed.Usage.PromptTokens, parsed.Usage.CompletionTokens),

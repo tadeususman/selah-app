@@ -3,6 +3,7 @@ package handlers
 import (
 	"crypto/rand"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -256,6 +257,7 @@ type adminAIDailyStat struct {
 }
 
 type adminAIStatsData struct {
+	Provider    string
 	StatsJSON   string
 	Error       string
 	UserStats   []adminAIUserStat
@@ -269,45 +271,15 @@ func (a *App) AdminAIStats(w http.ResponseWriter, r *http.Request) {
 	}
 	from := r.URL.Query().Get("from")
 	to := r.URL.Query().Get("to")
+	data := adminAIStatsData{Provider: a.AI.Provider()}
 
-	raw, err := a.AI.Stats(r.Context(), "", "")
-	data := adminAIStatsData{}
-	if err != nil {
-		data.Error = "Bridge tidak bisa dihubungi: " + err.Error()
+	if a.AI.Provider() == "qwen" {
+		a.loadQwenStats(r, &data, from, to)
 	} else {
-		var pretty interface{}
-		if json.Unmarshal(raw, &pretty) == nil {
-			if b, e := json.MarshalIndent(pretty, "", "  "); e == nil {
-				data.StatsJSON = string(b)
-			}
-		}
-		if data.StatsJSON == "" {
-			data.StatsJSON = string(raw)
-		}
+		a.loadBridgeStats(r, &data, from, to)
 	}
 
-	if from != "" || to != "" {
-		praw, perr := a.AI.Stats(r.Context(), from, to)
-		if perr == nil {
-			var ps struct {
-				Total        int     `json:"total"`
-				InputTokens  int     `json:"total_input_tokens"`
-				OutputTokens int     `json:"total_output_tokens"`
-				CostUSD      float64 `json:"total_cost_usd"`
-			}
-			if json.Unmarshal(praw, &ps) == nil {
-				data.Period = &adminAIPeriodStats{
-					From:         from,
-					To:           to,
-					Total:        ps.Total,
-					InputTokens:  ps.InputTokens,
-					OutputTokens: ps.OutputTokens,
-					CostUSD:      ps.CostUSD,
-				}
-			}
-		}
-	}
-
+	// Per-user stats dari journal_messages (berlaku untuk semua provider)
 	rows, err := a.DB.QueryContext(r.Context(), `
 		SELECT u.name,
 		       COUNT(DISTINCT j.id) AS journals,
@@ -335,14 +307,51 @@ func (a *App) AdminAIStats(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	a.render(w, "admin_ai.html", data)
+}
+
+func (a *App) loadBridgeStats(r *http.Request, data *adminAIStatsData, from, to string) {
+	raw, err := a.AI.Stats(r.Context(), "", "")
+	if err != nil {
+		data.Error = "Bridge tidak bisa dihubungi: " + err.Error()
+	} else {
+		var pretty interface{}
+		if json.Unmarshal(raw, &pretty) == nil {
+			if b, e := json.MarshalIndent(pretty, "", "  "); e == nil {
+				data.StatsJSON = string(b)
+			}
+		}
+		if data.StatsJSON == "" {
+			data.StatsJSON = string(raw)
+		}
+	}
+
+	if from != "" || to != "" {
+		praw, perr := a.AI.Stats(r.Context(), from, to)
+		if perr == nil {
+			var ps struct {
+				Total        int     `json:"total"`
+				InputTokens  int     `json:"total_input_tokens"`
+				OutputTokens int     `json:"total_output_tokens"`
+				CostUSD      float64 `json:"total_cost_usd"`
+			}
+			if json.Unmarshal(praw, &ps) == nil {
+				data.Period = &adminAIPeriodStats{
+					From: from, To: to,
+					Total: ps.Total, InputTokens: ps.InputTokens,
+					OutputTokens: ps.OutputTokens, CostUSD: ps.CostUSD,
+				}
+			}
+		}
+	}
+
 	drows, err := a.DB.QueryContext(r.Context(), `
 		SELECT to_char(m.created_at AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD') AS day,
 		       COUNT(*) AS cnt
 		FROM journal_messages m
 		WHERE m.role = 'ai'
 		  AND m.created_at >= NOW() - INTERVAL '12 months'
-		GROUP BY day
-		ORDER BY day ASC`)
+		GROUP BY day ORDER BY day ASC`)
 	if err == nil {
 		defer drows.Close()
 		for drows.Next() {
@@ -352,6 +361,46 @@ func (a *App) AdminAIStats(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+}
 
-	a.render(w, "admin_ai.html", data)
+func (a *App) loadQwenStats(r *http.Request, data *adminAIStatsData, from, to string) {
+	// Period filter
+	if from != "" || to != "" {
+		q := `SELECT COALESCE(COUNT(*),0), COALESCE(SUM(input_tokens),0), COALESCE(SUM(output_tokens),0), COALESCE(SUM(cost_usd),0)
+		      FROM ai_usage_log WHERE 1=1`
+		args := []any{}
+		if from != "" {
+			args = append(args, from)
+			q += " AND created_at >= $" + fmt.Sprintf("%d", len(args)) + "::date"
+		}
+		if to != "" {
+			args = append(args, to)
+			q += " AND created_at < ($" + fmt.Sprintf("%d", len(args)) + "::date + INTERVAL '1 day')"
+		}
+		var total, in, out int
+		var cost float64
+		if a.DB.QueryRowContext(r.Context(), q, args...).Scan(&total, &in, &out, &cost) == nil {
+			data.Period = &adminAIPeriodStats{
+				From: from, To: to,
+				Total: total, InputTokens: in, OutputTokens: out, CostUSD: cost,
+			}
+		}
+	}
+
+	// Daily chart dari ai_usage_log
+	drows, err := a.DB.QueryContext(r.Context(), `
+		SELECT to_char(created_at AT TIME ZONE 'Asia/Jakarta', 'YYYY-MM-DD') AS day,
+		       COUNT(*) AS cnt
+		FROM ai_usage_log
+		WHERE created_at >= NOW() - INTERVAL '12 months'
+		GROUP BY day ORDER BY day ASC`)
+	if err == nil {
+		defer drows.Close()
+		for drows.Next() {
+			var s adminAIDailyStat
+			if drows.Scan(&s.Date, &s.Count) == nil {
+				data.DailyStats = append(data.DailyStats, s)
+			}
+		}
+	}
 }

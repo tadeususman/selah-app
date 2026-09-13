@@ -69,8 +69,12 @@ CREATE TABLE IF NOT EXISTS ai_usage_log (
     id            BIGSERIAL PRIMARY KEY,
     provider      TEXT NOT NULL,
     model         TEXT NOT NULL,
+    user_id       BIGINT REFERENCES users(id) ON DELETE SET NULL,
     input_tokens  INT NOT NULL DEFAULT 0,
     output_tokens INT NOT NULL DEFAULT 0,
     cost_usd      NUMERIC(10,8) NOT NULL DEFAULT 0,
     created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+ALTER TABLE ai_usage_log ADD COLUMN IF NOT EXISTS user_id BIGINT REFERENCES users(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_ai_usage_log_user ON ai_usage_log(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_ai_usage_log_date ON ai_usage_log(created_at DESC);

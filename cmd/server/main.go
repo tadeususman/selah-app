@@ -39,9 +39,13 @@ func main() {
 		QwenModel:   cfg.QwenModel,
 		QwenBaseURL: cfg.QwenBaseURL,
 		OnUsage: func(r ai.UsageRecord) {
+			var uid *int64
+			if r.UserID != 0 {
+				uid = &r.UserID
+			}
 			_, err := pool.Exec(
-				`INSERT INTO ai_usage_log (provider, model, input_tokens, output_tokens, cost_usd) VALUES ($1, $2, $3, $4, $5)`,
-				r.Provider, r.Model, r.InputTokens, r.OutputTokens, r.CostUSD,
+				`INSERT INTO ai_usage_log (provider, model, user_id, input_tokens, output_tokens, cost_usd) VALUES ($1, $2, $3, $4, $5, $6)`,
+				r.Provider, r.Model, uid, r.InputTokens, r.OutputTokens, r.CostUSD,
 			)
 			if err != nil {
 				log.Printf("[ai] usage log error: %v", err)

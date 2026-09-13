@@ -32,3 +32,9 @@ func UserID(r *http.Request) int64 {
 	v, _ := r.Context().Value(userIDKey).(int64)
 	return v
 }
+
+// UserIDFromCtx reads the authenticated user id from a context directly.
+func UserIDFromCtx(ctx context.Context) int64 {
+	v, _ := ctx.Value(userIDKey).(int64)
+	return v
+}

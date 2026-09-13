@@ -740,6 +740,7 @@ input:focus, textarea:focus {
 .admin-hub-icon { color: var(--navy); flex-shrink: 0; }
 .admin-hub-label { font-size: 15px; font-weight: 700; color: var(--navy-dark); margin-bottom: 2px; }
 .admin-hub-desc { font-size: 12px; color: var(--text-muted); }
+.admin-hub-new { color: var(--sage); font-weight: 600; }
 
 .admin-section {
   background: var(--card);

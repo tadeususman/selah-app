@@ -42,11 +42,20 @@ func (a *App) requireAdmin(w http.ResponseWriter, r *http.Request) bool {
 	return true
 }
 
+type adminHubData struct {
+	UserCount    int
+	NewThisWeek  int
+}
+
 func (a *App) AdminPage(w http.ResponseWriter, r *http.Request) {
 	if !a.requireAdmin(w, r) {
 		return
 	}
-	a.render(w, "admin.html", nil)
+	var data adminHubData
+	_ = a.DB.QueryRowContext(r.Context(), `SELECT COUNT(*) FROM users`).Scan(&data.UserCount)
+	_ = a.DB.QueryRowContext(r.Context(),
+		`SELECT COUNT(*) FROM users WHERE created_at >= NOW() - INTERVAL '7 days'`).Scan(&data.NewThisWeek)
+	a.render(w, "admin.html", data)
 }
 
 func (a *App) AdminUsersPage(w http.ResponseWriter, r *http.Request) {

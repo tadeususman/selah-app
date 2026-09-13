@@ -16,19 +16,17 @@
     <div class="admin-section" style="margin-bottom:12px">
       <h3 style="margin-bottom:14px">AI Provider</h3>
 
-      <div style="display:flex;flex-direction:column;gap:10px;font-size:14px">
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:14px">
         <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px">
           <span style="color:var(--text-muted)">Provider aktif</span>
           <span style="font-weight:600">
-            {{if eq .Provider "qwen"}}Qwen (DashScope){{else}}Claude Bridge{{end}}
+            {{if eq .Provider "qwen"}}Qwen (Fireworks){{else}}Claude Bridge{{end}}
           </span>
         </div>
-
         <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px">
           <span style="color:var(--text-muted)">Model</span>
-          <span style="font-weight:600">{{.Model}}</span>
+          <span style="font-weight:600;font-size:12px">{{.Model}}</span>
         </div>
-
         <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px">
           <span style="color:var(--text-muted)">API Key</span>
           {{if .APIKeySet}}
@@ -40,25 +38,67 @@
       </div>
 
       {{if eq .TestResult "ok"}}
-      <div style="margin-top:12px;padding:10px 12px;background:var(--card-bg);border:1px solid var(--sage);border-radius:8px;font-size:13px;color:var(--sage);font-weight:600">
+      <div style="margin-top:10px;padding:10px 12px;background:var(--card-bg);border:1px solid var(--sage);border-radius:8px;font-size:13px;color:var(--sage);font-weight:600">
         Koneksi berhasil {{if .TestMsg}}· {{.TestMsg}}{{end}}
       </div>
       {{else if eq .TestResult "fail"}}
-      <div style="margin-top:12px;padding:10px 12px;background:var(--card-bg);border:1px solid #e05252;border-radius:8px;font-size:13px;color:#e05252">
+      <div style="margin-top:10px;padding:10px 12px;background:var(--card-bg);border:1px solid #e05252;border-radius:8px;font-size:13px;color:#e05252">
         Koneksi gagal: {{.TestMsg}}
       </div>
       {{end}}
 
-      <form method="POST" action="/admin/settings/test" style="margin-top:14px">
+      <form method="POST" action="/admin/settings/test" style="margin-top:12px">
         <button type="submit" class="btn-primary" style="width:100%">Test Koneksi</button>
       </form>
 
-      <p style="margin-top:14px;font-size:12px;color:var(--text-muted);line-height:1.6">
-        Untuk mengganti provider, ubah <code>AI_PROVIDER</code> di <code>.env</code> dan restart container.<br>
-        Nilai yang valid: <code>bridge</code> (default) atau <code>qwen</code>.<br>
-        Untuk Qwen: set juga <code>QWEN_API_KEY</code> dan opsional <code>QWEN_MODEL</code>.
+      <p style="margin-top:12px;font-size:12px;color:var(--text-muted);line-height:1.6">
+        Ganti provider: ubah <code>AI_PROVIDER</code> di <code>.env</code> lalu restart container.<br>
+        Nilai: <code>bridge</code> (default) atau <code>qwen</code>.
       </p>
     </div>
+
+    {{if .Usage}}
+    <div class="admin-section" style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <h3>Pemakaian AI</h3>
+        {{if eq .Provider "qwen"}}
+        <a href="https://app.fireworks.ai/billing" target="_blank" style="font-size:12px;color:var(--text-muted)">Cek di Fireworks →</a>
+        {{end}}
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <div style="padding:12px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;text-align:center">
+          <div style="font-size:20px;font-weight:700;color:var(--navy)">${{printf "%.4f" .Usage.TotalCostUSD}}</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Total semua waktu</div>
+        </div>
+        <div style="padding:12px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;text-align:center">
+          <div style="font-size:20px;font-weight:700;color:var(--navy)">${{printf "%.4f" .Usage.MonthCostUSD}}</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Bulan ini</div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:6px;font-size:13px">
+        <div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px">
+          <span style="color:var(--text-muted)">Token input</span>
+          <span style="font-weight:600">{{fmtInt .Usage.TotalInputTokens}}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px">
+          <span style="color:var(--text-muted)">Token output</span>
+          <span style="font-weight:600">{{fmtInt .Usage.TotalOutputTokens}}</span>
+        </div>
+        {{if .Usage.LastUsed}}
+        <div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px">
+          <span style="color:var(--text-muted)">Terakhir dipakai</span>
+          <span style="font-weight:600">{{wibDateTime .Usage.LastUsed}}</span>
+        </div>
+        {{end}}
+      </div>
+
+      {{if eq .Provider "bridge"}}
+      <p style="margin-top:10px;font-size:12px;color:var(--text-muted)">Tracking biaya hanya aktif saat pakai provider Qwen.</p>
+      {{end}}
+    </div>
+    {{end}}
 
   </main>
   {{template "nav" .}}

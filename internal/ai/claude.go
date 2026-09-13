@@ -23,12 +23,35 @@ const (
 // ErrNotRelevant is returned by SearchVerse when the query has no relation to the Bible or Christian faith.
 var ErrNotRelevant = errors.New("query tidak relevan dengan Alkitab")
 
+// UsageRecord holds token counts and estimated cost for one API call.
+type UsageRecord struct {
+	Provider     string
+	Model        string
+	InputTokens  int
+	OutputTokens int
+	CostUSD      float64
+}
+
+// modelPricing maps model ID to [inputPricePerM, outputPricePerM] in USD.
+var modelPricing = map[string][2]float64{
+	"accounts/fireworks/models/qwen3p8-max": {2.0, 6.0},
+}
+
+func calcCost(model string, input, output int) float64 {
+	p, ok := modelPricing[model]
+	if !ok {
+		p = [2]float64{0.9, 0.9} // default Fireworks >16B rate
+	}
+	return float64(input)/1_000_000*p[0] + float64(output)/1_000_000*p[1]
+}
+
 type Config struct {
 	Provider    string // "bridge" or "qwen"
 	BridgeURL   string
 	QwenKey     string
 	QwenModel   string
 	QwenBaseURL string // defaults to OpenRouter
+	OnUsage     func(r UsageRecord) // optional callback after each Qwen call
 }
 
 type Client struct {
@@ -148,16 +171,21 @@ func (c *Client) sendQwen(ctx context.Context, system string, history []ChatMess
 		msgs = append(msgs, qwenMsg{Role: role, Content: m.Content})
 	}
 
-	body, err := json.Marshal(map[string]any{
+	payload := map[string]any{
 		"model":    c.cfg.QwenModel,
 		"messages": msgs,
-	})
-	if err != nil {
-		return "", err
 	}
 	baseURL := c.cfg.QwenBaseURL
 	if baseURL == "" {
 		baseURL = defaultQwenBaseURL
+	}
+	// Fireworks requires thinking disabled explicitly for Qwen3 models
+	if strings.Contains(baseURL, "fireworks.ai") {
+		payload["thinking"] = map[string]string{"type": "disabled"}
+	}
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return "", err
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, baseURL+"/chat/completions", bytes.NewReader(body))
 	if err != nil {
@@ -182,6 +210,10 @@ func (c *Client) sendQwen(ctx context.Context, system string, history []ChatMess
 				Content string `json:"content"`
 			} `json:"message"`
 		} `json:"choices"`
+		Usage *struct {
+			PromptTokens     int `json:"prompt_tokens"`
+			CompletionTokens int `json:"completion_tokens"`
+		} `json:"usage"`
 		Error *struct {
 			Message string `json:"message"`
 		} `json:"error"`
@@ -194,6 +226,15 @@ func (c *Client) sendQwen(ctx context.Context, system string, history []ChatMess
 	}
 	if len(parsed.Choices) == 0 {
 		return "", fmt.Errorf("qwen tidak mengembalikan respons")
+	}
+	if c.cfg.OnUsage != nil && parsed.Usage != nil {
+		c.cfg.OnUsage(UsageRecord{
+			Provider:     ProviderQwen,
+			Model:        c.cfg.QwenModel,
+			InputTokens:  parsed.Usage.PromptTokens,
+			OutputTokens: parsed.Usage.CompletionTokens,
+			CostUSD:      calcCost(c.cfg.QwenModel, parsed.Usage.PromptTokens, parsed.Usage.CompletionTokens),
+		})
 	}
 	return parsed.Choices[0].Message.Content, nil
 }

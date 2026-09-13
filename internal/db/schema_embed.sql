@@ -63,3 +63,14 @@ CREATE TABLE IF NOT EXISTS sessions (
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
     expires_at  TIMESTAMPTZ NOT NULL
 );
+
+-- AI usage tracking for cost monitoring.
+CREATE TABLE IF NOT EXISTS ai_usage_log (
+    id            BIGSERIAL PRIMARY KEY,
+    provider      TEXT NOT NULL,
+    model         TEXT NOT NULL,
+    input_tokens  INT NOT NULL DEFAULT 0,
+    output_tokens INT NOT NULL DEFAULT 0,
+    cost_usd      NUMERIC(10,8) NOT NULL DEFAULT 0,
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);

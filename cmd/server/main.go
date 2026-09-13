@@ -38,6 +38,15 @@ func main() {
 		QwenKey:     cfg.QwenAPIKey,
 		QwenModel:   cfg.QwenModel,
 		QwenBaseURL: cfg.QwenBaseURL,
+		OnUsage: func(r ai.UsageRecord) {
+			_, err := pool.Exec(
+				`INSERT INTO ai_usage_log (provider, model, input_tokens, output_tokens, cost_usd) VALUES ($1, $2, $3, $4, $5)`,
+				r.Provider, r.Model, r.InputTokens, r.OutputTokens, r.CostUSD,
+			)
+			if err != nil {
+				log.Printf("[ai] usage log error: %v", err)
+			}
+		},
 	})
 	tmpl := handlers.LoadTemplates("web/templates")
 

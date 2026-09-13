@@ -7,12 +7,21 @@ import (
 	"time"
 )
 
+type aiUsageSummary struct {
+	TotalCostUSD      float64
+	MonthCostUSD      float64
+	TotalInputTokens  int
+	TotalOutputTokens int
+	LastUsed          *time.Time
+}
+
 type adminSettingsData struct {
 	Provider   string
 	Model      string
 	APIKeySet  bool
-	TestResult string // "ok", "fail", or ""
+	TestResult string
 	TestMsg    string
+	Usage      *aiUsageSummary
 }
 
 func (a *App) AdminSettings(w http.ResponseWriter, r *http.Request) {
@@ -20,12 +29,25 @@ func (a *App) AdminSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data := adminSettingsData{
-		Provider:  a.AI.Provider(),
-		Model:     a.AI.Model(),
-		APIKeySet: a.AI.APIKeySet(),
+		Provider:   a.AI.Provider(),
+		Model:      a.AI.Model(),
+		APIKeySet:  a.AI.APIKeySet(),
+		TestResult: r.URL.Query().Get("test"),
+		TestMsg:    r.URL.Query().Get("msg"),
 	}
-	data.TestResult = r.URL.Query().Get("test") // "ok", "fail", or ""
-	data.TestMsg = r.URL.Query().Get("msg")
+
+	var u aiUsageSummary
+	_ = a.DB.QueryRowContext(r.Context(), `
+		SELECT
+			COALESCE(SUM(cost_usd), 0),
+			COALESCE(SUM(CASE WHEN created_at >= date_trunc('month', NOW()) THEN cost_usd ELSE 0 END), 0),
+			COALESCE(SUM(input_tokens), 0),
+			COALESCE(SUM(output_tokens), 0),
+			MAX(created_at)
+		FROM ai_usage_log
+	`).Scan(&u.TotalCostUSD, &u.MonthCostUSD, &u.TotalInputTokens, &u.TotalOutputTokens, &u.LastUsed)
+	data.Usage = &u
+
 	a.render(w, "admin_settings.html", data)
 }
 

@@ -17,17 +17,18 @@ const (
 	ProviderBridge = "bridge"
 	ProviderQwen   = "qwen"
 
-	qwenBaseURL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+	defaultQwenBaseURL = "https://openrouter.ai/api/v1"
 )
 
 // ErrNotRelevant is returned by SearchVerse when the query has no relation to the Bible or Christian faith.
 var ErrNotRelevant = errors.New("query tidak relevan dengan Alkitab")
 
 type Config struct {
-	Provider  string // "bridge" or "qwen"
-	BridgeURL string
-	QwenKey   string
-	QwenModel string
+	Provider    string // "bridge" or "qwen"
+	BridgeURL   string
+	QwenKey     string
+	QwenModel   string
+	QwenBaseURL string // defaults to OpenRouter
 }
 
 type Client struct {
@@ -154,7 +155,11 @@ func (c *Client) sendQwen(ctx context.Context, system string, history []ChatMess
 	if err != nil {
 		return "", err
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, qwenBaseURL+"/chat/completions", bytes.NewReader(body))
+	baseURL := c.cfg.QwenBaseURL
+	if baseURL == "" {
+		baseURL = defaultQwenBaseURL
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, baseURL+"/chat/completions", bytes.NewReader(body))
 	if err != nil {
 		return "", err
 	}

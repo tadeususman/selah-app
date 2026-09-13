@@ -33,10 +33,11 @@ func main() {
 
 	sessions := session.NewManager(pool)
 	aiClient := ai.NewClientFromConfig(ai.Config{
-		Provider:  cfg.AIProvider,
-		BridgeURL: cfg.BridgeURL,
-		QwenKey:   cfg.QwenAPIKey,
-		QwenModel: cfg.QwenModel,
+		Provider:    cfg.AIProvider,
+		BridgeURL:   cfg.BridgeURL,
+		QwenKey:     cfg.QwenAPIKey,
+		QwenModel:   cfg.QwenModel,
+		QwenBaseURL: cfg.QwenBaseURL,
 	})
 	tmpl := handlers.LoadTemplates("web/templates")
 

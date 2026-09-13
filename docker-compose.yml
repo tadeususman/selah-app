@@ -31,7 +31,8 @@ services:
       BRIDGE_URL: ${BRIDGE_URL:-http://host.docker.internal:8765}
       AI_PROVIDER: ${AI_PROVIDER:-bridge}
       QWEN_API_KEY: ${QWEN_API_KEY:-}
-      QWEN_MODEL: ${QWEN_MODEL:-qwen-plus}
+      QWEN_MODEL: ${QWEN_MODEL:-qwen/qwen3.8-27b}
+      QWEN_BASE_URL: ${QWEN_BASE_URL:-}
     ports:
       - "8082:8080"
     extra_hosts:

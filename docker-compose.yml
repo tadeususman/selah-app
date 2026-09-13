@@ -29,6 +29,9 @@ services:
       DATABASE_URL: postgres://journalflow:${POSTGRES_PASSWORD:-changeme}@db:5432/journalflow?sslmode=disable
       SESSION_SECRET: ${SESSION_SECRET:?set a random secret in .env}
       BRIDGE_URL: ${BRIDGE_URL:-http://host.docker.internal:8765}
+      AI_PROVIDER: ${AI_PROVIDER:-bridge}
+      QWEN_API_KEY: ${QWEN_API_KEY:-}
+      QWEN_MODEL: ${QWEN_MODEL:-qwen-plus}
     ports:
       - "8082:8080"
     extra_hosts:

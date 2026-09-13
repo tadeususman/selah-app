@@ -32,7 +32,12 @@ func main() {
 	defer pool.Close()
 
 	sessions := session.NewManager(pool)
-	aiClient := ai.NewClient(cfg.BridgeURL)
+	aiClient := ai.NewClientFromConfig(ai.Config{
+		Provider:  cfg.AIProvider,
+		BridgeURL: cfg.BridgeURL,
+		QwenKey:   cfg.QwenAPIKey,
+		QwenModel: cfg.QwenModel,
+	})
 	tmpl := handlers.LoadTemplates("web/templates")
 
 	app := &handlers.App{
@@ -93,6 +98,8 @@ func main() {
 		r.Post("/admin/users/toggle-admin", app.AdminToggleAdmin)
 		r.Post("/admin/users/reset-password", app.AdminResetPassword)
 		r.Get("/admin/ai-stats", app.AdminAIStats)
+		r.Get("/admin/settings", app.AdminSettings)
+		r.Post("/admin/settings/test", app.AdminSettingsTest)
 	})
 
 	log.Printf("JournalFlow listening on :%s", cfg.AppPort)

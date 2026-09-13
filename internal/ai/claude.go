@@ -1,6 +1,4 @@
-// Package ai wraps calls to the claude-bridge running on the host.
-// The bridge exposes POST /ask which runs `claude -p` under the hood,
-// so no Anthropic API key is needed here — auth is handled by the bridge.
+// Package ai handles all AI provider calls: claude-bridge or Qwen (DashScope).
 package ai
 
 import (
@@ -15,19 +13,51 @@ import (
 	"time"
 )
 
+const (
+	ProviderBridge = "bridge"
+	ProviderQwen   = "qwen"
+
+	qwenBaseURL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+)
+
 // ErrNotRelevant is returned by SearchVerse when the query has no relation to the Bible or Christian faith.
 var ErrNotRelevant = errors.New("query tidak relevan dengan Alkitab")
 
+type Config struct {
+	Provider  string // "bridge" or "qwen"
+	BridgeURL string
+	QwenKey   string
+	QwenModel string
+}
+
 type Client struct {
-	bridgeURL string
-	http      *http.Client
+	cfg  Config
+	http *http.Client
 }
 
 func NewClient(bridgeURL string) *Client {
 	return &Client{
-		bridgeURL: bridgeURL,
-		http:      &http.Client{Timeout: 120 * time.Second},
+		cfg:  Config{Provider: ProviderBridge, BridgeURL: bridgeURL},
+		http: &http.Client{Timeout: 120 * time.Second},
 	}
+}
+
+func NewClientFromConfig(cfg Config) *Client {
+	return &Client{cfg: cfg, http: &http.Client{Timeout: 120 * time.Second}}
+}
+
+func (c *Client) Provider() string { return c.cfg.Provider }
+func (c *Client) Model() string {
+	if c.cfg.Provider == ProviderQwen {
+		return c.cfg.QwenModel
+	}
+	return "claude (via bridge)"
+}
+func (c *Client) APIKeySet() bool {
+	if c.cfg.Provider == ProviderQwen {
+		return c.cfg.QwenKey != ""
+	}
+	return true // bridge doesn't need a key in the app
 }
 
 // ChatMessage is one turn in a conversation.
@@ -49,10 +79,14 @@ type bridgeResponse struct {
 	Error  string `json:"error"`
 }
 
-// send builds a single text prompt from the system instruction + message
-// history and hands it to the bridge's /ask endpoint.
-// The bridge already handles Groq fallback automatically when Claude fails.
 func (c *Client) send(ctx context.Context, system string, history []ChatMessage) (string, error) {
+	if c.cfg.Provider == ProviderQwen {
+		return c.sendQwen(ctx, system, history)
+	}
+	return c.sendBridge(ctx, system, history)
+}
+
+func (c *Client) sendBridge(ctx context.Context, system string, history []ChatMessage) (string, error) {
 	var sb strings.Builder
 	if system != "" {
 		sb.WriteString(system)
@@ -72,24 +106,20 @@ func (c *Client) send(ctx context.Context, system string, history []ChatMessage)
 	if err != nil {
 		return "", err
 	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.bridgeURL+"/ask", bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.cfg.BridgeURL+"/ask", bytes.NewReader(body))
 	if err != nil {
 		return "", err
 	}
 	req.Header.Set("Content-Type", "application/json")
-
 	resp, err := c.http.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("bridge tidak bisa dihubungi (%s): %w", c.bridgeURL, err)
+		return "", fmt.Errorf("bridge tidak bisa dihubungi (%s): %w", c.cfg.BridgeURL, err)
 	}
 	defer resp.Body.Close()
-
 	raw, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
-
 	var parsed bridgeResponse
 	if err := json.Unmarshal(raw, &parsed); err != nil {
 		return "", fmt.Errorf("bridge respons tidak terduga (status %d): %s", resp.StatusCode, raw)
@@ -100,10 +130,81 @@ func (c *Client) send(ctx context.Context, system string, history []ChatMessage)
 	return parsed.Output, nil
 }
 
+func (c *Client) sendQwen(ctx context.Context, system string, history []ChatMessage) (string, error) {
+	type qwenMsg struct {
+		Role    string `json:"role"`
+		Content string `json:"content"`
+	}
+	var msgs []qwenMsg
+	if system != "" {
+		msgs = append(msgs, qwenMsg{Role: "system", Content: system})
+	}
+	for _, m := range history {
+		role := m.Role
+		if role != "user" {
+			role = "assistant"
+		}
+		msgs = append(msgs, qwenMsg{Role: role, Content: m.Content})
+	}
+
+	body, err := json.Marshal(map[string]any{
+		"model":    c.cfg.QwenModel,
+		"messages": msgs,
+	})
+	if err != nil {
+		return "", err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, qwenBaseURL+"/chat/completions", bytes.NewReader(body))
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+c.cfg.QwenKey)
+
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("qwen tidak bisa dihubungi: %w", err)
+	}
+	defer resp.Body.Close()
+	raw, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	var parsed struct {
+		Choices []struct {
+			Message struct {
+				Content string `json:"content"`
+			} `json:"message"`
+		} `json:"choices"`
+		Error *struct {
+			Message string `json:"message"`
+		} `json:"error"`
+	}
+	if err := json.Unmarshal(raw, &parsed); err != nil {
+		return "", fmt.Errorf("qwen respons tidak terduga (status %d): %s", resp.StatusCode, raw)
+	}
+	if parsed.Error != nil {
+		return "", fmt.Errorf("qwen error: %s", parsed.Error.Message)
+	}
+	if len(parsed.Choices) == 0 {
+		return "", fmt.Errorf("qwen tidak mengembalikan respons")
+	}
+	return parsed.Choices[0].Message.Content, nil
+}
+
+// Ping sends a minimal request to verify the AI provider is reachable.
+func (c *Client) Ping(ctx context.Context) (string, error) {
+	return c.send(ctx, "Jawab dengan satu kata: ok", []ChatMessage{{Role: "user", Content: "ping"}})
+}
+
 // Stats fetches aggregated AI usage statistics from the bridge.
-// from and to are optional YYYY-MM-DD date strings.
+// Returns an error when provider is not bridge.
 func (c *Client) Stats(ctx context.Context, from, to string) (json.RawMessage, error) {
-	u := c.bridgeURL + "/stats?app=selah"
+	if c.cfg.Provider != ProviderBridge {
+		return json.RawMessage(`{}`), fmt.Errorf("statistik hanya tersedia saat menggunakan Claude Bridge")
+	}
+	u := c.cfg.BridgeURL + "/stats?app=selah"
 	if from != "" {
 		u += "&from=" + from
 	}

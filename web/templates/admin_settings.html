@@ -1,0 +1,67 @@
+{{define "admin_settings.html"}}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <title>Pengaturan Server · Admin · selah,</title>
+  {{template "head" .}}
+</head>
+<body>
+  <main class="page">
+    <header class="page-header">
+      <a href="/admin" class="back-link">← Admin</a>
+      <p class="brand-wordmark brand-small">selah<span class="dot">,</span></p>
+      <h1>Pengaturan Server</h1>
+    </header>
+
+    <div class="admin-section" style="margin-bottom:12px">
+      <h3 style="margin-bottom:14px">AI Provider</h3>
+
+      <div style="display:flex;flex-direction:column;gap:10px;font-size:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px">
+          <span style="color:var(--text-muted)">Provider aktif</span>
+          <span style="font-weight:600">
+            {{if eq .Provider "qwen"}}Qwen (DashScope){{else}}Claude Bridge{{end}}
+          </span>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px">
+          <span style="color:var(--text-muted)">Model</span>
+          <span style="font-weight:600">{{.Model}}</span>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px">
+          <span style="color:var(--text-muted)">API Key</span>
+          {{if .APIKeySet}}
+            <span style="font-weight:600;color:var(--sage)">Terset ✓</span>
+          {{else}}
+            <span style="font-weight:600;color:#e05252">Belum diset</span>
+          {{end}}
+        </div>
+      </div>
+
+      {{if eq .TestResult "ok"}}
+      <div style="margin-top:12px;padding:10px 12px;background:var(--card-bg);border:1px solid var(--sage);border-radius:8px;font-size:13px;color:var(--sage);font-weight:600">
+        Koneksi berhasil {{if .TestMsg}}· {{.TestMsg}}{{end}}
+      </div>
+      {{else if eq .TestResult "fail"}}
+      <div style="margin-top:12px;padding:10px 12px;background:var(--card-bg);border:1px solid #e05252;border-radius:8px;font-size:13px;color:#e05252">
+        Koneksi gagal: {{.TestMsg}}
+      </div>
+      {{end}}
+
+      <form method="POST" action="/admin/settings/test" style="margin-top:14px">
+        <button type="submit" class="btn-primary" style="width:100%">Test Koneksi</button>
+      </form>
+
+      <p style="margin-top:14px;font-size:12px;color:var(--text-muted);line-height:1.6">
+        Untuk mengganti provider, ubah <code>AI_PROVIDER</code> di <code>.env</code> dan restart container.<br>
+        Nilai yang valid: <code>bridge</code> (default) atau <code>qwen</code>.<br>
+        Untuk Qwen: set juga <code>QWEN_API_KEY</code> dan opsional <code>QWEN_MODEL</code>.
+      </p>
+    </div>
+
+  </main>
+  {{template "nav" .}}
+</body>
+</html>
+{{end}}

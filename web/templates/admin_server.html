@@ -1,0 +1,66 @@
+{{define "admin_server.html"}}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <title>Status Server · Admin · selah,</title>
+  {{template "head" .}}
+</head>
+<body>
+  <main class="page">
+    <header class="page-header">
+      <a href="/admin" class="back-link">← Admin</a>
+      <p class="brand-wordmark brand-small">selah<span class="dot">,</span></p>
+      <h1>Status Server</h1>
+    </header>
+
+    <div class="admin-section" style="margin-bottom:12px">
+      <h3 style="margin-bottom:12px">Sistem</h3>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:13px">
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--text-muted)">Uptime</span>
+          <span style="font-weight:600">{{.Uptime}}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+          <span style="color:var(--text-muted)">Load Average (1/5/15 menit)</span>
+          <span style="font-weight:600">{{.LoadAvg}}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-section" style="margin-bottom:12px">
+      <h3 style="margin-bottom:12px">Memori (RAM)</h3>
+      <div style="margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);margin-bottom:4px">
+          <span>{{fmtBytes .MemUsed}} dipakai</span>
+          <span>{{fmtBytes .MemTotal}} total</span>
+        </div>
+        <div style="background:var(--border);border-radius:4px;height:8px;overflow:hidden">
+          <div style="background:{{if gt .MemPercent 85}}#c0392b{{else if gt .MemPercent 60}}#e67e22{{else}}#2C4468{{end}};height:100%;width:{{.MemPercent}}%;border-radius:4px;transition:width 0.3s"></div>
+        </div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px">{{.MemPercent}}% terpakai</div>
+      </div>
+    </div>
+
+    <div class="admin-section" style="margin-bottom:12px">
+      <h3 style="margin-bottom:12px">Disk</h3>
+      <div style="margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);margin-bottom:4px">
+          <span>{{fmtBytes .DiskUsed}} dipakai</span>
+          <span>{{fmtBytes .DiskTotal}} total</span>
+        </div>
+        <div style="background:var(--border);border-radius:4px;height:8px;overflow:hidden">
+          <div style="background:{{if gt .DiskPercent 85}}#c0392b{{else if gt .DiskPercent 60}}#e67e22{{else}}#2C4468{{end}};height:100%;width:{{.DiskPercent}}%;border-radius:4px;transition:width 0.3s"></div>
+        </div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px">{{.DiskPercent}}% terpakai</div>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:8px">
+      <button onclick="location.reload()" class="btn-secondary" style="font-size:13px;padding:8px 20px">Refresh</button>
+    </div>
+
+  </main>
+  {{template "nav" .}}
+</body>
+</html>
+{{end}}

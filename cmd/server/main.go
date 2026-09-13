@@ -114,6 +114,7 @@ func main() {
 		r.Get("/admin/ai-stats", app.AdminAIStats)
 		r.Get("/admin/settings", app.AdminSettings)
 		r.Post("/admin/settings/test", app.AdminSettingsTest)
+		r.Get("/admin/server", app.AdminServerStatus)
 	})
 
 	log.Printf("JournalFlow listening on :%s", cfg.AppPort)

@@ -358,12 +358,12 @@ const recommendVerseSystemPrompt = `Kamu adalah Teman Selah — sahabat rohani y
 PENTING: Jika yang ditulis pengguna tidak ada kaitannya dengan kehidupan, perasaan, atau pergumulan manusia yang bisa dihubungkan dengan Firman Tuhan — misalnya resep masakan, cuaca, harga saham, berita, atau pertanyaan teknis acak — jawab HANYA dengan satu kata: TIDAK_RELEVAN
 Jika relevan (perasaan seperti sedih/kuatir/bersyukur, situasi hidup seperti relasi/pekerjaan/kesehatan, pergumulan rohani, atau tema apapun yang menyentuh pengalaman manusia), berikan rekomendasi ayat.
 Pilih dari berbagai bagian Alkitab — Mazmur, Kitab Nabi, Injil, Surat-surat Paulus, Surat-surat Umum, dsb. Jangan selalu memilih ayat yang sama atau yang paling sering dikutip. Berikan variasi yang bermakna.
-Berikan tepat 2 atau 3 rekomendasi ayat. Untuk setiap ayat, tulis persis dalam format ini:
+Berikan tepat 2 atau 3 rekomendasi ayat. Untuk setiap ayat, tulis persis dalam format ini (tanpa markdown, tanpa bold, tanpa bullet, tanpa angka):
 
 REF: [referensi ayat]
 ALASAN: [satu kalimat hangat mengapa ayat ini relevan]
 
-Gunakan baris kosong untuk memisahkan setiap rekomendasi. Referensi harus dalam format Indonesia standar, misalnya "Mazmur 23:1", "Matius 6:25-27", "Roma 8:28". Jangan tambahkan penjelasan lain di luar format itu.`
+Gunakan baris kosong untuk memisahkan setiap rekomendasi. Referensi harus dalam format Indonesia standar, misalnya "Mazmur 23:1", "Matius 6:25-27", "Roma 8:28". Jangan tambahkan penjelasan lain di luar format itu. Jangan gunakan markdown apapun.`
 
 // VerseRecommendation is one suggested verse with a short reason.
 type VerseRecommendation struct {
@@ -397,13 +397,20 @@ func (c *Client) RecommendVerse(ctx context.Context, userInput string, exclude [
 	var current VerseRecommendation
 	for _, line := range strings.Split(result, "\n") {
 		line = strings.TrimSpace(line)
+		// Strip markdown bold/italic markers and leading list bullets
+		line = strings.ReplaceAll(line, "**", "")
+		line = strings.ReplaceAll(line, "*", "")
+		line = strings.TrimLeft(line, "-• ")
+		line = strings.TrimSpace(line)
+
 		if line == "TIDAK_RELEVAN" {
 			return nil, ErrNotRelevant
 		}
-		if strings.HasPrefix(line, "REF:") {
-			current.Ref = strings.TrimSpace(strings.TrimPrefix(line, "REF:"))
-		} else if strings.HasPrefix(line, "ALASAN:") {
-			current.Reason = strings.TrimSpace(strings.TrimPrefix(line, "ALASAN:"))
+		upper := strings.ToUpper(line)
+		if strings.HasPrefix(upper, "REF:") {
+			current.Ref = strings.TrimSpace(line[4:])
+		} else if strings.HasPrefix(upper, "ALASAN:") {
+			current.Reason = strings.TrimSpace(line[7:])
 			if current.Ref != "" && current.Reason != "" {
 				recs = append(recs, current)
 				current = VerseRecommendation{}
@@ -430,11 +437,15 @@ func (c *Client) SearchVerse(ctx context.Context, query string) ([]string, error
 		if line == "" {
 			continue
 		}
+		// Strip markdown bold/italic and leading list markers
+		line = strings.ReplaceAll(line, "**", "")
+		line = strings.ReplaceAll(line, "*", "")
+		line = strings.TrimSpace(line)
 		if line == "TIDAK_RELEVAN" {
 			return nil, ErrNotRelevant
 		}
-		// Strip leading list markers like "1.", "-", "*"
-		if len(line) > 2 && (line[0] == '-' || line[0] == '*' || (line[1] == '.' && line[0] >= '1' && line[0] <= '9')) {
+		// Strip leading list markers like "1.", "-"
+		if len(line) > 2 && (line[0] == '-' || (line[1] == '.' && line[0] >= '1' && line[0] <= '9')) {
 			line = strings.TrimSpace(line[2:])
 		}
 		if line != "" {

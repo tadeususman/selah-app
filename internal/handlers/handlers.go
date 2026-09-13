@@ -63,6 +63,8 @@ func LoadTemplates(dir string) *template.Template {
 		"idMonthShort": func(t time.Time) string {
 			return fmt.Sprintf("%s %02d", idMonths[t.Month()], t.Year()%100)
 		},
+		// human-readable byte size: 1048576 → "1.0 MB"
+		"fmtBytes": func(b uint64) string { return fmtBytes(b) },
 		// format integer with dot thousand separator: 36389 → "36.389"
 		"fmtInt": func(n int) string {
 			s := fmt.Sprintf("%d", n)

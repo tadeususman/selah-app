@@ -390,8 +390,22 @@ Matius 5:44
 Roma 8:28
 Mazmur 23:1`
 
-const recommendVerseSystemPrompt = `Kamu adalah Teman Selah — sahabat rohani yang membantu pengguna menemukan ayat untuk direnungkan hari ini.
-Selalu berikan rekomendasi ayat, apapun yang ditulis pengguna. Kalau pengguna tidak memberikan konteks, pilih ayat yang bermakna untuk hari ini.
+// recommendVerseSystemPromptNoContext is used when userInput is empty.
+// No TIDAK_RELEVAN guard needed — user explicitly asked for a verse.
+const recommendVerseSystemPromptNoContext = `Kamu adalah Teman Selah — sahabat rohani yang membantu pengguna menemukan ayat untuk direnungkan hari ini.
+Pilih dari berbagai bagian Alkitab — Mazmur, Kitab Nabi, Injil, Surat-surat Paulus, Surat-surat Umum, dsb. Jangan selalu memilih ayat yang sama atau yang paling sering dikutip. Berikan variasi yang bermakna.
+Berikan tepat 2 atau 3 rekomendasi ayat. Untuk setiap ayat, tulis persis dalam format ini (tanpa markdown, tanpa bold, tanpa bullet, tanpa angka):
+
+REF: [referensi ayat]
+ALASAN: [satu kalimat hangat mengapa ayat ini relevan]
+
+Gunakan baris kosong untuk memisahkan setiap rekomendasi. Referensi harus dalam format Indonesia standar, misalnya "Mazmur 23:1", "Matius 6:25-27", "Roma 8:28". Jangan tambahkan penjelasan lain di luar format itu. Jangan gunakan markdown apapun.`
+
+// recommendVerseSystemPromptWithContext is used when userInput is not empty.
+// Includes TIDAK_RELEVAN guard to reject clearly off-topic inputs.
+const recommendVerseSystemPromptWithContext = `Kamu adalah Teman Selah — sahabat rohani yang membantu pengguna menemukan ayat untuk direnungkan hari ini.
+PENTING: Jika yang ditulis pengguna tidak ada kaitannya dengan kehidupan, perasaan, atau pergumulan manusia yang bisa dihubungkan dengan Firman Tuhan — misalnya resep masakan, menu makanan, cuaca, harga saham, berita, atau pertanyaan teknis acak — jawab HANYA dengan satu kata: TIDAK_RELEVAN
+Jika relevan (perasaan seperti sedih/kuatir/bersyukur, situasi hidup seperti relasi/pekerjaan/kesehatan, pergumulan rohani, atau tema apapun yang menyentuh pengalaman manusia), berikan rekomendasi ayat.
 Pilih dari berbagai bagian Alkitab — Mazmur, Kitab Nabi, Injil, Surat-surat Paulus, Surat-surat Umum, dsb. Jangan selalu memilih ayat yang sama atau yang paling sering dikutip. Berikan variasi yang bermakna.
 Berikan tepat 2 atau 3 rekomendasi ayat. Untuk setiap ayat, tulis persis dalam format ini (tanpa markdown, tanpa bold, tanpa bullet, tanpa angka):
 
@@ -413,19 +427,26 @@ func (c *Client) RecommendVerse(ctx context.Context, userInput string, exclude [
 	loc, _ := time.LoadLocation("Asia/Jakarta")
 	today := time.Now().In(loc).Format("Monday, 2 January 2006")
 
-	var prompt string
+	var prompt, systemPrompt string
 	if strings.TrimSpace(userInput) == "" {
 		prompt = fmt.Sprintf("Hari ini %s. Rekomendasikan ayat yang bermakna untuk direnungkan.", today)
+		systemPrompt = recommendVerseSystemPromptNoContext
 	} else {
 		prompt = fmt.Sprintf("Hari ini %s. Situasi atau tema yang sedang saya pikirkan: %s\n\nTolong rekomendasikan ayat yang relevan untuk saya renungkan.", today, userInput)
+		systemPrompt = recommendVerseSystemPromptWithContext
 	}
 	if len(exclude) > 0 {
 		prompt += "\nJangan rekomendasikan ayat-ayat berikut karena sudah pernah ditampilkan: " + strings.Join(exclude, ", ") + "."
 	}
 
-	result, err := c.send(ctx, recommendVerseSystemPrompt, []ChatMessage{{Role: "user", Content: prompt}})
+	result, err := c.send(ctx, systemPrompt, []ChatMessage{{Role: "user", Content: prompt}})
 	if err != nil {
 		return nil, err
+	}
+
+	// Catch TIDAK_RELEVAN even when buried inside thinking/reasoning output
+	if strings.Contains(result, "TIDAK_RELEVAN") {
+		return nil, ErrNotRelevant
 	}
 
 	var recs []VerseRecommendation

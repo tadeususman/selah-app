@@ -38,6 +38,11 @@ func main() {
 		QwenKey:     cfg.QwenAPIKey,
 		QwenModel:   cfg.QwenModel,
 		QwenBaseURL: cfg.QwenBaseURL,
+		OnError: func(errMsg string) {
+			if _, err := pool.Exec(`INSERT INTO ai_error_log (error_msg) VALUES ($1)`, errMsg); err != nil {
+				log.Printf("[ai] error log insert failed: %v", err)
+			}
+		},
 		OnUsage: func(r ai.UsageRecord) {
 			var uid *int64
 			if r.UserID != 0 {

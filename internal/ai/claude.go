@@ -15,6 +15,8 @@ import (
 	"journalflow/internal/middleware"
 )
 
+const maxRetries = 2
+
 const (
 	ProviderBridge = "bridge"
 	ProviderQwen   = "qwen"
@@ -55,6 +57,7 @@ type Config struct {
 	QwenModel   string
 	QwenBaseURL string // defaults to OpenRouter
 	OnUsage     func(r UsageRecord) // optional callback after each Qwen call
+	OnError     func(errMsg string) // optional callback when all retries fail
 }
 
 type Client struct {
@@ -107,10 +110,31 @@ type bridgeResponse struct {
 }
 
 func (c *Client) send(ctx context.Context, system string, history []ChatMessage) (string, error) {
+	var fn func(context.Context, string, []ChatMessage) (string, error)
 	if c.cfg.Provider == ProviderQwen {
-		return c.sendQwen(ctx, system, history)
+		fn = c.sendQwen
+	} else {
+		fn = c.sendBridge
 	}
-	return c.sendBridge(ctx, system, history)
+	var lastErr error
+	for attempt := 0; attempt <= maxRetries; attempt++ {
+		if attempt > 0 {
+			select {
+			case <-ctx.Done():
+				return "", ctx.Err()
+			case <-time.After(time.Duration(attempt) * time.Second):
+			}
+		}
+		result, err := fn(ctx, system, history)
+		if err == nil {
+			return result, nil
+		}
+		lastErr = err
+	}
+	if c.cfg.OnError != nil {
+		c.cfg.OnError(lastErr.Error())
+	}
+	return "", lastErr
 }
 
 func (c *Client) sendBridge(ctx context.Context, system string, history []ChatMessage) (string, error) {
@@ -175,8 +199,11 @@ func (c *Client) sendQwen(ctx context.Context, system string, history []ChatMess
 	}
 
 	payload := map[string]any{
-		"model":    c.cfg.QwenModel,
-		"messages": msgs,
+		"model":              c.cfg.QwenModel,
+		"messages":           msgs,
+		"repetition_penalty": 1.1,
+		"temperature":        0.7,
+		"max_tokens":         1024,
 	}
 	baseURL := c.cfg.QwenBaseURL
 	if baseURL == "" {

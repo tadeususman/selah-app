@@ -256,6 +256,11 @@ type adminAIDailyStat struct {
 	Count int
 }
 
+type adminAIErrorEntry struct {
+	CreatedAt string
+	ErrorMsg  string
+}
+
 type adminAIStatsData struct {
 	Provider    string
 	StatsJSON   string
@@ -263,6 +268,7 @@ type adminAIStatsData struct {
 	UserStats   []adminAIUserStat
 	DailyStats  []adminAIDailyStat
 	Period      *adminAIPeriodStats
+	ErrorLog    []adminAIErrorEntry
 }
 
 func (a *App) AdminAIStats(w http.ResponseWriter, r *http.Request) {
@@ -303,6 +309,23 @@ func (a *App) AdminAIStats(w http.ResponseWriter, r *http.Request) {
 					s.LastActive = "—"
 				}
 				data.UserStats = append(data.UserStats, s)
+			}
+		}
+	}
+
+	// Recent AI errors
+	erows, err := a.DB.QueryContext(r.Context(), `
+		SELECT to_char(created_at AT TIME ZONE 'Asia/Jakarta', 'DD Mon, HH24:MI') AS ts,
+		       error_msg
+		FROM ai_error_log
+		ORDER BY created_at DESC
+		LIMIT 20`)
+	if err == nil {
+		defer erows.Close()
+		for erows.Next() {
+			var e adminAIErrorEntry
+			if erows.Scan(&e.CreatedAt, &e.ErrorMsg) == nil {
+				data.ErrorLog = append(data.ErrorLog, e)
 			}
 		}
 	}

@@ -78,3 +78,11 @@ CREATE TABLE IF NOT EXISTS ai_usage_log (
 ALTER TABLE ai_usage_log ADD COLUMN IF NOT EXISTS user_id BIGINT REFERENCES users(id) ON DELETE SET NULL;
 CREATE INDEX IF NOT EXISTS idx_ai_usage_log_user ON ai_usage_log(user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_ai_usage_log_date ON ai_usage_log(created_at DESC);
+
+-- AI error tracking.
+CREATE TABLE IF NOT EXISTS ai_error_log (
+    id         BIGSERIAL PRIMARY KEY,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    error_msg  TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_ai_error_log_date ON ai_error_log(created_at DESC);

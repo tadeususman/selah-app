@@ -229,6 +229,28 @@
         root.innerHTML = html;
       </script>
     {{end}}
+
+    <div class="admin-section" style="margin-bottom:12px">
+      <h3 style="margin-bottom:10px">Error Log AI <span style="font-size:12px;font-weight:400;color:var(--text-muted)">(20 terakhir)</span></h3>
+      {{if .ErrorLog}}
+      <div style="overflow-x:auto">
+        <table style="width:100%;font-size:12px;border-collapse:collapse">
+          <tr style="color:var(--text-muted);text-align:left">
+            <th style="padding:4px 6px;white-space:nowrap">Waktu</th>
+            <th style="padding:4px 6px">Pesan Error</th>
+          </tr>
+          {{range .ErrorLog}}
+          <tr style="border-top:1px solid var(--border)">
+            <td style="padding:5px 6px;color:var(--text-muted);white-space:nowrap">{{.CreatedAt}}</td>
+            <td style="padding:5px 6px;word-break:break-word;font-family:monospace;font-size:11px">{{.ErrorMsg}}</td>
+          </tr>
+          {{end}}
+        </table>
+      </div>
+      {{else}}
+      <p style="font-size:13px;color:var(--text-muted);margin:0">Tidak ada error yang tercatat.</p>
+      {{end}}
+    </div>
   </main>
   {{template "nav" .}}
 </body>

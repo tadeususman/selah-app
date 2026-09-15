@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"errors"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -98,6 +99,7 @@ func (a *App) VerseRecommend(w http.ResponseWriter, r *http.Request) {
 
 	recs, err := a.AI.RecommendVerse(r.Context(), userInput, exclude)
 	if err != nil {
+		log.Printf("[verse/recommend] AI error (input=%q): %v", userInput, err)
 		writeErr(http.StatusInternalServerError, "Teman Selah sedang tidak bisa dihubungi. Coba lagi sebentar.")
 		return
 	}
@@ -137,6 +139,7 @@ func (a *App) VerseSearch(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			if fetchErr != nil || len(options) == 0 {
+				log.Printf("[verse/search] recommend fallback error (query=%q): %v", query, fetchErr)
 				writeErr(http.StatusNotFound, "Ayat tidak ditemukan. Coba tulis frasa dari Alkitab atau ceritakan situasimu.")
 				return
 			}
@@ -147,6 +150,7 @@ func (a *App) VerseSearch(w http.ResponseWriter, r *http.Request) {
 			})
 			return
 		}
+		log.Printf("[verse/search] AI error (query=%q): %v", query, err)
 		writeErr(http.StatusInternalServerError, "Teman Selah tidak bisa membantu saat ini, coba lagi.")
 		return
 	}

@@ -203,15 +203,15 @@ func (c *Client) sendQwen(ctx context.Context, system string, history []ChatMess
 		"messages":           msgs,
 		"repetition_penalty": 1.1,
 		"temperature":        0.7,
-		"max_tokens":         1024,
+		"max_tokens":         2048,
 	}
 	baseURL := c.cfg.QwenBaseURL
 	if baseURL == "" {
 		baseURL = defaultQwenBaseURL
 	}
-	// Fireworks requires thinking disabled explicitly for Qwen3 models
+	// Fireworks Qwen3 uses chat_template_kwargs to suppress thinking output
 	if strings.Contains(baseURL, "fireworks.ai") {
-		payload["thinking"] = map[string]string{"type": "disabled"}
+		payload["chat_template_kwargs"] = map[string]bool{"enable_thinking": false}
 	}
 	body, err := json.Marshal(payload)
 	if err != nil {

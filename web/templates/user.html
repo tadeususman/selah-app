@@ -68,6 +68,22 @@
       </form>
     </section>
 
+    <section class="admin-section">
+      <h3>Gaya Bahasa</h3>
+      <form method="POST" action="/user/language">
+        <div class="radio-group">
+          <label class="radio-option">
+            <input type="radio" name="language_style" value="casual" {{if ne .LanguageStyle "formal"}}checked{{end}} onchange="this.form.submit()">
+            <span class="radio-option-text">Santai <span class="radio-option-desc">— Teman Selah pakai aku &amp; kamu</span></span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="language_style" value="formal" {{if eq .LanguageStyle "formal"}}checked{{end}} onchange="this.form.submit()">
+            <span class="radio-option-text">Formal <span class="radio-option-desc">— Teman Selah pakai saya &amp; Anda</span></span>
+          </label>
+        </div>
+      </form>
+    </section>
+
     <section class="admin-section danger-section">
       <h3>Hapus Akun</h3>
       <p class="danger-desc">Semua data journal dan riwayat diskusi akan dihapus permanen dan tidak bisa dipulihkan.</p>

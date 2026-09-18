@@ -178,7 +178,26 @@ func (c *Client) sendBridge(ctx context.Context, system string, history []ChatMe
 	if parsed.Error != "" {
 		return "", fmt.Errorf("bridge error: %s", parsed.Error)
 	}
-	return parsed.Output, nil
+	return extractBridgeOutput(parsed.Output), nil
+}
+
+// extractBridgeOutput handles the case where the bridge returns a Claude API
+// tool_use content block as a string instead of plain text. In that case the
+// real response is in input.content.
+func extractBridgeOutput(raw string) string {
+	trimmed := strings.TrimSpace(raw)
+	if !strings.HasPrefix(trimmed, `{"type": "tool_use"`) {
+		return raw
+	}
+	var block struct {
+		Input struct {
+			Content string `json:"content"`
+		} `json:"input"`
+	}
+	if err := json.Unmarshal([]byte(trimmed), &block); err == nil && block.Input.Content != "" {
+		return block.Input.Content
+	}
+	return raw
 }
 
 func (c *Client) sendQwen(ctx context.Context, system string, history []ChatMessage) (string, error) {
@@ -191,9 +210,9 @@ func (c *Client) sendQwen(ctx context.Context, system string, history []ChatMess
 		baseURL = defaultQwenBaseURL
 	}
 
-	// Qwen3 on Fireworks: append /no_think to system prompt as a model-level
-	// soft switch that reliably disables thinking output.
-	if strings.Contains(baseURL, "fireworks.ai") && system != "" {
+	// Qwen3: append /no_think to system prompt as a model-level soft switch
+	// that disables thinking output regardless of provider (Fireworks or OpenRouter).
+	if system != "" {
 		system = system + "\n/no_think"
 	}
 
@@ -216,7 +235,7 @@ func (c *Client) sendQwen(ctx context.Context, system string, history []ChatMess
 		"temperature":        0.7,
 		"max_tokens":         2048,
 	}
-	// Belt-and-suspenders: also pass the API-level flag
+	// Belt-and-suspenders: also pass the API-level flag (Fireworks-specific parameter).
 	if strings.Contains(baseURL, "fireworks.ai") {
 		payload["chat_template_kwargs"] = map[string]bool{"enable_thinking": false}
 	}
@@ -320,10 +339,20 @@ HINDARI:
 - Tiga paragraf rapi yang terstruktur — boleh mengalir bebas
 - Kata ganti "Dia" atau "Ia" untuk merujuk Tuhan atau Yesus — pakai "Tuhan", "Allah", atau "Yesus" langsung`
 
+// formalizePrompt swaps casual Indonesian pronouns (aku/kamu) for formal ones (saya/Anda)
+// in system prompts, to match the user's preferred language style.
+func formalizePrompt(prompt string) string {
+	return strings.ReplaceAll(prompt, `Pakai "aku" dan "kamu"`, `Pakai "saya" dan "Anda"`)
+}
+
 // VerseBackground asks for historical/original-language context for a verse.
-func (c *Client) VerseBackground(ctx context.Context, verseRef, verseText string) (string, error) {
+func (c *Client) VerseBackground(ctx context.Context, verseRef, verseText, langStyle string) (string, error) {
+	sys := backgroundSystemPrompt
+	if langStyle == "formal" {
+		sys = formalizePrompt(sys)
+	}
 	prompt := fmt.Sprintf("Ayat: %s\n\nTeks: %s\n\nTolong jelaskan latar belakang, konteks historis, dan makna ayat ini.", verseRef, verseText)
-	return c.send(ctx, backgroundSystemPrompt, []ChatMessage{{Role: "user", Content: prompt}})
+	return c.send(ctx, sys, []ChatMessage{{Role: "user", Content: prompt}})
 }
 
 const discussSystemPromptLight = `Kamu adalah "Teman Selah" — teman yang beriman dan hangat, menemani saat teduh. Bantu pengguna menggali makna ayat yang sedang direnungkan dan kaitkan dengan kehidupan mereka.
@@ -362,12 +391,15 @@ JANGAN PERNAH:
 // Discuss continues the back-and-forth conversation for an entry.
 // history should include all prior turns so the bridge gets full context.
 // originalLang=true uses the deep prompt with Hebrew/Greek word analysis.
-func (c *Client) Discuss(ctx context.Context, history []ChatMessage, originalLang bool) (string, error) {
-	prompt := discussSystemPromptLight
+func (c *Client) Discuss(ctx context.Context, history []ChatMessage, originalLang bool, langStyle string) (string, error) {
+	sys := discussSystemPromptLight
 	if originalLang {
-		prompt = discussSystemPromptDeep
+		sys = discussSystemPromptDeep
 	}
-	return c.send(ctx, prompt, history)
+	if langStyle == "formal" {
+		sys = formalizePrompt(sys)
+	}
+	return c.send(ctx, sys, history)
 }
 
 const closingSystemPrompt = `Kamu adalah "Teman Selah" — teman rohani yang sudah menemani sesi perenungan ini dari awal sampai akhir.
@@ -523,6 +555,10 @@ func (c *Client) SearchVerse(ctx context.Context, query string) ([]string, error
 
 // ClosingMessage generates a warm closing/encouragement message at the end of a devotion session.
 // history should include the full session context including reflection and practical step.
-func (c *Client) ClosingMessage(ctx context.Context, history []ChatMessage) (string, error) {
-	return c.send(ctx, closingSystemPrompt, history)
+func (c *Client) ClosingMessage(ctx context.Context, history []ChatMessage, langStyle string) (string, error) {
+	sys := closingSystemPrompt
+	if langStyle == "formal" {
+		sys = formalizePrompt(sys)
+	}
+	return c.send(ctx, sys, history)
 }

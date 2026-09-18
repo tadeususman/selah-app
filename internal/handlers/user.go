@@ -14,6 +14,7 @@ type userPageData struct {
 	Name                string
 	IsAdmin             bool
 	DiscussOriginalLang bool
+	LanguageStyle       string
 	Version             string
 	Year                int
 	FlashOK             string
@@ -22,15 +23,18 @@ type userPageData struct {
 
 func (a *App) UserPage(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.UserID(r)
-	var name, email string
+	var name, email, langStyle string
 	var isAdmin, discussOriginalLang bool
 	err := a.DB.QueryRowContext(r.Context(),
-		`SELECT name, email, is_admin, discuss_original_lang FROM users WHERE id = $1`, userID).Scan(&name, &email, &isAdmin, &discussOriginalLang)
+		`SELECT name, email, is_admin, discuss_original_lang, language_style FROM users WHERE id = $1`, userID).Scan(&name, &email, &isAdmin, &discussOriginalLang, &langStyle)
 	if err != nil {
 		http.Error(w, "could not load user", http.StatusInternalServerError)
 		return
 	}
-	data := userPageData{Name: name, Email: email, IsAdmin: isAdmin, DiscussOriginalLang: discussOriginalLang, Version: appconfig.Version, Year: time.Now().Year()}
+	if langStyle == "" {
+		langStyle = "casual"
+	}
+	data := userPageData{Name: name, Email: email, IsAdmin: isAdmin, DiscussOriginalLang: discussOriginalLang, LanguageStyle: langStyle, Version: appconfig.Version, Year: time.Now().Year()}
 	switch r.URL.Query().Get("ok") {
 	case "email":
 		data.FlashOK = "Email berhasil diperbarui."
@@ -40,6 +44,8 @@ func (a *App) UserPage(w http.ResponseWriter, r *http.Request) {
 		data.FlashOK = "Password berhasil diganti."
 	case "prefs":
 		data.FlashOK = "Preferensi berhasil disimpan."
+	case "language":
+		data.FlashOK = "Gaya bahasa berhasil diperbarui."
 	}
 	switch r.URL.Query().Get("err") {
 	case "wrong_password":
@@ -153,6 +159,25 @@ func (a *App) UserUpdatePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.Redirect(w, r, "/user?ok=password", http.StatusSeeOther)
+}
+
+func (a *App) UserUpdateLanguage(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.UserID(r)
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "bad form", http.StatusBadRequest)
+		return
+	}
+	style := r.FormValue("language_style")
+	if style != "casual" && style != "formal" {
+		style = "casual"
+	}
+	_, err := a.DB.ExecContext(r.Context(),
+		`UPDATE users SET language_style = $1 WHERE id = $2`, style, userID)
+	if err != nil {
+		http.Error(w, "could not update language style", http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, "/user?ok=language", http.StatusSeeOther)
 }
 
 func (a *App) UserDeleteAccount(w http.ResponseWriter, r *http.Request) {

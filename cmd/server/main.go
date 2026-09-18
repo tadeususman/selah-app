@@ -108,6 +108,7 @@ func main() {
 		r.Post("/user/name", app.UserUpdateName)
 		r.Post("/user/password", app.UserUpdatePassword)
 		r.Post("/user/prefs", app.UserUpdatePrefs)
+		r.Post("/user/language", app.UserUpdateLanguage)
 		r.Post("/user/delete", app.UserDeleteAccount)
 
 		r.Get("/admin", app.AdminPage)

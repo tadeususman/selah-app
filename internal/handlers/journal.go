@@ -132,10 +132,17 @@ func (a *App) JournalCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var langStyle string
+	_ = a.DB.QueryRowContext(r.Context(),
+		`SELECT language_style FROM users WHERE id = $1`, userID).Scan(&langStyle)
+	if langStyle == "" {
+		langStyle = "casual"
+	}
+
 	// Ask Claude for historical/original-language background before
 	// saving, so the entry is created already populated (matches the
 	// "AI: Search Background Peristiwa" step in the flow).
-	background, aiErr := a.AI.VerseBackground(r.Context(), verseRef, verseText)
+	background, aiErr := a.AI.VerseBackground(r.Context(), verseRef, verseText, langStyle)
 	if aiErr != nil {
 		// Don't block journaling if the AI call fails (e.g. key not
 		// configured yet) — just leave it blank and let the user
@@ -283,11 +290,15 @@ func (a *App) JournalDiscuss(w http.ResponseWriter, r *http.Request) {
 	history = append(history, struct{ Role, Content string }{"user", question})
 
 	var originalLang bool
+	var discussLangStyle string
 	_ = a.DB.QueryRowContext(r.Context(),
-		`SELECT discuss_original_lang FROM users WHERE id = $1`, userID).Scan(&originalLang)
+		`SELECT discuss_original_lang, language_style FROM users WHERE id = $1`, userID).Scan(&originalLang, &discussLangStyle)
+	if discussLangStyle == "" {
+		discussLangStyle = "casual"
+	}
 
 	msgs := toChatMessages(history)
-	answer, err := a.AI.Discuss(r.Context(), msgs, originalLang)
+	answer, err := a.AI.Discuss(r.Context(), msgs, originalLang, discussLangStyle)
 	if err != nil {
 		answer = "Maaf, AI sedang tidak bisa dihubungi. Coba lagi sebentar. (" + err.Error() + ")"
 	}
@@ -351,7 +362,13 @@ func (a *App) JournalComplete(w http.ResponseWriter, r *http.Request) {
 			history = append(history, struct{ Role, Content string }{"user", "Langkah praktis yang aku tulis: " + step})
 		}
 
-		closing, aiErr := a.AI.ClosingMessage(r.Context(), toChatMessages(history))
+		var closingLangStyle string
+		_ = a.DB.QueryRowContext(r.Context(),
+			`SELECT language_style FROM users WHERE id = $1`, entry.UserID).Scan(&closingLangStyle)
+		if closingLangStyle == "" {
+			closingLangStyle = "casual"
+		}
+		closing, aiErr := a.AI.ClosingMessage(r.Context(), toChatMessages(history), closingLangStyle)
 		if aiErr == nil && closing != "" {
 			_, _ = a.DB.ExecContext(r.Context(),
 				`INSERT INTO journal_messages (entry_id, role, content) VALUES ($1, 'ai', $2)`,

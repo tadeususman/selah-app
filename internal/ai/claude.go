@@ -339,10 +339,12 @@ HINDARI:
 - Tiga paragraf rapi yang terstruktur — boleh mengalir bebas
 - Kata ganti "Dia" atau "Ia" untuk merujuk Tuhan atau Yesus — pakai "Tuhan", "Allah", atau "Yesus" langsung`
 
-// formalizePrompt swaps casual Indonesian pronouns (aku/kamu) for formal ones (saya/Anda)
-// in system prompts, to match the user's preferred language style.
+// formalizePrompt swaps casual Indonesian pronouns and adds vocabulary guidance
+// for the formal language style setting.
 func formalizePrompt(prompt string) string {
-	return strings.ReplaceAll(prompt, `Pakai "aku" dan "kamu"`, `Pakai "saya" dan "Anda"`)
+	prompt = strings.ReplaceAll(prompt, `Pakai "aku" dan "kamu"`, `Pakai "saya" dan "Anda"`)
+	prompt += "\nGunakan bahasa Indonesia yang baik, natural, dan mudah dipahami — bukan bahasa tulis yang kaku. Hindari kata tidak baku: gunakan \"membuat\" bukan \"bikin\", \"tidak\" bukan \"nggak/enggak\", \"bagaimana\" bukan \"gimana\", \"seperti\" bukan \"kayak\", \"sangat\" bukan \"banget\", \"sudah\" bukan \"udah\", \"akan\" bukan \"bakal\". Kalimat tetap mengalir alami seperti orang yang sedang berbicara dengan sopan, bukan seperti artikel atau teks formal kaku."
+	return prompt
 }
 
 // VerseBackground asks for historical/original-language context for a verse.

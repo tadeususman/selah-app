@@ -190,6 +190,7 @@ type journalViewData struct {
 	Entry          models.JournalEntry
 	Messages       []models.JournalMessage
 	CompletedCount int
+	LanguageStyle  string
 }
 
 func (a *App) JournalView(w http.ResponseWriter, r *http.Request) {
@@ -222,7 +223,14 @@ func (a *App) JournalView(w http.ResponseWriter, r *http.Request) {
 		`SELECT COUNT(*) FROM journal_entries WHERE user_id = $1 AND status = 'completed'`,
 		entry.UserID).Scan(&completedCount)
 
-	a.render(w, "journal_view.html", journalViewData{Entry: entry, Messages: messages, CompletedCount: completedCount})
+	var viewLangStyle string
+	_ = a.DB.QueryRowContext(r.Context(),
+		`SELECT language_style FROM users WHERE id = $1`, entry.UserID).Scan(&viewLangStyle)
+	if viewLangStyle == "" {
+		viewLangStyle = "casual"
+	}
+
+	a.render(w, "journal_view.html", journalViewData{Entry: entry, Messages: messages, CompletedCount: completedCount, LanguageStyle: viewLangStyle})
 }
 
 // ---- POST /journal/{id}/reflect (save "apa yang didapat setelah membaca") ----

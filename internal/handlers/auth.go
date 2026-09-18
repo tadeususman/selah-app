@@ -79,6 +79,11 @@ func (a *App) RegisterSubmit(w http.ResponseWriter, r *http.Request) {
 	if langStyle != "casual" && langStyle != "formal" {
 		langStyle = "casual"
 	}
+	regTheme := r.FormValue("theme")
+	validThemes := map[string]bool{"default": true, "mawar": true, "lavender": true, "sage": true}
+	if !validThemes[regTheme] {
+		regTheme = "default"
+	}
 
 	if email == "" || password == "" {
 		a.render(w, "register.html", registerPageData{Error: "Email dan password wajib diisi."})
@@ -96,8 +101,8 @@ func (a *App) RegisterSubmit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, err = a.DB.ExecContext(r.Context(),
-		`INSERT INTO users (email, password_hash, name, language_style) VALUES ($1, $2, $3, $4)`,
-		email, string(hash), name, langStyle)
+		`INSERT INTO users (email, password_hash, name, language_style, theme) VALUES ($1, $2, $3, $4, $5)`,
+		email, string(hash), name, langStyle, regTheme)
 	if err != nil {
 		a.render(w, "register.html", registerPageData{Error: "Email sudah terdaftar."})
 		return

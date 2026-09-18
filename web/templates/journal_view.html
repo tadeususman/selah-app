@@ -96,7 +96,7 @@
             </svg>
           </span>
           <span class="action-btn-text">
-            <span>Tulis apa yang kamu dapat</span>
+            <span>{{if eq .LanguageStyle "formal"}}Tulis apa yang Anda dapat{{else}}Tulis apa yang kamu dapat{{end}}</span>
             <span class="action-btn-sub">Diperlukan untuk menyelesaikan journal</span>
           </span>
         </button>
@@ -115,9 +115,9 @@
       </div>
 
       <div id="panel-write" class="action-panel" style="display:none">
-        <div class="panel-header-label">Tulis apa yang kamu dapat</div>
+        <div class="panel-header-label">{{if eq .LanguageStyle "formal"}}Tulis apa yang Anda dapat{{else}}Tulis apa yang kamu dapat{{end}}</div>
         <form method="POST" action="/journal/{{.Entry.ID}}/reflect" class="stacked-form" id="reflect-form">
-          <textarea name="reflection" id="reflect-text" rows="5" placeholder="Tulis refleksimu di sini..."></textarea>
+          <textarea name="reflection" id="reflect-text" rows="5" placeholder="{{if eq .LanguageStyle "formal"}}Tulis refleksi Anda di sini...{{else}}Tulis refleksimu di sini...{{end}}"></textarea>
           <div class="char-counter" id="reflect-counter">0 / 500</div>
           <div class="panel-actions">
             <button type="button" class="btn-ghost" onclick="closePanel()">Batal</button>
@@ -131,7 +131,7 @@
       <div class="action-panel" id="panel-step" style="margin-top:8px">
         <div class="panel-header-label">Langkah singkat <span style="color:var(--text-muted);font-size:12px;font-weight:normal">(opsional)</span></div>
         <form method="POST" action="/journal/{{.Entry.ID}}/complete" class="stacked-form" id="complete-form">
-          <textarea name="practical_step" id="step-text" rows="3" placeholder="Tulis langkah singkatmu..."></textarea>
+          <textarea name="practical_step" id="step-text" rows="3" placeholder="{{if eq .LanguageStyle "formal"}}Tulis langkah singkat Anda...{{else}}Tulis langkah singkatmu...{{end}}"></textarea>
           <div class="char-counter" id="step-counter">0 / 500</div>
           <div class="panel-actions">
             <button type="submit" class="btn-ghost" id="skip-submit" onclick="document.getElementById('step-text').value=''">Lewati</button>

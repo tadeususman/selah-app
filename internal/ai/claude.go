@@ -342,7 +342,7 @@ HINDARI:
 // for the formal language style setting.
 func formalizePrompt(prompt string) string {
 	prompt = strings.ReplaceAll(prompt, `Pakai "aku" dan "kamu"`, `Pakai "saya" dan "Anda"`)
-	prompt += "\nGunakan bahasa Indonesia yang baik, natural, dan mudah dipahami — bukan bahasa tulis yang kaku. Hindari kata tidak baku: gunakan \"membuat\" bukan \"bikin\", \"tidak\" bukan \"nggak/enggak\", \"bagaimana\" bukan \"gimana\", \"seperti\" bukan \"kayak\", \"sangat\" bukan \"banget\", \"sudah\" bukan \"udah\", \"akan\" bukan \"bakal\", \"mengatakan/berkata\" bukan \"bilang\", \"memberikan/memberi\" bukan \"kasih\", \"melihat\" bukan \"lihat\" (di awal kalimat), \"pergi\" bukan \"jalan\", \"bertanya\" bukan \"tanya\". Kalimat tetap mengalir alami seperti orang yang sedang berbicara dengan sopan, bukan seperti artikel atau teks formal kaku."
+	prompt += "\nGunakan bahasa Indonesia yang baik, natural, dan mudah dipahami — bukan bahasa tulis yang kaku. Hindari kata tidak baku: gunakan \"membuat\" bukan \"bikin\", \"tidak\" bukan \"nggak/enggak\", \"bagaimana\" bukan \"gimana\", \"seperti\" bukan \"kayak\", \"sangat\" bukan \"banget\", \"sudah\" bukan \"udah\", \"akan\" bukan \"bakal\", \"mengatakan/berkata\" bukan \"bilang\", \"memberikan\" bukan \"kasih\" dalam arti memberi (contoh: \"memberikan gambaran\" bukan \"kasih gambaran\", \"memberikan contoh\" bukan \"kasih contoh\"), \"melihat\" bukan \"lihat\" (di awal kalimat), \"pergi\" bukan \"jalan\", \"bertanya\" bukan \"tanya\". Kalimat tetap mengalir alami seperti orang yang sedang berbicara dengan sopan, bukan seperti artikel atau teks formal kaku."
 	return prompt
 }
 

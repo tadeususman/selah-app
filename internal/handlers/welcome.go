@@ -32,7 +32,7 @@ func (a *App) WelcomeSubmit(w http.ResponseWriter, r *http.Request) {
 		langStyle = "casual"
 	}
 	theme := r.FormValue("theme")
-	validThemes := map[string]bool{"default": true, "mawar": true, "lavender": true, "sage": true}
+	validThemes := map[string]bool{"default": true, "sakura": true, "rose": true, "lavender": true, "sage": true, "mono": true}
 	if !validThemes[theme] {
 		theme = "default"
 	}

@@ -930,19 +930,34 @@ input:focus, textarea:focus {
 
 /* ---------- Color themes (accent-only — background & text stay default) ---------- */
 
-[data-color="mawar"] {
-  --navy: #A05468;
-  --navy-dark: #7A3D50;
-  --gold: #D4707E;
-  --gold-light: #F9DDE0;
-  --bubble-ai-bg: #FDE8EC;
+[data-color="sakura"] {
+  --navy: #B05580;
+  --navy-dark: #883060;
+  --gold: #E080A0;
+  --gold-light: #FDE0EC;
+  --bubble-ai-bg: #FDE8F2;
 }
-[data-color="mawar"][data-theme="dark"] {
-  --navy: #C4889A;
-  --navy-dark: #DDB0BC;
-  --gold: #D4707E;
-  --gold-light: #4A1E24;
-  --bubble-ai-bg: #2A1820;
+[data-color="sakura"][data-theme="dark"] {
+  --navy: #883060;
+  --navy-dark: #EAA8C8;
+  --gold: #E080A0;
+  --gold-light: #481830;
+  --bubble-ai-bg: #28141E;
+}
+
+[data-color="rose"] {
+  --navy: #A03040;
+  --navy-dark: #782028;
+  --gold: #C85060;
+  --gold-light: #F8D0D4;
+  --bubble-ai-bg: #FDE8EA;
+}
+[data-color="rose"][data-theme="dark"] {
+  --navy: #802838;
+  --navy-dark: #E89098;
+  --gold: #C85060;
+  --gold-light: #481018;
+  --bubble-ai-bg: #281018;
 }
 
 [data-color="lavender"] {
@@ -953,11 +968,11 @@ input:focus, textarea:focus {
   --bubble-ai-bg: #EAE5FA;
 }
 [data-color="lavender"][data-theme="dark"] {
-  --navy: #A899D8;
-  --navy-dark: #C4BAEE;
-  --gold: #9B87CE;
+  --navy: #5A4890;
+  --navy-dark: #C0B0E8;
+  --gold: #9080C8;
   --gold-light: #2D2850;
-  --bubble-ai-bg: #221D38;
+  --bubble-ai-bg: #201C38;
 }
 
 [data-color="sage"] {
@@ -968,18 +983,33 @@ input:focus, textarea:focus {
   --bubble-ai-bg: #E2F0E5;
 }
 [data-color="sage"][data-theme="dark"] {
-  --navy: #6DB888;
-  --navy-dark: #90D0A8;
-  --gold: #5A9E78;
-  --gold-light: #1A3820;
-  --bubble-ai-bg: #182A1E;
+  --navy: #2E6048;
+  --navy-dark: #88C8A0;
+  --gold: #4A8C68;
+  --gold-light: #183820;
+  --bubble-ai-bg: #162A1C;
+}
+
+[data-color="mono"] {
+  --navy: #404040;
+  --navy-dark: #222222;
+  --gold: #808080;
+  --gold-light: #EBEBEB;
+  --bubble-ai-bg: #F2F2F2;
+}
+[data-color="mono"][data-theme="dark"] {
+  --navy: #686868;
+  --navy-dark: #C8C8C8;
+  --gold: #909090;
+  --gold-light: #202020;
+  --bubble-ai-bg: #1A1A1A;
 }
 
 /* ---------- Theme swatches ---------- */
 
 .theme-swatch-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 8px;
 }
 .theme-swatch {

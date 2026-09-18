@@ -193,7 +193,7 @@ func (a *App) UserUpdateTheme(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	theme := r.FormValue("theme")
-	valid := map[string]bool{"default": true, "mawar": true, "lavender": true, "sage": true}
+	valid := map[string]bool{"default": true, "sakura": true, "rose": true, "lavender": true, "sage": true, "mono": true}
 	if !valid[theme] {
 		theme = "default"
 	}

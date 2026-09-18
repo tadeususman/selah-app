@@ -78,10 +78,15 @@
             <span class="swatch-accent" style="background:#F0A93B"></span>
             <span class="swatch-label">Biru Laut</span>
           </button>
-          <button type="button" class="theme-swatch{{if eq .Theme "mawar"}} active{{end}}" data-theme-value="mawar" onclick="pickTheme('mawar')" title="Mawar">
-            <span class="swatch-dot" style="background:#A05468"></span>
-            <span class="swatch-accent" style="background:#D4707E"></span>
-            <span class="swatch-label">Mawar</span>
+          <button type="button" class="theme-swatch{{if eq .Theme "sakura"}} active{{end}}" data-theme-value="sakura" onclick="pickTheme('sakura')" title="Sakura">
+            <span class="swatch-dot" style="background:#B05580"></span>
+            <span class="swatch-accent" style="background:#E080A0"></span>
+            <span class="swatch-label">Sakura</span>
+          </button>
+          <button type="button" class="theme-swatch{{if eq .Theme "rose"}} active{{end}}" data-theme-value="rose" onclick="pickTheme('rose')" title="Rose">
+            <span class="swatch-dot" style="background:#A03040"></span>
+            <span class="swatch-accent" style="background:#C85060"></span>
+            <span class="swatch-label">Rose</span>
           </button>
           <button type="button" class="theme-swatch{{if eq .Theme "lavender"}} active{{end}}" data-theme-value="lavender" onclick="pickTheme('lavender')" title="Lavender">
             <span class="swatch-dot" style="background:#6E5CA8"></span>
@@ -92,6 +97,11 @@
             <span class="swatch-dot" style="background:#3D7A58"></span>
             <span class="swatch-accent" style="background:#5A9E78"></span>
             <span class="swatch-label">Sage</span>
+          </button>
+          <button type="button" class="theme-swatch{{if eq .Theme "mono"}} active{{end}}" data-theme-value="mono" onclick="pickTheme('mono')" title="Mono">
+            <span class="swatch-dot" style="background:#404040"></span>
+            <span class="swatch-accent" style="background:#909090"></span>
+            <span class="swatch-label">Mono</span>
           </button>
         </div>
       </form>

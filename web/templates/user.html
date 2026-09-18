@@ -69,6 +69,35 @@
     </section>
 
     <section class="admin-section">
+      <h3>Tema Warna</h3>
+      <form id="theme-form" method="POST" action="/user/theme">
+        <input type="hidden" name="theme" id="theme-input" value="{{.Theme}}">
+        <div class="theme-swatch-grid">
+          <button type="button" class="theme-swatch{{if eq .Theme "default"}} active{{end}}" data-theme-value="default" onclick="pickTheme('default')" title="Biru Laut">
+            <span class="swatch-dot" style="background:#2C4468"></span>
+            <span class="swatch-accent" style="background:#F0A93B"></span>
+            <span class="swatch-label">Biru Laut</span>
+          </button>
+          <button type="button" class="theme-swatch{{if eq .Theme "mawar"}} active{{end}}" data-theme-value="mawar" onclick="pickTheme('mawar')" title="Mawar">
+            <span class="swatch-dot" style="background:#A05468"></span>
+            <span class="swatch-accent" style="background:#D4707E"></span>
+            <span class="swatch-label">Mawar</span>
+          </button>
+          <button type="button" class="theme-swatch{{if eq .Theme "lavender"}} active{{end}}" data-theme-value="lavender" onclick="pickTheme('lavender')" title="Lavender">
+            <span class="swatch-dot" style="background:#6E5CA8"></span>
+            <span class="swatch-accent" style="background:#9B87CE"></span>
+            <span class="swatch-label">Lavender</span>
+          </button>
+          <button type="button" class="theme-swatch{{if eq .Theme "sage"}} active{{end}}" data-theme-value="sage" onclick="pickTheme('sage')" title="Sage">
+            <span class="swatch-dot" style="background:#3D7A58"></span>
+            <span class="swatch-accent" style="background:#5A9E78"></span>
+            <span class="swatch-label">Sage</span>
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <section class="admin-section">
       <h3>Gaya Bahasa</h3>
       <form method="POST" action="/user/language">
         <div class="radio-group">
@@ -308,6 +337,18 @@
       updateAboutIcon();
       new MutationObserver(updateAboutIcon).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     })();
+  </script>
+  <script>
+  function pickTheme(val) {
+    document.getElementById('theme-input').value = val;
+    localStorage.setItem('selah-color', val);
+    document.documentElement.dataset.color = val === 'default' ? '' : val;
+    if (typeof applyColorTheme === 'function') applyColorTheme(val);
+    document.getElementById('theme-form').submit();
+  }
+  // Sync localStorage with server-side value on settings page load
+  localStorage.setItem('selah-color', '{{.Theme}}');
+  if (typeof applyColorTheme === 'function') applyColorTheme('{{.Theme}}');
   </script>
 </body>
 </html>

@@ -12,12 +12,16 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16-dark.png" media="(prefers-color-scheme: dark)">
 <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
 <link rel="manifest" href="/static/manifest.json">
-<link rel="stylesheet" href="/static/css/style.css?v=23">
+<link rel="stylesheet" href="/static/css/style.css?v=24">
 <script>
   (function() {
     var saved = localStorage.getItem('selah-theme');
     var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     document.documentElement.dataset.theme = saved || (prefersDark ? 'dark' : 'light');
+    var savedColor = localStorage.getItem('selah-color');
+    if (savedColor && savedColor !== 'default') {
+      document.documentElement.dataset.color = savedColor;
+    }
   })();
 </script>
 <script>
@@ -99,5 +103,16 @@
     localStorage.setItem('selah-theme', next);
     applyTheme(next);
   });
+  var colorMeta = document.getElementById('themeColorMeta');
+  var themeColors = { default: '#2C4468', mawar: '#A05468', lavender: '#6E5CA8', sage: '#3D7A58' };
+  function applyColorTheme(c) {
+    if (c && c !== 'default') {
+      document.documentElement.dataset.color = c;
+    } else {
+      delete document.documentElement.dataset.color;
+    }
+    if (colorMeta) colorMeta.content = themeColors[c] || themeColors.default;
+  }
+  applyColorTheme(localStorage.getItem('selah-color') || 'default');
 </script>
 {{end}}

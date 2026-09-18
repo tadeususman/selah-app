@@ -62,7 +62,7 @@
     <section class="thread">
       {{range .Messages}}
         <div class="bubble {{if eq .Role "ai"}}bubble-ai{{else}}bubble-user{{end}}">
-          <div class="bubble-label">{{if eq .Role "ai"}}Teman Selah{{else if eq .Role "reflection"}}Renunganku{{else}}Kamu{{end}}</div>
+          <div class="bubble-label">{{if eq .Role "ai"}}Teman Selah{{else if eq .Role "reflection"}}Renunganku{{else}}{{if eq $.LanguageStyle "formal"}}Anda{{else}}Kamu{{end}}{{end}}</div>
           <div class="bubble-content">{{.Content}}</div>
           <div class="bubble-time">{{msgTime .CreatedAt}}</div>
         </div>
@@ -148,6 +148,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
   <script>
+    var userLabel = '{{if eq .LanguageStyle "formal"}}Anda{{else}}Kamu{{end}}';
     marked.use({ breaks: true, gfm: true });
     document.querySelectorAll('.bubble-ai .bubble-content').forEach(function(el) {
       el.innerHTML = marked.parse(el.textContent);
@@ -201,7 +202,7 @@
         var userContent = document.createElement('div');
         userContent.className = 'bubble-content';
         userContent.textContent = message;
-        userBubble.innerHTML = '<div class="bubble-label">Kamu</div>';
+        userBubble.innerHTML = '<div class="bubble-label">' + userLabel + '</div>';
         userBubble.appendChild(userContent);
         thread.appendChild(userBubble);
 
@@ -259,7 +260,7 @@
         var uc = document.createElement('div');
         uc.className = 'bubble-content';
         uc.textContent = userText;
-        userBubble.innerHTML = '<div class="bubble-label">Kamu</div>';
+        userBubble.innerHTML = '<div class="bubble-label">' + userLabel + '</div>';
         userBubble.appendChild(uc);
         thread.appendChild(userBubble);
       }

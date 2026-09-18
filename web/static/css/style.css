@@ -998,9 +998,9 @@ input:focus, textarea:focus {
   --bubble-ai-bg: #F2F2F2;
 }
 [data-color="mono"][data-theme="dark"] {
-  --navy: #505050;
-  --navy-dark: #C0C0C0;
-  --gold: #909090;
+  --navy: #808080;
+  --navy-dark: #C8C8C8;
+  --gold: #A0A0A0;
   --gold-light: #2C2C2C;
   --bubble-ai-bg: #242424;
 }

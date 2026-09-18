@@ -12,7 +12,7 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16-dark.png" media="(prefers-color-scheme: dark)">
 <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
 <link rel="manifest" href="/static/manifest.json">
-<link rel="stylesheet" href="/static/css/style.css?v=32">
+<link rel="stylesheet" href="/static/css/style.css?v=33">
 <script>
   (function() {
     var saved = localStorage.getItem('selah-theme');
@@ -82,17 +82,17 @@
     <span>Logout</span>
   </a>
   <form id="logout-form" action="/logout" method="POST" style="display:none"></form>
-  <div id="logout-modal" class="modal-backdrop" style="display:none" onclick="if(event.target===this)this.style.display='none'">
-    <div class="modal-card" style="max-width:300px;text-align:center">
-      <p style="font-size:15px;font-weight:700;margin:0 0 6px;color:var(--text)">Logout?</p>
-      <p style="font-size:13px;color:var(--text-muted);margin:0 0 20px;line-height:1.5">Kamu akan keluar dari sesi ini.</p>
-      <div style="display:flex;gap:8px">
-        <button type="button" class="modal-btn-cancel" style="flex:1" onclick="document.getElementById('logout-modal').style.display='none'">Batal</button>
-        <button type="button" class="btn-primary" style="flex:1" onclick="document.getElementById('logout-form').submit()">Ya, Logout</button>
-      </div>
+</nav>
+<div id="logout-modal" class="modal-backdrop" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal-card" style="max-width:300px;text-align:center">
+    <p style="font-size:15px;font-weight:700;margin:0 0 6px;color:var(--text)">Logout?</p>
+    <p style="font-size:13px;color:var(--text-muted);margin:0 0 20px;line-height:1.5">Kamu akan keluar dari sesi ini.</p>
+    <div style="display:flex;gap:8px">
+      <button type="button" class="modal-btn-cancel" style="flex:1" onclick="document.getElementById('logout-modal').style.display='none'">Batal</button>
+      <button type="button" class="btn-primary" style="flex:1" onclick="document.getElementById('logout-form').submit()">Ya, Logout</button>
     </div>
   </div>
-</nav>
+</div>
 
 <script>
   document.querySelectorAll('.nav-item[data-path]').forEach(function(el) {

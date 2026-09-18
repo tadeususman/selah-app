@@ -636,8 +636,7 @@ input:focus, textarea:focus {
   opacity: 1;
   transition: opacity 0.3s ease;
 }
-.bubble-time { font-size: 10px; color: var(--text-muted); margin-top: 4px; opacity: 0.7; }
-[data-theme="dark"] .bubble-time { opacity: 1; }
+.bubble-time { font-size: 10px; color: var(--text-muted); margin-top: 4px; }
 .bubble-content { }
 .bubble-content p { margin: 0 0 8px; }
 .bubble-content p:last-child { margin-bottom: 0; }

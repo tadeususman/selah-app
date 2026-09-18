@@ -998,11 +998,11 @@ input:focus, textarea:focus {
   --bubble-ai-bg: #F2F2F2;
 }
 [data-color="mono"][data-theme="dark"] {
-  --navy: #686868;
-  --navy-dark: #C8C8C8;
-  --gold: #909090;
-  --gold-light: #202020;
-  --bubble-ai-bg: #1A1A1A;
+  --navy: #303030;
+  --navy-dark: #B0B0B0;
+  --gold: #888888;
+  --gold-light: #1E1E1E;
+  --bubble-ai-bg: #181818;
 }
 
 /* ---------- Theme swatches ---------- */

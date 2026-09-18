@@ -60,11 +60,11 @@
         <label>Gaya Bahasa Teman Selah</label>
         <div class="radio-group" style="margin-top:2px">
           <label class="radio-option">
-            <input type="radio" name="language_style" value="casual" checked>
+            <input type="radio" name="language_style" value="casual" checked onchange="onWelcomeLangChange(this)">
             <span class="radio-option-text">Santai <span class="radio-option-desc">— pakai aku &amp; kamu</span></span>
           </label>
           <label class="radio-option">
-            <input type="radio" name="language_style" value="formal">
+            <input type="radio" name="language_style" value="formal" onchange="onWelcomeLangChange(this)">
             <span class="radio-option-text">Formal <span class="radio-option-desc">— pakai saya &amp; Anda</span></span>
           </label>
         </div>
@@ -75,6 +75,12 @@
   </div>
 
   <script>
+    function onWelcomeLangChange(radio) {
+      if (radio.value === 'formal') {
+        localStorage.setItem('selah-theme', 'light');
+        document.documentElement.dataset.theme = 'light';
+      }
+    }
     function pickWelcomeTheme(val) {
       document.getElementById('welcome-theme-input').value = val;
       document.querySelectorAll('.theme-swatch').forEach(function(el) {

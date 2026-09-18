@@ -12,7 +12,7 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16-dark.png" media="(prefers-color-scheme: dark)">
 <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
 <link rel="manifest" href="/static/manifest.json">
-<link rel="stylesheet" href="/static/css/style.css?v=31">
+<link rel="stylesheet" href="/static/css/style.css?v=32">
 <script>
   (function() {
     var saved = localStorage.getItem('selah-theme');
@@ -77,11 +77,21 @@
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="nav-icon-svg"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
     <span>Pengaturan</span>
   </a>
-  <a href="#" class="nav-item" onclick="document.getElementById('logout-form').submit(); return false;">
+  <a href="#" class="nav-item" onclick="document.getElementById('logout-modal').style.display='flex'; return false;">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="nav-icon-svg"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
     <span>Logout</span>
   </a>
   <form id="logout-form" action="/logout" method="POST" style="display:none"></form>
+  <div id="logout-modal" class="modal-backdrop" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+    <div class="modal-card" style="max-width:300px;text-align:center">
+      <p style="font-size:15px;font-weight:700;margin:0 0 6px;color:var(--text)">Logout?</p>
+      <p style="font-size:13px;color:var(--text-muted);margin:0 0 20px;line-height:1.5">Kamu akan keluar dari sesi ini.</p>
+      <div style="display:flex;gap:8px">
+        <button type="button" class="modal-btn-cancel" style="flex:1" onclick="document.getElementById('logout-modal').style.display='none'">Batal</button>
+        <button type="button" class="btn-primary" style="flex:1" onclick="document.getElementById('logout-form').submit()">Ya, Logout</button>
+      </div>
+    </div>
+  </div>
 </nav>
 
 <script>

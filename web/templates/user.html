@@ -112,11 +112,11 @@
       <form method="POST" action="/user/language">
         <div class="radio-group">
           <label class="radio-option">
-            <input type="radio" name="language_style" value="casual" {{if ne .LanguageStyle "formal"}}checked{{end}} onchange="this.form.submit()">
+            <input type="radio" name="language_style" value="casual" {{if ne .LanguageStyle "formal"}}checked{{end}} onchange="onLangChange(this)">
             <span class="radio-option-text">Santai <span class="radio-option-desc">— Teman Selah pakai aku &amp; kamu</span></span>
           </label>
           <label class="radio-option">
-            <input type="radio" name="language_style" value="formal" {{if eq .LanguageStyle "formal"}}checked{{end}} onchange="this.form.submit()">
+            <input type="radio" name="language_style" value="formal" {{if eq .LanguageStyle "formal"}}checked{{end}} onchange="onLangChange(this)">
             <span class="radio-option-text">Formal <span class="radio-option-desc">— Teman Selah pakai saya &amp; Anda</span></span>
           </label>
         </div>
@@ -355,6 +355,13 @@
     document.documentElement.dataset.color = val === 'default' ? '' : val;
     if (typeof applyColorTheme === 'function') applyColorTheme(val);
     document.getElementById('theme-form').submit();
+  }
+  function onLangChange(radio) {
+    if (radio.value === 'formal') {
+      localStorage.setItem('selah-theme', 'light');
+      if (typeof applyTheme === 'function') applyTheme('light');
+    }
+    radio.form.submit();
   }
   // Sync localStorage with server-side value on settings page load
   localStorage.setItem('selah-color', '{{.Theme}}');

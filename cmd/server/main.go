@@ -88,6 +88,9 @@ func main() {
 	r.Group(func(r chi.Router) {
 		r.Use(authmw.RequireAuth(sessions))
 
+		r.Get("/welcome", app.WelcomePage)
+		r.Post("/welcome", app.WelcomeSubmit)
+
 		r.Get("/dashboard", app.Dashboard)
 
 		r.Get("/journal", app.JournalList)

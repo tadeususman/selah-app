@@ -34,9 +34,10 @@ func (a *App) LoginSubmit(w http.ResponseWriter, r *http.Request) {
 
 	var userID int64
 	var hash string
+	var onboarded bool
 	err := a.DB.QueryRowContext(r.Context(),
-		`SELECT id, password_hash FROM users WHERE email = $1`, email).
-		Scan(&userID, &hash)
+		`SELECT id, password_hash, onboarded FROM users WHERE email = $1`, email).
+		Scan(&userID, &hash, &onboarded)
 
 	if err != nil || bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)) != nil {
 		a.render(w, "login.html", loginPageData{Error: "Email atau password salah."})
@@ -45,6 +46,10 @@ func (a *App) LoginSubmit(w http.ResponseWriter, r *http.Request) {
 
 	if err := a.Sessions.Create(w, r, userID); err != nil {
 		http.Error(w, "could not start session", http.StatusInternalServerError)
+		return
+	}
+	if !onboarded {
+		http.Redirect(w, r, "/welcome", http.StatusSeeOther)
 		return
 	}
 	http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
@@ -75,15 +80,6 @@ func (a *App) RegisterSubmit(w http.ResponseWriter, r *http.Request) {
 	email := r.FormValue("email")
 	password := r.FormValue("password")
 	name := r.FormValue("name")
-	langStyle := r.FormValue("language_style")
-	if langStyle != "casual" && langStyle != "formal" {
-		langStyle = "casual"
-	}
-	regTheme := r.FormValue("theme")
-	validThemes := map[string]bool{"default": true, "mawar": true, "lavender": true, "sage": true}
-	if !validThemes[regTheme] {
-		regTheme = "default"
-	}
 
 	if email == "" || password == "" {
 		a.render(w, "register.html", registerPageData{Error: "Email dan password wajib diisi."})
@@ -101,8 +97,8 @@ func (a *App) RegisterSubmit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, err = a.DB.ExecContext(r.Context(),
-		`INSERT INTO users (email, password_hash, name, language_style, theme) VALUES ($1, $2, $3, $4, $5)`,
-		email, string(hash), name, langStyle, regTheme)
+		`INSERT INTO users (email, password_hash, name, onboarded) VALUES ($1, $2, $3, false)`,
+		email, string(hash), name)
 	if err != nil {
 		a.render(w, "register.html", registerPageData{Error: "Email sudah terdaftar."})
 		return

@@ -1,0 +1,83 @@
+{{define "welcome.html"}}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <title>Selamat datang · selah,</title>
+  {{template "head" .}}
+</head>
+<body class="auth-body">
+
+  <div class="auth-top" style="flex:0;padding:36px 24px 24px">
+    <h1 class="auth-wordmark">selah<span class="auth-dot">,</span></h1>
+    <p class="auth-tagline">ruang jeda untuk merenung.</p>
+  </div>
+
+  <div class="auth-sheet" style="flex:1;overflow-y:auto">
+    <h2 class="auth-sheet-title" style="margin-bottom:6px">Halo, {{.UserName}}! 👋</h2>
+    <p style="font-size:13px;color:var(--text-muted);margin:0 0 24px;line-height:1.5">Sebelum mulai, sesuaikan selah, agar terasa seperti ruangmu sendiri.</p>
+
+    <form method="POST" action="/welcome" class="auth-form-new">
+
+      <div class="auth-field">
+        <label>Tema Warna</label>
+        <p style="font-size:11px;color:var(--text-muted);margin:2px 0 10px;line-height:1.4">Ketuk untuk langsung preview — halaman ini akan berubah warna.</p>
+        <input type="hidden" name="theme" id="welcome-theme-input" value="default">
+        <div class="theme-swatch-grid">
+          <button type="button" class="theme-swatch active" data-theme-value="default" onclick="pickWelcomeTheme('default')">
+            <span class="swatch-dot" style="background:#2C4468"></span>
+            <span class="swatch-accent" style="background:#F0A93B"></span>
+            <span class="swatch-label">Biru Laut</span>
+          </button>
+          <button type="button" class="theme-swatch" data-theme-value="mawar" onclick="pickWelcomeTheme('mawar')">
+            <span class="swatch-dot" style="background:#A05468"></span>
+            <span class="swatch-accent" style="background:#D4707E"></span>
+            <span class="swatch-label">Mawar</span>
+          </button>
+          <button type="button" class="theme-swatch" data-theme-value="lavender" onclick="pickWelcomeTheme('lavender')">
+            <span class="swatch-dot" style="background:#6E5CA8"></span>
+            <span class="swatch-accent" style="background:#9B87CE"></span>
+            <span class="swatch-label">Lavender</span>
+          </button>
+          <button type="button" class="theme-swatch" data-theme-value="sage" onclick="pickWelcomeTheme('sage')">
+            <span class="swatch-dot" style="background:#3D7A58"></span>
+            <span class="swatch-accent" style="background:#5A9E78"></span>
+            <span class="swatch-label">Sage</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="auth-field">
+        <label>Gaya Bahasa Teman Selah</label>
+        <div class="radio-group" style="margin-top:2px">
+          <label class="radio-option">
+            <input type="radio" name="language_style" value="casual" checked>
+            <span class="radio-option-text">Santai <span class="radio-option-desc">— pakai aku &amp; kamu</span></span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="language_style" value="formal">
+            <span class="radio-option-text">Formal <span class="radio-option-desc">— pakai saya &amp; Anda</span></span>
+          </label>
+        </div>
+      </div>
+
+      <button type="submit" class="auth-btn" style="margin-top:8px">Mulai →</button>
+    </form>
+  </div>
+
+  <script>
+    function pickWelcomeTheme(val) {
+      document.getElementById('welcome-theme-input').value = val;
+      document.querySelectorAll('.theme-swatch').forEach(function(el) {
+        el.classList.toggle('active', el.dataset.themeValue === val);
+      });
+      if (val === 'default') {
+        delete document.documentElement.dataset.color;
+      } else {
+        document.documentElement.dataset.color = val;
+      }
+      localStorage.setItem('selah-color', val);
+    }
+  </script>
+</body>
+</html>
+{{end}}

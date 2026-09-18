@@ -1601,7 +1601,7 @@ input:focus, textarea:focus {
 .theme-toggle-top {
   position: fixed;
   top: 16px;
-  right: max(16px, calc(50vw - 240px + 16px));
+  right: max(24px, calc(50vw - 240px + 24px));
   width: 36px;
   height: 36px;
   border-radius: 50%;

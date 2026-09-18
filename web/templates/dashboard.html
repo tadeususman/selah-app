@@ -69,13 +69,13 @@
     var steps = [
       {
         title: 'Selamat datang di selah, 🙏',
-        body: 'selah adalah ruang jeda harianmu untuk merenungkan firman Tuhan bersama Teman Selah.',
+        body: '{{if eq .LanguageStyle "formal"}}selah adalah ruang jeda harian Anda untuk merenungkan firman Tuhan bersama Teman Selah.{{else}}selah adalah ruang jeda harianmu untuk merenungkan firman Tuhan bersama Teman Selah.{{end}}',
         btn: 'Lihat tur singkat',
       },
       {
         target: '.fab',
         title: 'Tambah Journal Baru',
-        body: 'Ketuk tombol ini, masukkan ayat favoritmu, lalu Teman Selah akan membantu merenungkannya.',
+        body: '{{if eq .LanguageStyle "formal"}}Ketuk tombol ini, masukkan ayat favorit Anda, lalu Teman Selah akan membantu merenungkannya.{{else}}Ketuk tombol ini, masukkan ayat favoritmu, lalu Teman Selah akan membantu merenungkannya.{{end}}',
         btn: 'Lanjut',
       },
       {
@@ -86,7 +86,7 @@
       },
       {
         title: 'Siap memulai! ✨',
-        body: 'Yuk tulis renungan pertama kamu sekarang. Pilih ayat favoritmu dan Teman Selah siap menemanimu.',
+        body: '{{if eq .LanguageStyle "formal"}}Mari tulis renungan pertama Anda sekarang. Pilih ayat favorit Anda dan Teman Selah siap menemani.{{else}}Yuk tulis renungan pertama kamu sekarang. Pilih ayat favoritmu dan Teman Selah siap menemanimu.{{end}}',
         btn: 'Mulai Renungan Pertama',
         href: '/journal/new',
         hideSkip: true,

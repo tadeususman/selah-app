@@ -9,7 +9,7 @@
   <main class="page">
     <header class="page-header">
       <a href="/dashboard" class="back-link">← Kembali</a>
-      <h1>Ayat apa yang ingin kamu renungkan hari ini?</h1>
+      <h1>{{if eq .LanguageStyle "formal"}}Ayat apa yang ingin Anda renungkan hari ini?{{else}}Ayat apa yang ingin kamu renungkan hari ini?{{end}}</h1>
     </header>
 
     <div class="modal-backdrop" id="new-hint" style="display:none" onclick="if(event.target===this)closeHint()">
@@ -22,7 +22,7 @@
               <strong>Pilih ayat</strong> — ada beberapa cara:<br>
               <span style="display:block;margin-top:6px">Tahu referensinya → isi kolom <strong>Referensi ayat</strong>, ketuk <strong>Ambil ayat</strong></span>
               <span style="display:block;margin-top:4px">Ingat kata-katanya → tulis frasa di <strong>Teks ayat</strong>, ketuk <strong>Cari ayat</strong></span>
-              <span style="display:block;margin-top:4px">Belum tahu → ceritakan apa yang sedang kamu rasakan di <strong>Teks ayat</strong>, ketuk <strong>Cari ayat</strong> — Teman Selah akan carikan</span>
+              <span style="display:block;margin-top:4px">Belum tahu → ceritakan apa yang sedang {{if eq .LanguageStyle "formal"}}Anda rasakan{{else}}kamu rasakan{{end}} di <strong>Teks ayat</strong>, ketuk <strong>Cari ayat</strong> — Teman Selah akan carikan</span>
               <span style="display:block;margin-top:4px">Mau dicarikan langsung → ketuk tombol <strong>✦ Pilihkan Ayat</strong> di samping kolom referensi</span>
             </div>
           </div>
@@ -39,7 +39,7 @@
           <div class="hint-arrow">↓</div>
           <div class="hint-step">
             <div class="hint-num">4</div>
-            <div class="hint-text"><strong>Tulis refleksi</strong> — apa yang kamu terima dari perenungan ini</div>
+            <div class="hint-text"><strong>Tulis refleksi</strong> — apa yang {{if eq .LanguageStyle "formal"}}Anda terima{{else}}kamu terima{{end}} dari perenungan ini</div>
           </div>
           <div class="hint-arrow">↓</div>
           <div class="hint-step">
@@ -163,7 +163,7 @@
     }
 
     var VERSE_MAX = 1000;
-    var VERSE_TEXT_PLACEHOLDER = "Ketik atau tempel ayat di sini. Tidak tahu referensinya? Tulis frasa yang kamu ingat, atau ceritakan apa yang sedang kamu rasakan — Teman Selah akan carikan ayatnya.";
+    var VERSE_TEXT_PLACEHOLDER = "{{if eq .LanguageStyle "formal"}}Ketik atau tempel ayat di sini. Tidak tahu referensinya? Tulis frasa yang Anda ingat, atau ceritakan apa yang sedang Anda rasakan — Teman Selah akan carikan ayatnya.{{else}}Ketik atau tempel ayat di sini. Tidak tahu referensinya? Tulis frasa yang kamu ingat, atau ceritakan apa yang sedang kamu rasakan — Teman Selah akan carikan ayatnya.{{end}}";
     var SPARKLE_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="vertical-align:-2px;margin-right:5px;flex-shrink:0;color:var(--gold)"><path d="M9 4.5a.75.75 0 0 1 .721.544l.813 2.846a3.75 3.75 0 0 0 2.576 2.576l2.846.813a.75.75 0 0 1 0 1.442l-2.846.813a3.75 3.75 0 0 0-2.576 2.576l-.813 2.846a.75.75 0 0 1-1.442 0l-.813-2.846a3.75 3.75 0 0 0-2.576-2.576l-2.846-.813a.75.75 0 0 1 0-1.442l2.846-.813A3.75 3.75 0 0 0 7.466 7.89l.813-2.846A.75.75 0 0 1 9 4.5ZM18 1.5a.75.75 0 0 1 .728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 0 1 0 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 0 1-1.456 0l-.258-1.036a2.625 2.625 0 0 0-1.91-1.91l-1.036-.258a.75.75 0 0 1 0-1.456l1.036-.258a2.625 2.625 0 0 0 1.91-1.91l.258-1.036A.75.75 0 0 1 18 1.5ZM16.5 15a.75.75 0 0 1 .712.513l.394 1.183c.15.447.5.799.948.948l1.183.394a.75.75 0 0 1 0 1.422l-1.183.395c-.447.15-.799.5-.948.948l-.395 1.183a.75.75 0 0 1-1.422 0l-.395-1.183a1.5 1.5 0 0 0-.948-.948l-1.183-.395a.75.75 0 0 1 0-1.422l1.183-.395c.447-.15.799-.5.948-.948l.395-1.183A.75.75 0 0 1 16.5 15Z"/></svg>';
     var verseRefEl  = document.getElementById('verse-ref');
     var verseTextEl = document.getElementById('verse-text');

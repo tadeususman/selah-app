@@ -57,14 +57,26 @@ func (a *App) JournalList(w http.ResponseWriter, r *http.Request) {
 // ---- GET /journal/new (step 1: ask which verse to reflect on) ----
 
 type journalNewData struct {
-	UserID int64
-	Error  string
+	UserID        int64
+	Error         string
+	LanguageStyle string
 }
 
 func (a *App) JournalNewPage(w http.ResponseWriter, r *http.Request) {
-	data := journalNewData{UserID: middleware.UserID(r)}
+	userID := middleware.UserID(r)
+	var langStyle string
+	_ = a.DB.QueryRowContext(r.Context(),
+		`SELECT language_style FROM users WHERE id = $1`, userID).Scan(&langStyle)
+	if langStyle == "" {
+		langStyle = "casual"
+	}
+	data := journalNewData{UserID: userID, LanguageStyle: langStyle}
 	if r.URL.Query().Get("err") == "rate_limit" {
-		data.Error = "Kamu sudah membuat 10 journal hari ini. Coba lagi besok ya. 🙏"
+		if langStyle == "formal" {
+			data.Error = "Anda sudah membuat 10 journal hari ini. Coba lagi besok. 🙏"
+		} else {
+			data.Error = "Kamu sudah membuat 10 journal hari ini. Coba lagi besok ya. 🙏"
+		}
 	}
 	a.render(w, "journal_new.html", data)
 }

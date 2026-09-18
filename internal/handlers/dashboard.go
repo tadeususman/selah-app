@@ -9,20 +9,24 @@ import (
 )
 
 type dashboardData struct {
-	UserID     int64
-	UserName   string
-	Greeting   string
-	MonthLabel string
-	Entries    []models.Preview
+	UserID        int64
+	UserName      string
+	Greeting      string
+	MonthLabel    string
+	Entries       []models.Preview
+	LanguageStyle string
 }
 
 func (a *App) Dashboard(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.UserID(r)
 	now := time.Now()
 
-	var userName string
+	var userName, langStyle string
 	_ = a.DB.QueryRowContext(r.Context(),
-		`SELECT name FROM users WHERE id = $1`, userID).Scan(&userName)
+		`SELECT name, language_style FROM users WHERE id = $1`, userID).Scan(&userName, &langStyle)
+	if langStyle == "" {
+		langStyle = "casual"
+	}
 
 	monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
 	monthEnd := monthStart.AddDate(0, 1, 0)
@@ -70,10 +74,11 @@ func (a *App) Dashboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	a.render(w, "dashboard.html", dashboardData{
-		UserID:     userID,
-		UserName:   userName,
-		Greeting:   greeting,
-		MonthLabel: monthLabel,
-		Entries:    entries,
+		UserID:        userID,
+		UserName:      userName,
+		Greeting:      greeting,
+		MonthLabel:    monthLabel,
+		Entries:       entries,
+		LanguageStyle: langStyle,
 	})
 }

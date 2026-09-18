@@ -1420,6 +1420,7 @@ input:focus, textarea:focus {
   letter-spacing: 0.04em;
   margin-bottom: 3px;
 }
+[data-theme="dark"] .list-verse-ref { color: var(--navy-dark); }
 .list-verse-text {
   font-size: 13px;
   color: var(--text-muted);

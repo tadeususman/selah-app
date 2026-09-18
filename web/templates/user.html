@@ -148,7 +148,22 @@
       <div class="modal-card changelog-modal" style="max-height:80vh;overflow-y:auto">
 
         <div class="changelog-modal-header">
-          <span class="about-version">v0.5.1</span>
+          <span class="about-version">v0.5.2</span>
+          <span class="changelog-date">19 Sep 2026</span>
+        </div>
+        <ul class="changelog-list" style="margin-bottom:20px">
+          <li>6 pilihan tema warna — <strong>Sakura</strong> (pink), <strong>Rose</strong> (merah), <strong>Mono</strong> (abu-abu) — dan perbaikan kontras di semua tema mode gelap</li>
+          <li>Pilihan <strong>Gaya Bahasa Formal</strong> — kosakata lebih baku, label "Anda" di bubble chat, otomatis beralih ke mode terang</li>
+          {{if .IsAdmin}}
+          <li>Halaman sambutan untuk pengguna baru — pilih tema & gaya bahasa saat pertama kali masuk</li>
+          <li>Konfirmasi sebelum logout — tidak bisa tidak sengaja keluar</li>
+          <li>Penjelasan ayat lebih ringkas dan padat</li>
+          <li>Jam di bubble chat lebih terbaca di semua tema dan mode</li>
+          {{end}}
+        </ul>
+
+        <div class="changelog-modal-header">
+          <span class="about-version" style="background:var(--text-muted)">v0.5.1</span>
           <span class="changelog-date">12 Sep 2026</span>
         </div>
         <ul class="changelog-list" style="margin-bottom:20px">

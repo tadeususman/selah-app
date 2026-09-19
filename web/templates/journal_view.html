@@ -4,6 +4,7 @@
 <head>
   <title>{{idDate .Entry.EntryDate}} · selah,</title>
   {{template "head" .}}
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@1,400&family=Playfair+Display:wght@700&display=swap">
 </head>
 <body>
   <main class="page">
@@ -458,14 +459,14 @@
 
       // Verse reference
       ctx.fillStyle = refColor;
-      ctx.font = '700 52px “Plus Jakarta Sans”, sans-serif';
+      ctx.font = '700 52px “Playfair Display”, serif';
       ctx.textAlign = 'center';
       var ref = d.verseRef.length > 38 ? d.verseRef.slice(0, 38) + '…' : d.verseRef;
       ctx.fillText(ref, W / 2, 310);
 
       // Verse text — full, no character limit
       ctx.fillStyle = verseTxt;
-      ctx.font = 'italic 500 38px Georgia, serif';
+      ctx.font = 'italic 400 38px Lora, serif';
       ctx.textAlign = 'center';
       var vtLines = wrapCanvasText(ctx, '“' + d.verseText + '”', W - pad * 2 - 40);
       var vtY = 390;

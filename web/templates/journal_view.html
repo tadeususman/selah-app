@@ -79,6 +79,7 @@
       data-date="{{idDate .Entry.EntryDate}}"
       data-weekday="{{idDay .Entry.EntryDate}}"
       data-summary="{{.Entry.ShareSummary}}"
+      data-username="{{.UserName}}"
       style="padding:4px 0 12px;max-width:420px;margin:0 auto">
       <canvas id="share-canvas" style="width:100%;height:auto;border-radius:12px;display:block"></canvas>
       <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:12px">
@@ -568,22 +569,30 @@
 
       // ── Watermark ──
       ctx.fillStyle = wm;
-      ctx.font = '400 28px “Plus Jakarta Sans”, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('selah-app.my.id', W / 2, H - 54);
+      var username = shareSection.dataset.username || '';
+      if (username) {
+        ctx.font = '600 30px “Plus Jakarta Sans”, sans-serif';
+        ctx.fillText('— ' + username, W / 2, H - 88);
+        ctx.font = '400 26px “Plus Jakarta Sans”, sans-serif';
+        ctx.fillText('selah-app.my.id', W / 2, H - 50);
+      } else {
+        ctx.font = '400 28px “Plus Jakarta Sans”, sans-serif';
+        ctx.fillText('selah-app.my.id', W / 2, H - 54);
+      }
     }
 
     function shareHandler() {
       var d = shareSection.dataset;
-      var text = d.verseRef + '\n\n”' + d.verseText + '”\n\n' + d.summary + '\n\n— Selah, jurnal devotional';
-      var filename = 'selah-hari-ke-' + d.day + '.png';
+      var caption = 'Selah · ' + d.verseRef + '\nDaily Devotion Journal\nhttps://selah-app.my.id' + (d.username ? '\n— ' + d.username : '');
+      var filename = 'selah-' + d.verseRef.replace(/[^a-zA-Z0-9]/g, '-') + '.png';
       var btn = this;
 
       function fallbackTextShare() {
         if (navigator.share) {
-          navigator.share({ title: 'Selah · ' + d.verseRef, text: text, url: 'https://selah-app.my.id' }).catch(function() {});
+          navigator.share({ title: 'Selah · ' + d.verseRef, text: caption }).catch(function() {});
         } else if (navigator.clipboard) {
-          navigator.clipboard.writeText(text).then(function() {
+          navigator.clipboard.writeText(caption).then(function() {
             var prev = btn.innerHTML;
             btn.textContent = 'Tersalin!';
             setTimeout(function() { btn.innerHTML = prev; }, 2000);
@@ -595,7 +604,7 @@
         shareCanvas.toBlob(function(blob) {
           var file = new File([blob], filename, { type: 'image/png' });
           if (navigator.canShare({ files: [file] })) {
-            navigator.share({ title: 'Selah · ' + d.verseRef, text: text, files: [file] }).catch(function() {});
+            navigator.share({ title: 'Selah · ' + d.verseRef, text: caption, files: [file] }).catch(function() {});
           } else {
             fallbackTextShare();
           }

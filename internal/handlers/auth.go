@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
+	"unicode"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -12,7 +14,6 @@ type loginPageData struct {
 }
 
 func (a *App) LoginPage(w http.ResponseWriter, r *http.Request) {
-	// Already logged in? skip straight to dashboard.
 	if _, ok := a.Sessions.UserID(r); ok {
 		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 		return
@@ -29,18 +30,27 @@ func (a *App) LoginSubmit(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "bad form", http.StatusBadRequest)
 		return
 	}
-	email := r.FormValue("email")
+	identifier := strings.TrimSpace(r.FormValue("identifier"))
 	password := r.FormValue("password")
 
 	var userID int64
 	var hash string
 	var onboarded bool
-	err := a.DB.QueryRowContext(r.Context(),
-		`SELECT id, password_hash, onboarded FROM users WHERE email = $1`, email).
-		Scan(&userID, &hash, &onboarded)
+	var err error
+
+	if strings.Contains(identifier, "@") {
+		err = a.DB.QueryRowContext(r.Context(),
+			`SELECT id, password_hash, onboarded FROM users WHERE email = $1`, identifier).
+			Scan(&userID, &hash, &onboarded)
+	} else {
+		phone := normalizePhone(identifier)
+		err = a.DB.QueryRowContext(r.Context(),
+			`SELECT id, password_hash, onboarded FROM users WHERE phone = $1`, phone).
+			Scan(&userID, &hash, &onboarded)
+	}
 
 	if err != nil || bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)) != nil {
-		a.render(w, "login.html", loginPageData{Error: "Email atau password salah."})
+		a.render(w, "login.html", loginPageData{Error: "Email/nomor HP atau password salah."})
 		return
 	}
 
@@ -77,12 +87,12 @@ func (a *App) RegisterSubmit(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "bad form", http.StatusBadRequest)
 		return
 	}
-	email := r.FormValue("email")
+	identifier := strings.TrimSpace(r.FormValue("identifier"))
 	password := r.FormValue("password")
 	name := r.FormValue("name")
 
-	if email == "" || password == "" {
-		a.render(w, "register.html", registerPageData{Error: "Email dan password wajib diisi."})
+	if identifier == "" {
+		a.render(w, "register.html", registerPageData{Error: "Email atau nomor HP wajib diisi."})
 		return
 	}
 	if len(password) < 8 {
@@ -96,13 +106,46 @@ func (a *App) RegisterSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = a.DB.ExecContext(r.Context(),
-		`INSERT INTO users (email, password_hash, name, onboarded) VALUES ($1, $2, $3, false)`,
-		email, string(hash), name)
-	if err != nil {
-		a.render(w, "register.html", registerPageData{Error: "Email sudah terdaftar."})
-		return
+	if strings.Contains(identifier, "@") {
+		_, err = a.DB.ExecContext(r.Context(),
+			`INSERT INTO users (email, password_hash, name, onboarded) VALUES ($1, $2, $3, false)`,
+			identifier, string(hash), name)
+		if err != nil {
+			a.render(w, "register.html", registerPageData{Error: "Email sudah terdaftar."})
+			return
+		}
+	} else {
+		phone := normalizePhone(identifier)
+		_, err = a.DB.ExecContext(r.Context(),
+			`INSERT INTO users (phone, password_hash, name, onboarded) VALUES ($1, $2, $3, false)`,
+			phone, string(hash), name)
+		if err != nil {
+			a.render(w, "register.html", registerPageData{Error: "Nomor HP sudah terdaftar."})
+			return
+		}
 	}
 
 	http.Redirect(w, r, "/login?registered=1", http.StatusSeeOther)
+}
+
+// normalizePhone converts Indonesian phone formats to +62xxxxxxxxxx.
+func normalizePhone(s string) string {
+	var b strings.Builder
+	for _, r := range s {
+		if unicode.IsDigit(r) || r == '+' {
+			b.WriteRune(r)
+		}
+	}
+	p := b.String()
+	switch {
+	case strings.HasPrefix(p, "+62"):
+		return p
+	case strings.HasPrefix(p, "62"):
+		return "+" + p
+	case strings.HasPrefix(p, "0"):
+		return "+62" + p[1:]
+	case strings.HasPrefix(p, "8"):
+		return "+62" + p
+	}
+	return p
 }

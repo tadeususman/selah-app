@@ -102,7 +102,7 @@
   }
 
   .share-card-mini {
-    background: var(--navy);
+    background: #F7F3EC;
     border-radius: 16px;
     padding: 20px 18px 16px;
     display: flex;
@@ -116,7 +116,6 @@
     font-family: 'Playfair Display', serif;
     font-size: 15px;
     font-weight: 700;
-    color: var(--gold);
     letter-spacing: 0.01em;
   }
 
@@ -124,7 +123,6 @@
     font-family: 'Lora', serif;
     font-size: 13px;
     font-style: italic;
-    color: rgba(255,255,255,0.88);
     line-height: 1.55;
     margin: 0;
     flex: 1;
@@ -132,7 +130,6 @@
 
   .share-card-mini-date {
     font-size: 11px;
-    color: rgba(255,255,255,0.45);
     font-family: 'Plus Jakarta Sans', sans-serif;
   }
 
@@ -140,8 +137,7 @@
     display: block;
     text-align: center;
     background: transparent;
-    border: 1.5px solid var(--navy);
-    color: var(--navy);
+    border: 1.5px solid currentColor;
     border-radius: 10px;
     padding: 9px 0;
     font-size: 13px;
@@ -151,8 +147,7 @@
     transition: background 0.15s, color 0.15s;
   }
   .btn-bagikan:active {
-    background: var(--navy);
-    color: white;
+    color: white !important;
   }
 
   .section-link {
@@ -262,6 +257,39 @@
     }
 
     render(0);
+  })();
+
+  // Apply theme color to share card mini previews
+  (function() {
+    var themeColors = {
+      default:  [44,  68,  104],
+      sakura:   [176, 85,  128],
+      rose:     [160, 48,  64 ],
+      lavender: [110, 92,  168],
+      sage:     [61,  122, 88 ],
+      mono:     [64,  64,  64 ]
+    };
+    var tc = themeColors[localStorage.getItem('selah-color')] || themeColors.default;
+    var hex = '#' + tc.map(function(v){ return ('0'+v.toString(16)).slice(-2); }).join('');
+    function rgba(a) { return 'rgba('+tc[0]+','+tc[1]+','+tc[2]+','+a+')'; }
+
+    document.querySelectorAll('.share-card-mini').forEach(function(card) {
+      card.querySelector('.share-card-mini-ref').style.color   = hex;
+      card.querySelector('.share-card-mini-summary').style.color = rgba(0.82);
+      card.querySelector('.share-card-mini-date').style.color  = rgba(0.45);
+    });
+    document.querySelectorAll('.btn-bagikan').forEach(function(btn) {
+      btn.style.color       = hex;
+      btn.style.borderColor = hex;
+      btn.addEventListener('pointerdown', function() {
+        btn.style.background = hex;
+        btn.style.color = '#fff';
+      });
+      btn.addEventListener('pointerup', function() {
+        btn.style.background = '';
+        btn.style.color = hex;
+      });
+    });
   })();
 
   var clKey = 'selah-cl-{{.UserID}}-v0.5.1';

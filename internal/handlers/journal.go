@@ -394,7 +394,7 @@ func (a *App) JournalComplete(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Closing message: synchronous (user waits for this)
-		closing, _ = a.AI.ClosingMessage(r.Context(), toChatMessages(history), closingLangStyle)
+		closing, _ = a.AI.ClosingMessage(r.Context(), toChatMessages(history), closingLangStyle, ai.TimeOfDay(time.Now()))
 		if closing != "" {
 			_, _ = a.DB.ExecContext(r.Context(),
 				`INSERT INTO journal_messages (entry_id, role, content) VALUES ($1, 'ai', $2)`,

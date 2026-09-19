@@ -403,14 +403,15 @@ func (c *Client) Discuss(ctx context.Context, history []ChatMessage, originalLan
 	return c.send(ctx, sys, history)
 }
 
-const closingSystemPrompt = `Kamu adalah "Teman Selah" — teman rohani yang sudah menemani sesi perenungan ini dari awal sampai akhir.
+const closingSystemPromptBase = `Kamu adalah "Teman Selah" — teman rohani yang sudah menemani sesi perenungan ini dari awal sampai akhir.
 Sekarang tutup sesi ini. Tulis 3-5 kalimat yang personal dan mengalir natural dari apa yang benar-benar terjadi di sesi ini — sebut detail spesifik dari refleksi atau diskusi yang ditulis, bukan kesan umum. Kalau ada langkah praktis yang disebut, singgung juga. Akhiri dengan doa pendek yang tulus.
 Pakai "aku" dan "kamu" saat berbicara dengan pengguna. Bahasa yang wajar — seperti teman yang genuinely hadir, bukan paragraf formal atau kesimpulan otomatis.
 JANGAN:
 - Buka dengan pujian template: "refleksimu dalam", "luar biasa", "kamu sudah melakukan hal yang baik..."
 - Pakai: "tentunya", "memang benar", "pastinya", "sesungguhnya", "tentu saja"
 - Mulai dengan "Terima kasih sudah..." atau "Senang bisa menemani..."
-Dalam doa: pakai "kami" — kamu dan pengguna berdoa bersama. Jangan pakai "dia/mereka" untuk sebut pengguna. Sapa Tuhan dengan "Engkau" dan "Mu" — JANGAN pakai "kamu" untuk menyebut Tuhan.`
+Dalam doa: pakai "kami" — kamu dan pengguna berdoa bersama. Jangan pakai "dia/mereka" untuk sebut pengguna. Sapa Tuhan dengan "Engkau" dan "Mu" — JANGAN pakai "kamu" untuk menyebut Tuhan.
+Kalau menyebut waktu hari ini, gunakan waktu yang sudah diberikan — jangan mengarang.`
 
 const verseSearchSystemPrompt = `Kamu adalah asisten pencarian ayat Alkitab Indonesia.
 User mengingat sebuah frasa atau tema dari Alkitab dan ingin tahu referensinya.
@@ -557,7 +558,24 @@ func (c *Client) SearchVerse(ctx context.Context, query string) ([]string, error
 const shareSummarySystemPrompt = `Kamu menulis satu kutipan inspiratif singkat dari sesi saat teduh yang baru selesai.
 Berdasarkan ayat dan refleksi yang ada, tulis 1-2 kalimat yang natural, hangat, dan spesifik — bukan quote template, tapi lahir dari sesi ini.
 Tulis dalam bahasa Indonesia. Tidak ada markdown. Tidak ada label. Hanya kalimat mengalir.
-Maksimal 160 karakter. Langsung ke inti — jangan buka dengan "Hari ini" atau "Dalam sesi ini".`
+Maksimal 160 karakter. Langsung ke inti — jangan buka dengan "Hari ini" atau "Dalam sesi ini".
+Jangan menyebut waktu hari (pagi/siang/sore/malam) kecuali secara kontekstual tepat dari refleksi.`
+
+// TimeOfDay returns the Indonesian time-of-day label for the given time in WIB (Asia/Jakarta).
+func TimeOfDay(t time.Time) string {
+	loc, _ := time.LoadLocation("Asia/Jakarta")
+	h := t.In(loc).Hour()
+	switch {
+	case h >= 5 && h < 11:
+		return "pagi"
+	case h >= 11 && h < 15:
+		return "siang"
+	case h >= 15 && h < 18:
+		return "sore"
+	default:
+		return "malam"
+	}
+}
 
 // GenerateShareSummary creates a short shareable quote from a completed devotion session.
 func (c *Client) GenerateShareSummary(ctx context.Context, verseRef, verseText, background, reflection, step string) (string, error) {
@@ -588,8 +606,9 @@ func (c *Client) GenerateShareSummary(ctx context.Context, verseRef, verseText, 
 
 // ClosingMessage generates a warm closing/encouragement message at the end of a devotion session.
 // history should include the full session context including reflection and practical step.
-func (c *Client) ClosingMessage(ctx context.Context, history []ChatMessage, langStyle string) (string, error) {
-	sys := closingSystemPrompt
+// timeOfDay is the Indonesian time label ("pagi"/"siang"/"sore"/"malam") when the session ends.
+func (c *Client) ClosingMessage(ctx context.Context, history []ChatMessage, langStyle, timeOfDay string) (string, error) {
+	sys := closingSystemPromptBase + "\nWaktu saat ini: " + timeOfDay + "."
 	if langStyle == "formal" {
 		sys = formalizePrompt(sys)
 	}

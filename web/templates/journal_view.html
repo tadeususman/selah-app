@@ -79,14 +79,14 @@
       data-summary="{{.Entry.ShareSummary}}"
       style="padding:4px 0 12px;max-width:420px;margin:0 auto">
       <canvas id="share-canvas" style="width:100%;height:auto;border-radius:12px;display:block"></canvas>
-      <div style="display:flex;gap:8px;margin-top:10px">
-        <button type="button" class="btn-primary" id="btn-share-native" style="flex:1;font-size:14px;margin-top:0;display:flex;align-items:center;justify-content:center;gap:6px">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M18 16a3 3 0 00-2.04.8l-7.43-4.29a3.07 3.07 0 000-1.02l7.43-4.29A3 3 0 1017 5l-7.43 4.29a3 3 0 100 5.42L17 19a3 3 0 101-2.99z"/></svg>
-          Bagikan
+      <div style="display:flex;gap:12px;margin-top:12px;justify-content:center">
+        <button type="button" id="btn-share-native" title="Bagikan"
+          style="width:48px;height:48px;border-radius:50%;border:none;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M18 16a3 3 0 00-2.04.8l-7.43-4.29a3.07 3.07 0 000-1.02l7.43-4.29A3 3 0 1017 5l-7.43 4.29a3 3 0 100 5.42L17 19a3 3 0 101-2.99z"/></svg>
         </button>
-        <button type="button" class="btn-secondary" id="btn-save-img" style="flex:1;font-size:14px;display:flex;align-items:center;justify-content:center;gap:6px">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M5 20h14v-2H5v2zm7-18v10.59l-3.3-3.3-1.41 1.41L12 16l4.71-4.3-1.41-1.41L13 13.59V2h-1z"/></svg>
-          Simpan
+        <button type="button" id="btn-save-img" title="Simpan Gambar"
+          style="width:48px;height:48px;border-radius:50%;border:1.5px solid var(--border);background:var(--card);color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M5 20h14v-2H5v2zm7-18v10.59l-3.3-3.3-1.41 1.41L12 16l4.71-4.3-1.41-1.41L13 13.59V2h-1z"/></svg>
         </button>
       </div>
     </div>
@@ -530,14 +530,14 @@
             section.style.cssText = 'padding:4px 0 12px;max-width:420px;margin:0 auto';
             section.innerHTML =
               '<canvas id="share-canvas" style="width:100%;height:auto;border-radius:12px;display:block"></canvas>' +
-              '<div style="display:flex;gap:8px;margin-top:10px">' +
-                '<button type="button" class="btn-primary" id="btn-share-native" style="flex:1;font-size:14px;margin-top:0;display:flex;align-items:center;justify-content:center;gap:6px">' +
-                  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M18 16a3 3 0 00-2.04.8l-7.43-4.29a3.07 3.07 0 000-1.02l7.43-4.29A3 3 0 1017 5l-7.43 4.29a3 3 0 100 5.42L17 19a3 3 0 101-2.99z"/></svg>' +
-                  'Bagikan' +
+              '<div style="display:flex;gap:12px;margin-top:12px;justify-content:center">' +
+                '<button type="button" id="btn-share-native" title="Bagikan"' +
+                  ' style="width:48px;height:48px;border-radius:50%;border:none;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">' +
+                  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M18 16a3 3 0 00-2.04.8l-7.43-4.29a3.07 3.07 0 000-1.02l7.43-4.29A3 3 0 1017 5l-7.43 4.29a3 3 0 100 5.42L17 19a3 3 0 101-2.99z"/></svg>' +
                 '</button>' +
-                '<button type="button" class="btn-secondary" id="btn-save-img" style="flex:1;font-size:14px;display:flex;align-items:center;justify-content:center;gap:6px">' +
-                  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M5 20h14v-2H5v2zm7-18v10.59l-3.3-3.3-1.41 1.41L12 16l4.71-4.3-1.41-1.41L13 13.59V2h-1z"/></svg>' +
-                  'Simpan' +
+                '<button type="button" id="btn-save-img" title="Simpan Gambar"' +
+                  ' style="width:48px;height:48px;border-radius:50%;border:1.5px solid var(--border);background:var(--card);color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">' +
+                  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M5 20h14v-2H5v2zm7-18v10.59l-3.3-3.3-1.41 1.41L12 16l4.71-4.3-1.41-1.41L13 13.59V2h-1z"/></svg>' +
                 '</button>' +
               '</div>';
             if (pending) pending.replaceWith(section);

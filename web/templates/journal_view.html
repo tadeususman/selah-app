@@ -409,7 +409,8 @@
       return lines;
     }
 
-    var cardIsDark = true;
+    // Default card to opposite of app theme (contrast pairing)
+    var cardIsDark = document.documentElement.dataset.theme !== 'dark';
 
     function drawShareCard() {
       if (!shareCanvas || !shareSection) return;
@@ -419,79 +420,116 @@
       shareCanvas.width = W; shareCanvas.height = H;
       var gold = '#F0A93B';
 
-      var bg, wordmark, dateTxt, refColor, verseTxt, divColor, sumTxt, wm;
+      var bg, wordmark, dateTxt, refColor, verseTxt, divColor, sumTxt, wm, quoteColor;
       if (cardIsDark) {
         bg = '#2C4468'; wordmark = gold; dateTxt = 'rgba(255,255,255,0.45)';
         refColor = gold; verseTxt = '#FFFFFF'; divColor = gold;
-        sumTxt = 'rgba(255,255,255,0.82)'; wm = 'rgba(255,255,255,0.22)';
+        sumTxt = 'rgba(255,255,255,0.90)'; wm = 'rgba(255,255,255,0.22)';
+        quoteColor = 'rgba(240,169,59,0.22)';
       } else {
         bg = '#F7F3EC'; wordmark = '#2C4468'; dateTxt = 'rgba(44,68,104,0.5)';
         refColor = '#2C4468'; verseTxt = '#1E3050'; divColor = '#2C4468';
-        sumTxt = 'rgba(44,68,104,0.75)'; wm = 'rgba(44,68,104,0.25)';
+        sumTxt = 'rgba(44,68,104,0.82)'; wm = 'rgba(44,68,104,0.25)';
+        quoteColor = 'rgba(44,68,104,0.10)';
       }
 
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, W, H);
 
-      // Wordmark
+      // Wordmark top-left
       ctx.fillStyle = wordmark;
       ctx.font = '700 52px “Plus Jakarta Sans”, sans-serif';
       ctx.textAlign = 'left';
       ctx.fillText('selah,', pad, pad + 52);
 
-      // Date — weekday (small), day number (large), month+year (small)
+      // Date top-right: weekday (small) / day number (large) / month+year (small)
       var monthAbbr = {
         'Januari':'Jan','Februari':'Feb','Maret':'Mar','April':'Apr',
         'Mei':'Mei','Juni':'Jun','Juli':'Jul','Agustus':'Agt',
         'September':'Sep','Oktober':'Okt','November':'Nov','Desember':'Des'
       };
       var dp = d.date.split(' ');
-      var dayNum = dp[0];
       var monthYear = (monthAbbr[dp[1]] || dp[1]) + ' ' + dp[2];
       ctx.fillStyle = dateTxt;
       ctx.textAlign = 'right';
       ctx.font = '400 26px “Plus Jakarta Sans”, sans-serif';
       ctx.fillText(d.weekday, W - pad, pad + 32);
       ctx.font = '700 68px “Plus Jakarta Sans”, sans-serif';
-      ctx.fillText(dayNum, W - pad, pad + 104);
+      ctx.fillText(dp[0], W - pad, pad + 104);
       ctx.font = '400 26px “Plus Jakarta Sans”, sans-serif';
       ctx.fillText(monthYear, W - pad, pad + 136);
 
-      // Verse reference
+      // ── Pre-measure content for dynamic vertical centering ──
+      var textW = W - pad * 2 - 60;
+      var vtFont  = 'italic 400 44px Lora, serif';
+      var sumFont = '400 38px “Plus Jakarta Sans”, sans-serif';
+
+      ctx.font = vtFont;
+      var vtLines = wrapCanvasText(ctx, d.verseText, textW);
+
+      ctx.font = sumFont;
+      var sumLines = wrapCanvasText(ctx, d.summary, textW).slice(0, 5);
+
+      var refLH = 66, vtLH = 64, sumLH = 56;
+      var gapRefVt = 44, gapVtDiv = 68, gapDivSum = 76;
+      var vtH   = vtLines.length  * vtLH;
+      var sumH  = sumLines.length * sumLH;
+      var totalH = refLH + gapRefVt + vtH + gapVtDiv + gapDivSum + sumH;
+
+      // Center between end of header (~y=250) and watermark (~y=1270)
+      var topY = 250, botY = 1270;
+      var startY = topY + Math.max(16, ((botY - topY) - totalH) / 2);
+
+      // ── Verse reference (Playfair Display) ──
       ctx.fillStyle = refColor;
-      ctx.font = '700 52px “Playfair Display”, serif';
+      ctx.font = '700 58px “Playfair Display”, serif';
       ctx.textAlign = 'center';
       var ref = d.verseRef.length > 38 ? d.verseRef.slice(0, 38) + '…' : d.verseRef;
-      ctx.fillText(ref, W / 2, 310);
+      ctx.fillText(ref, W / 2, startY + refLH);
 
-      // Verse text — full, no character limit
+      // ── Verse text (Lora italic) ──
       ctx.fillStyle = verseTxt;
-      ctx.font = 'italic 400 38px Lora, serif';
-      ctx.textAlign = 'center';
-      var vtLines = wrapCanvasText(ctx, '“' + d.verseText + '”', W - pad * 2 - 40);
-      var vtY = 390;
-      vtLines.forEach(function(l) { ctx.fillText(l, W / 2, vtY); vtY += 56; });
+      ctx.font = vtFont;
+      var vtBaseY = startY + refLH + gapRefVt;
+      vtLines.forEach(function(l, i) {
+        ctx.fillText(l, W / 2, vtBaseY + (i + 1) * vtLH);
+      });
 
-      // Divider
-      var divY = Math.min(vtY + 50, 920);
+      // ── Divider ──
+      var divY = vtBaseY + vtLines.length * vtLH + gapVtDiv;
       ctx.save();
       ctx.strokeStyle = divColor; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.3;
       ctx.beginPath(); ctx.moveTo(pad + 80, divY); ctx.lineTo(W - pad - 80, divY); ctx.stroke();
       ctx.restore();
 
-      // Summary
-      ctx.fillStyle = sumTxt;
-      ctx.font = '400 38px “Plus Jakarta Sans”, sans-serif';
-      ctx.textAlign = 'center';
-      var sumLines = wrapCanvasText(ctx, d.summary, W - pad * 2 - 40);
-      var sumY = divY + 70;
-      sumLines.slice(0, 5).forEach(function(l) { ctx.fillText(l, W / 2, sumY); sumY += 56; });
+      // ── Summary with large decorative quotes ──
+      var sumBaseY = divY + gapDivSum;
 
-      // Watermark
+      // Opening “ — large, low-opacity, decorative
+      ctx.fillStyle = quoteColor;
+      ctx.font = '400 180px Georgia, serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('“', pad - 8, sumBaseY + 80);
+
+      // Summary text
+      ctx.fillStyle = sumTxt;
+      ctx.font = sumFont;
+      ctx.textAlign = 'center';
+      sumLines.forEach(function(l, i) {
+        ctx.fillText(l, W / 2, sumBaseY + (i + 1) * sumLH);
+      });
+
+      // Closing “ — anchored after last summary line
+      ctx.fillStyle = quoteColor;
+      ctx.font = '400 180px Georgia, serif';
+      ctx.textAlign = 'right';
+      ctx.fillText('”', W - pad + 8, sumBaseY + sumLines.length * sumLH + 36);
+
+      // ── Watermark ──
       ctx.fillStyle = wm;
       ctx.font = '400 28px “Plus Jakarta Sans”, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('selah-app.my.id', W / 2, H - pad + 16);
+      ctx.fillText('selah-app.my.id', W / 2, H - 54);
     }
 
     function shareHandler() {

@@ -1,10 +1,8 @@
 [{
-  "relation": ["delegate_permission/common.handle_all_urls"],
-  "target": {
-    "namespace": "android_app",
-    "package_name": "PACKAGE_NAME_FROM_PWABUILDER",
-    "sha256_cert_fingerprints": [
-      "FINGERPRINT_FROM_PWABUILDER"
-    ]
-  }
-}]
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "id.my.selah_app.twa",
+        "sha256_cert_fingerprints": ["60:1F:24:3C:A5:8F:19:56:C2:FB:CF:50:4F:A8:F3:2A:E7:73:EF:A6:AA:DE:0B:17:80:A8:2E:13:70:89:D8:AF"]
+      }
+    }]

@@ -76,6 +76,7 @@
       data-verse-text="{{.Entry.VerseText}}"
       data-day="{{.Entry.DayNumber}}"
       data-date="{{idDate .Entry.EntryDate}}"
+      data-weekday="{{idDay .Entry.EntryDate}}"
       data-summary="{{.Entry.ShareSummary}}"
       style="padding:4px 0 12px;max-width:420px;margin:0 auto">
       <canvas id="share-canvas" style="width:100%;height:auto;border-radius:12px;display:block"></canvas>
@@ -433,12 +434,23 @@
       ctx.textAlign = 'left';
       ctx.fillText('selah,', pad, pad + 52);
 
-      // Date & day
+      // Date — weekday (small), day number (large), month+year (small)
+      var monthAbbr = {
+        'Januari':'Jan','Februari':'Feb','Maret':'Mar','April':'Apr',
+        'Mei':'Mei','Juni':'Jun','Juli':'Jul','Agustus':'Agt',
+        'September':'Sep','Oktober':'Okt','November':'Nov','Desember':'Des'
+      };
+      var dp = d.date.split(' ');
+      var dayNum = dp[0];
+      var monthYear = (monthAbbr[dp[1]] || dp[1]) + ' ' + dp[2];
       ctx.fillStyle = dateTxt;
-      ctx.font = '400 32px “Plus Jakarta Sans”, sans-serif';
       ctx.textAlign = 'right';
-      ctx.fillText(d.date, W - pad, pad + 36);
-      ctx.fillText('Hari ke-' + d.day, W - pad, pad + 76);
+      ctx.font = '400 26px “Plus Jakarta Sans”, sans-serif';
+      ctx.fillText(d.weekday, W - pad, pad + 32);
+      ctx.font = '700 68px “Plus Jakarta Sans”, sans-serif';
+      ctx.fillText(dayNum, W - pad, pad + 104);
+      ctx.font = '400 26px “Plus Jakarta Sans”, sans-serif';
+      ctx.fillText(monthYear, W - pad, pad + 136);
 
       // Verse reference
       ctx.fillStyle = refColor;
@@ -558,6 +570,7 @@
             section.dataset.verseText = '{{.Entry.VerseText}}';
             section.dataset.day       = '{{.Entry.DayNumber}}';
             section.dataset.date      = '{{idDate .Entry.EntryDate}}';
+            section.dataset.weekday   = '{{idDay .Entry.EntryDate}}';
             section.dataset.summary   = data.summary;
             section.style.cssText = 'padding:4px 0 12px;max-width:420px;margin:0 auto';
             section.innerHTML =

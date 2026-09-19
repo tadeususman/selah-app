@@ -87,7 +87,11 @@
         </button>
         <button type="button" id="btn-toggle-theme" title="Ganti tema kartu"
           style="width:36px;height:36px;border-radius:50%;border:1.5px solid var(--border);background:var(--card);color:var(--text-muted);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M12 3a9 9 0 100 18A9 9 0 0012 3zm0 2v14a7 7 0 000-14z"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3a9 9 0 010 18V3z" fill="currentColor"/></svg>
+        </button>
+        <button type="button" id="btn-retry" title="Muat ulang gambar"
+          style="width:36px;height:36px;border-radius:50%;border:1.5px solid var(--border);background:var(--card);color:var(--text-muted);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M17.65 6.35A7.96 7.96 0 0012 4a8 8 0 000 16 8 8 0 007.73-5.96l-2.06-.52A5.99 5.99 0 0112 18a6 6 0 010-12c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
         </button>
         <button type="button" id="btn-save-img" title="Simpan Gambar"
           style="width:48px;height:48px;border-radius:50%;border:1.5px solid var(--border);background:var(--card);color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">
@@ -454,22 +458,21 @@
 
       // Verse reference
       ctx.fillStyle = refColor;
-      ctx.font = '700 56px “Plus Jakarta Sans”, sans-serif';
+      ctx.font = '700 52px “Plus Jakarta Sans”, sans-serif';
       ctx.textAlign = 'center';
       var ref = d.verseRef.length > 38 ? d.verseRef.slice(0, 38) + '…' : d.verseRef;
-      ctx.fillText(ref, W / 2, 480);
+      ctx.fillText(ref, W / 2, 310);
 
-      // Verse text
+      // Verse text — full, no character limit
       ctx.fillStyle = verseTxt;
-      ctx.font = 'italic 500 40px Georgia, serif';
+      ctx.font = 'italic 500 38px Georgia, serif';
       ctx.textAlign = 'center';
-      var vt = d.verseText.length > 220 ? d.verseText.slice(0, 220) + '…' : d.verseText;
-      var vtLines = wrapCanvasText(ctx, '”' + vt + '”', W - pad * 2 - 40);
-      var vtY = 574;
-      vtLines.forEach(function(l) { ctx.fillText(l, W / 2, vtY); vtY += 60; });
+      var vtLines = wrapCanvasText(ctx, '“' + d.verseText + '”', W - pad * 2 - 40);
+      var vtY = 390;
+      vtLines.forEach(function(l) { ctx.fillText(l, W / 2, vtY); vtY += 56; });
 
       // Divider
-      var divY = Math.min(vtY + 50, 960);
+      var divY = Math.min(vtY + 50, 920);
       ctx.save();
       ctx.strokeStyle = divColor; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.3;
       ctx.beginPath(); ctx.moveTo(pad + 80, divY); ctx.lineTo(W - pad - 80, divY); ctx.stroke();
@@ -543,6 +546,13 @@
       });
     }
 
+    var btnRetry = document.getElementById('btn-retry');
+    if (btnRetry) {
+      btnRetry.addEventListener('click', function() {
+        document.fonts.ready.then(function() { drawShareCard(); });
+      });
+    }
+
     {{if .ShowShareCard}}
     document.fonts.ready.then(function() {
       drawShareCard();
@@ -582,7 +592,11 @@
                 '</button>' +
                 '<button type="button" id="btn-toggle-theme" title="Ganti tema kartu"' +
                   ' style="width:36px;height:36px;border-radius:50%;border:1.5px solid var(--border);background:var(--card);color:var(--text-muted);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">' +
-                  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M12 3a9 9 0 100 18A9 9 0 0012 3zm0 2v14a7 7 0 000-14z"/></svg>' +
+                  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3a9 9 0 010 18V3z" fill="currentColor"/></svg>' +
+                '</button>' +
+                '<button type="button" id="btn-retry" title="Muat ulang gambar"' +
+                  ' style="width:36px;height:36px;border-radius:50%;border:1.5px solid var(--border);background:var(--card);color:var(--text-muted);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">' +
+                  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M17.65 6.35A7.96 7.96 0 0012 4a8 8 0 000 16 8 8 0 007.73-5.96l-2.06-.52A5.99 5.99 0 0112 18a6 6 0 010-12c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>' +
                 '</button>' +
                 '<button type="button" id="btn-save-img" title="Simpan Gambar"' +
                   ' style="width:48px;height:48px;border-radius:50%;border:1.5px solid var(--border);background:var(--card);color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0">' +
@@ -602,6 +616,8 @@
             if (btnS) btnS.addEventListener('click', shareHandler);
             if (btnD) btnD.addEventListener('click', saveHandler);
             if (btnT) btnT.addEventListener('click', function() { cardIsDark = !cardIsDark; drawShareCard(); });
+            var btnR = section.querySelector('#btn-retry');
+            if (btnR) btnR.addEventListener('click', function() { document.fonts.ready.then(function() { drawShareCard(); }); });
           })
           .catch(function() {});
       }, 4000);

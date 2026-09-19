@@ -555,11 +555,10 @@ func (c *Client) SearchVerse(ctx context.Context, query string) ([]string, error
 	return refs, nil
 }
 
-const shareSummarySystemPrompt = `Kamu menulis satu kutipan inspiratif singkat dari sesi saat teduh yang baru selesai.
-Berdasarkan ayat dan refleksi yang ada, tulis 1-2 kalimat yang natural, hangat, dan spesifik — bukan quote template, tapi lahir dari sesi ini.
-Tulis dalam bahasa Indonesia. Tidak ada markdown. Tidak ada label. Hanya kalimat mengalir.
-Maksimal 160 karakter. Langsung ke inti — jangan buka dengan "Hari ini" atau "Dalam sesi ini".
-Jangan menyebut waktu hari (pagi/siang/sore/malam) kecuali secara kontekstual tepat dari refleksi.`
+const shareSummarySystemPrompt = `Baca refleksi dan langkah praktis yang ditulis pengguna. Tulis 1-2 kalimat pendek yang lahir dari isi spesifik sesi ini — satu insight nyata atau satu niat konkret yang muncul dari perenungan mereka.
+Harus terdengar seperti orang yang baru selesai merenung, berbicara kepada dirinya sendiri — bukan poster rohani, bukan quote motivasi, bukan kesimpulan khotbah.
+Bahasa Indonesia yang mengalir natural. Tidak ada markdown. Tidak ada label. Di bawah 150 karakter.
+JANGAN: buka dengan "Tuhan", "Hari ini", "Dalam hidup", "Firman ini", atau kalimat yang bisa berlaku untuk sesi rohani siapapun kapanpun. Jangan sebut waktu hari.`
 
 // TimeOfDay returns the Indonesian time-of-day label for the given time in WIB (Asia/Jakarta).
 func TimeOfDay(t time.Time) string {

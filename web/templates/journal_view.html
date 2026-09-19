@@ -510,7 +510,7 @@
       // ── Pre-measure content for dynamic vertical centering ──
       var textW = W - pad * 2 - 60;
       var vtFontSize = 44, vtFont = 'italic 400 ' + vtFontSize + 'px Lora, serif';
-      var sumFont = '500 38px "Plus Jakarta Sans", sans-serif';
+      var sumFont = '400 34px "Plus Jakarta Sans", sans-serif';
 
       ctx.font = vtFont;
       var vtLines = wrapCanvasText(ctx, d.verseText, textW);
@@ -524,9 +524,9 @@
       }
 
       ctx.font = sumFont;
-      var sumLines = wrapCanvasText(ctx, d.summary, textW).slice(0, 4);
+      var sumLines = wrapCanvasText(ctx, '“' + d.summary + '”', textW).slice(0, 4);
 
-      var refLH = 66, vtLH = Math.round(vtFontSize * 1.45), sumLH = 56;
+      var refLH = 66, vtLH = Math.round(vtFontSize * 1.45), sumLH = 52;
       var gapRefVt = 44, gapVtDiv = 68, gapDivSum = 76;
       var vtH   = vtLines.length  * vtLH;
       var sumH  = sumLines.length * sumLH;
@@ -558,18 +558,9 @@
       ctx.beginPath(); ctx.moveTo(pad + 80, divY); ctx.lineTo(W - pad - 80, divY); ctx.stroke();
       ctx.restore();
 
-      // ── Summary with decorative background quotes ──
+      // ── Summary ──
       var sumBaseY = divY + gapDivSum;
 
-      // Draw quotes as background BEFORE text so they never overlap
-      ctx.font = '400 90px Georgia, serif';
-      ctx.fillStyle = quoteColor;
-      ctx.textAlign = 'left';
-      ctx.fillText('”', pad + 20, sumBaseY + 66);
-      ctx.textAlign = 'right';
-      ctx.fillText('”', W - pad - 20, sumBaseY + sumLines.length * sumLH);
-
-      // Summary text on top
       ctx.fillStyle = sumTxt;
       ctx.font = sumFont;
       ctx.textAlign = 'center';

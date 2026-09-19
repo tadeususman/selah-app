@@ -461,6 +461,12 @@
       shareCanvas.width = W; shareCanvas.height = H;
       var gold = '#F0A93B';
 
+      var themeColors = { default: [44,68,104], sakura: [176,85,128], rose: [160,48,64], lavender: [110,92,168], sage: [61,122,88], mono: [64,64,64] };
+      var themeKey = localStorage.getItem('selah-color') || 'default';
+      var tc = themeColors[themeKey] || themeColors.default;
+      function tRgba(a) { return 'rgba(' + tc[0] + ',' + tc[1] + ',' + tc[2] + ',' + a + ')'; }
+      function tHex() { return '#' + tc.map(function(v){ return ('0'+v.toString(16)).slice(-2); }).join(''); }
+
       var bg, wordmark, dateTxt, refColor, verseTxt, divColor, sumTxt, wm, quoteColor;
       if (cardIsDark) {
         bg = '#2C4468'; wordmark = gold; dateTxt = 'rgba(255,255,255,0.45)';
@@ -468,10 +474,10 @@
         sumTxt = 'rgba(255,255,255,0.90)'; wm = 'rgba(255,255,255,0.22)';
         quoteColor = 'rgba(240,169,59,0.22)';
       } else {
-        bg = '#F7F3EC'; wordmark = '#2C4468'; dateTxt = 'rgba(44,68,104,0.5)';
-        refColor = '#2C4468'; verseTxt = '#1E3050'; divColor = '#2C4468';
-        sumTxt = 'rgba(44,68,104,0.82)'; wm = 'rgba(44,68,104,0.25)';
-        quoteColor = 'rgba(44,68,104,0.10)';
+        bg = '#F7F3EC'; wordmark = tHex(); dateTxt = tRgba(0.5);
+        refColor = tHex(); verseTxt = tRgba(0.9); divColor = tHex();
+        sumTxt = tRgba(0.82); wm = tRgba(0.25);
+        quoteColor = tRgba(0.10);
       }
 
       ctx.fillStyle = bg;
@@ -516,7 +522,7 @@
       var gapRefVt = 44, gapVtDiv = 68, gapDivSum = 76;
       var vtH   = vtLines.length  * vtLH;
       var sumH  = sumLines.length * sumLH;
-      var totalH = refLH + gapRefVt + vtH + gapVtDiv + gapDivSum + sumH;
+      var totalH = refLH + gapRefVt + vtH + gapVtDiv + gapDivSum + sumH + 32;
 
       // Center between end of header (~y=250) and watermark (~y=1270)
       var topY = 250, botY = 1270;
@@ -565,7 +571,7 @@
       ctx.fillStyle = quoteColor;
       ctx.font = '400 180px Georgia, serif';
       ctx.textAlign = 'right';
-      ctx.fillText('”', W - pad + 8, sumBaseY + sumLines.length * sumLH + 36);
+      ctx.fillText('”', W - pad + 8, sumBaseY + sumLines.length * sumLH + 20);
 
       // ── Watermark ──
       ctx.fillStyle = wm;

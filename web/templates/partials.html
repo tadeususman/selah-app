@@ -4,7 +4,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="selah,">
+<meta name="apple-mobile-web-app-title" content="Selah">
 <meta name="theme-color" content="#2C4468" id="themeColorMeta">
 <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32-light.png" media="(prefers-color-scheme: light)">
 <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32-dark.png" media="(prefers-color-scheme: dark)">
@@ -55,6 +55,13 @@
       if (e.persisted && bar) bar.style.opacity = '0';
     });
   })();
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('/sw.js');
+    });
+  }
 </script>
 {{end}}
 

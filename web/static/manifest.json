@@ -1,7 +1,7 @@
 {
   "name": "Selah — Jurnal Devotional",
-  "short_name": "selah,",
-  "description": "Jurnal devotional pribadi berbantuan AI",
+  "short_name": "Selah",
+  "description": "Daily Devotion Journal",
   "start_url": "/dashboard",
   "display": "standalone",
   "orientation": "portrait",

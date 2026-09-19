@@ -73,6 +73,14 @@ func main() {
 	// static assets
 	fs := http.FileServer(http.Dir("web/static"))
 	r.Handle("/static/*", http.StripPrefix("/static/", fs))
+	r.Get("/sw.js", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/javascript")
+		http.ServeFile(w, r, "web/static/sw.js")
+	})
+	r.Get("/.well-known/assetlinks.json", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		http.ServeFile(w, r, "web/static/assetlinks.json")
+	})
 
 	// public routes
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {

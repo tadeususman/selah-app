@@ -1,9 +1,9 @@
 package handlers
 
 import (
+	"context"
 	"net/http"
 	"strconv"
-	"sync"
 	"time"
 	"unicode/utf8"
 
@@ -364,7 +364,7 @@ func (a *App) JournalComplete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Build full session context for closing message
-	var closing, shareSummary string
+	var closing string
 	rows, err := a.DB.QueryContext(r.Context(),
 		`SELECT role, content FROM journal_messages WHERE entry_id = $1 ORDER BY created_at ASC`,
 		entry.ID)
@@ -393,36 +393,30 @@ func (a *App) JournalComplete(w http.ResponseWriter, r *http.Request) {
 			closingLangStyle = "casual"
 		}
 
-		// Run closing message and share summary in parallel
-		var wg sync.WaitGroup
-		wg.Add(2)
-		go func() {
-			defer wg.Done()
-			closing, _ = a.AI.ClosingMessage(r.Context(), toChatMessages(history), closingLangStyle)
-		}()
-		go func() {
-			defer wg.Done()
-			shareSummary, _ = a.AI.GenerateShareSummary(r.Context(), entry.VerseRef, entry.VerseText, entry.AIBackground, entry.Reflection, step)
-		}()
-		wg.Wait()
-
+		// Closing message: synchronous (user waits for this)
+		closing, _ = a.AI.ClosingMessage(r.Context(), toChatMessages(history), closingLangStyle)
 		if closing != "" {
 			_, _ = a.DB.ExecContext(r.Context(),
 				`INSERT INTO journal_messages (entry_id, role, content) VALUES ($1, 'ai', $2)`,
 				entry.ID, closing)
 		}
-		if shareSummary != "" {
-			_, _ = a.DB.ExecContext(r.Context(),
-				`UPDATE journal_entries SET share_summary = $1 WHERE id = $2`,
-				shareSummary, entry.ID)
-		}
+
+		// Share summary: background goroutine so it never blocks the response
+		entryID := entry.ID
+		vRef, vText, bg, refl := entry.VerseRef, entry.VerseText, entry.AIBackground, entry.Reflection
+		go func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
+			defer cancel()
+			summary, err := a.AI.GenerateShareSummary(ctx, vRef, vText, bg, refl, step)
+			if err == nil && summary != "" {
+				_, _ = a.DB.ExecContext(ctx,
+					`UPDATE journal_entries SET share_summary = $1 WHERE id = $2`,
+					summary, entryID)
+			}
+		}()
 	}
 
-	dest := "/journal/" + strconv.FormatInt(entry.ID, 10)
-	if shareSummary != "" {
-		dest += "?share=1"
-	}
-	http.Redirect(w, r, dest, http.StatusSeeOther)
+	http.Redirect(w, r, "/journal/"+strconv.FormatInt(entry.ID, 10), http.StatusSeeOther)
 }
 
 // ---- POST /journal/{id}/delete ----

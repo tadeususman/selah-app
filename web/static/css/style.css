@@ -303,7 +303,7 @@ label {
 
 input, textarea {
   font: inherit;
-  font-size: 13px;
+  font-size: 14px;
   padding: 12px 14px;
   border-radius: 10px;
   border: 1px solid var(--border);

@@ -116,6 +116,21 @@
     </section>
 
     <section class="admin-section">
+      <h3>Ukuran Teks</h3>
+      <div class="font-size-picker" id="font-size-picker">
+        <button type="button" class="font-size-opt" data-size="small" onclick="setFontSize('small')">
+          <span style="font-size:12px">A</span> Kecil
+        </button>
+        <button type="button" class="font-size-opt" data-size="normal" onclick="setFontSize('normal')">
+          <span style="font-size:15px">A</span> Normal
+        </button>
+        <button type="button" class="font-size-opt" data-size="large" onclick="setFontSize('large')">
+          <span style="font-size:19px">A</span> Besar
+        </button>
+      </div>
+    </section>
+
+    <section class="admin-section">
       <h3>Gaya Bahasa</h3>
       <form method="POST" action="/user/language">
         <div class="radio-group">
@@ -389,6 +404,25 @@
   // Sync localStorage with server-side value on settings page load
   localStorage.setItem('selah-color', '{{.Theme}}');
   if (typeof applyColorTheme === 'function') applyColorTheme('{{.Theme}}');
+
+  // Font size setting (localStorage only, no server round-trip)
+  function setFontSize(size) {
+    localStorage.setItem('selah-fontsize', size);
+    if (size === 'normal') {
+      delete document.documentElement.dataset.fontsize;
+    } else {
+      document.documentElement.dataset.fontsize = size;
+    }
+    document.querySelectorAll('.font-size-opt').forEach(function(b) {
+      b.classList.toggle('active', b.dataset.size === size);
+    });
+  }
+  (function() {
+    var cur = localStorage.getItem('selah-fontsize') || 'normal';
+    document.querySelectorAll('.font-size-opt').forEach(function(b) {
+      b.classList.toggle('active', b.dataset.size === cur);
+    });
+  })();
   </script>
 </body>
 </html>

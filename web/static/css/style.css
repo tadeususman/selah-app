@@ -60,6 +60,13 @@
 
 * { box-sizing: border-box; }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+html[data-fontsize="large"] { zoom: 1.15; }
+html[data-fontsize="small"] { zoom: 0.88; }
+
 body {
   margin: 0;
   font-family: var(--font-brand);
@@ -1055,6 +1062,35 @@ input:focus, textarea:focus {
 .theme-swatch.active .swatch-label { color: var(--navy); }
 
 /* ---------- Radio group ---------- */
+
+.font-size-picker {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+.font-size-opt {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 8px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+  font-family: var(--font-brand);
+  font-size: 12px;
+  font-weight: 600;
+  transition: border-color 0.15s, background 0.15s;
+}
+.font-size-opt:hover { border-color: var(--text-muted); }
+.font-size-opt.active {
+  border-color: var(--gold);
+  background: rgba(240,169,59,0.08);
+  color: var(--navy-dark);
+}
 
 .radio-group {
   display: flex;

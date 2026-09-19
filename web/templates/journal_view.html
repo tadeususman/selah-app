@@ -509,23 +509,31 @@
 
       // ── Pre-measure content for dynamic vertical centering ──
       var textW = W - pad * 2 - 60;
-      var vtFont  = 'italic 400 44px Lora, serif';
-      var sumFont = '400 38px Lora, serif';
+      var vtFontSize = 44, vtFont = 'italic 400 ' + vtFontSize + 'px Lora, serif';
+      var sumFont = '500 38px "Plus Jakarta Sans", sans-serif';
 
       ctx.font = vtFont;
       var vtLines = wrapCanvasText(ctx, d.verseText, textW);
 
-      ctx.font = sumFont;
-      var sumLines = wrapCanvasText(ctx, d.summary, textW).slice(0, 5);
+      // Auto-shrink verse font if too many lines
+      if (vtLines.length > 7) {
+        vtFontSize = Math.max(34, Math.floor(44 * 7 / vtLines.length));
+        vtFont = 'italic 400 ' + vtFontSize + 'px Lora, serif';
+        ctx.font = vtFont;
+        vtLines = wrapCanvasText(ctx, d.verseText, textW);
+      }
 
-      var refLH = 66, vtLH = 64, sumLH = 56;
+      ctx.font = sumFont;
+      var sumLines = wrapCanvasText(ctx, d.summary, textW).slice(0, 4);
+
+      var refLH = 66, vtLH = Math.round(vtFontSize * 1.45), sumLH = 56;
       var gapRefVt = 44, gapVtDiv = 68, gapDivSum = 76;
       var vtH   = vtLines.length  * vtLH;
       var sumH  = sumLines.length * sumLH;
       var totalH = refLH + gapRefVt + vtH + gapVtDiv + gapDivSum + sumH + 32;
 
-      // Center between end of header (~y=250) and watermark (~y=1270)
-      var topY = 250, botY = 1270;
+      // Center between end of header (~y=250) and watermark (~y=1230)
+      var topY = 250, botY = 1230;
       var startY = topY + Math.max(16, ((botY - topY) - totalH) / 2);
 
       // ── Verse reference (Playfair Display) ──
@@ -550,29 +558,24 @@
       ctx.beginPath(); ctx.moveTo(pad + 80, divY); ctx.lineTo(W - pad - 80, divY); ctx.stroke();
       ctx.restore();
 
-      // ── Summary with large decorative quotes ──
+      // ── Summary with decorative background quotes ──
       var sumBaseY = divY + gapDivSum;
 
-      // Opening “ — large, low-opacity, decorative
+      // Draw quotes as background BEFORE text so they never overlap
+      ctx.font = '400 160px Georgia, serif';
       ctx.fillStyle = quoteColor;
-      ctx.font = '400 140px Georgia, serif';
       ctx.textAlign = 'left';
-      ctx.fillText('“', pad - 8, sumBaseY + 60);
+      ctx.fillText('”', pad - 12, sumBaseY + sumLH * 0.8);
+      ctx.textAlign = 'right';
+      ctx.fillText('”', W - pad + 12, sumBaseY + sumLines.length * sumLH + sumLH * 0.2);
 
-      // Summary text
+      // Summary text on top
       ctx.fillStyle = sumTxt;
       ctx.font = sumFont;
       ctx.textAlign = 'center';
       sumLines.forEach(function(l, i) {
         ctx.fillText(l, W / 2, sumBaseY + (i + 1) * sumLH);
       });
-
-      // Closing “ — clamped so it never overlaps watermark
-      ctx.fillStyle = quoteColor;
-      ctx.font = '400 140px Georgia, serif';
-      ctx.textAlign = 'right';
-      var closeQuoteY = Math.min(sumBaseY + sumLines.length * sumLH + 16, H - 180);
-      ctx.fillText('”', W - pad + 8, closeQuoteY);
 
       // ── Watermark ──
       ctx.fillStyle = wm;

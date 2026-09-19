@@ -188,11 +188,12 @@ func (a *App) JournalCreate(w http.ResponseWriter, r *http.Request) {
 // ---- GET /journal/{id} (view/continue a devotion session) ----
 
 type journalViewData struct {
-	Entry          models.JournalEntry
-	Messages       []models.JournalMessage
-	CompletedCount int
-	LanguageStyle  string
-	ShowShareCard  bool
+	Entry           models.JournalEntry
+	Messages        []models.JournalMessage
+	CompletedCount  int
+	LanguageStyle   string
+	ShowShareCard   bool
+	PendingShareCard bool
 }
 
 func (a *App) JournalView(w http.ResponseWriter, r *http.Request) {
@@ -226,14 +227,21 @@ func (a *App) JournalView(w http.ResponseWriter, r *http.Request) {
 		entry.UserID).Scan(&completedCount)
 
 	var viewLangStyle string
+	var generateShareCard bool
 	_ = a.DB.QueryRowContext(r.Context(),
-		`SELECT language_style FROM users WHERE id = $1`, entry.UserID).Scan(&viewLangStyle)
+		`SELECT language_style, generate_share_card FROM users WHERE id = $1`, entry.UserID).Scan(&viewLangStyle, &generateShareCard)
 	if viewLangStyle == "" {
 		viewLangStyle = "casual"
 	}
 
 	showShare := entry.Status == "completed" && entry.ShareSummary != ""
-	a.render(w, "journal_view.html", journalViewData{Entry: entry, Messages: messages, CompletedCount: completedCount, LanguageStyle: viewLangStyle, ShowShareCard: showShare})
+	// Only show pending notice if: card feature is on, completed recently (within 10 min), and no summary yet
+	pendingShare := entry.Status == "completed" && entry.ShareSummary == "" &&
+		generateShareCard && time.Since(entry.UpdatedAt) < 10*time.Minute
+	a.render(w, "journal_view.html", journalViewData{
+		Entry: entry, Messages: messages, CompletedCount: completedCount,
+		LanguageStyle: viewLangStyle, ShowShareCard: showShare, PendingShareCard: pendingShare,
+	})
 }
 
 // ---- POST /journal/{id}/reflect (save "apa yang didapat setelah membaca") ----

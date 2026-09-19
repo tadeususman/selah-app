@@ -92,7 +92,7 @@
     </div>
     {{end}}
 
-    {{if and (eq .Entry.Status "completed") (not .ShowShareCard)}}
+    {{if .PendingShareCard}}
     <div id="share-card-pending" style="text-align:center;padding:12px 0 4px">
       <p style="font-size:13px;color:var(--text-muted);margin:0">Kartu berbagi sedang disiapkan...</p>
     </div>
@@ -403,55 +403,62 @@
       if (!shareCanvas || !shareSection) return;
       var d = shareSection.dataset;
       var ctx = shareCanvas.getContext('2d');
-      var S = 1080;
-      shareCanvas.width = S; shareCanvas.height = S;
-      var navy = '#2C4468', gold = '#F0A93B', pad = 80;
+      var W = 1080, H = 1350, pad = 80;
+      shareCanvas.width = W; shareCanvas.height = H;
+      var navy = '#2C4468', gold = '#F0A93B';
 
       ctx.fillStyle = navy;
-      ctx.fillRect(0, 0, S, S);
+      ctx.fillRect(0, 0, W, H);
 
+      // Wordmark
       ctx.fillStyle = gold;
       ctx.font = '700 52px “Plus Jakarta Sans”, sans-serif';
       ctx.textAlign = 'left';
       ctx.fillText('selah,', pad, pad + 52);
 
+      // Date & day (top right)
       ctx.fillStyle = 'rgba(255,255,255,0.45)';
       ctx.font = '400 32px “Plus Jakarta Sans”, sans-serif';
       ctx.textAlign = 'right';
-      ctx.fillText(d.date, S - pad, pad + 36);
-      ctx.fillText('Hari ke-' + d.day, S - pad, pad + 76);
+      ctx.fillText(d.date, W - pad, pad + 36);
+      ctx.fillText('Hari ke-' + d.day, W - pad, pad + 76);
 
+      // Verse reference
       ctx.fillStyle = gold;
       ctx.font = '700 56px “Plus Jakarta Sans”, sans-serif';
       ctx.textAlign = 'center';
       var ref = d.verseRef.length > 38 ? d.verseRef.slice(0, 38) + '…' : d.verseRef;
-      ctx.fillText(ref, S / 2, 420);
+      ctx.fillText(ref, W / 2, 480);
 
+      // Verse text
       ctx.fillStyle = '#FFFFFF';
       ctx.font = 'italic 500 40px Georgia, serif';
       ctx.textAlign = 'center';
-      var vt = d.verseText.length > 190 ? d.verseText.slice(0, 190) + '…' : d.verseText;
-      var vtLines = wrapCanvasText(ctx, '”' + vt + '”', S - pad * 2 - 40);
-      var vtY = 506;
-      vtLines.forEach(function(l) { ctx.fillText(l, S / 2, vtY); vtY += 58; });
+      var vt = d.verseText.length > 220 ? d.verseText.slice(0, 220) + '…' : d.verseText;
+      var vtLines = wrapCanvasText(ctx, '“' + vt + '”', W - pad * 2 - 40);
+      var vtY = 574;
+      vtLines.forEach(function(l) { ctx.fillText(l, W / 2, vtY); vtY += 60; });
 
-      var divY = Math.min(vtY + 36, 760);
+      // Divider
+      var divY = Math.min(vtY + 50, 960);
       ctx.save();
       ctx.strokeStyle = gold; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.3;
-      ctx.beginPath(); ctx.moveTo(pad + 80, divY); ctx.lineTo(S - pad - 80, divY); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(pad + 80, divY); ctx.lineTo(W - pad - 80, divY); ctx.stroke();
       ctx.restore();
 
-      ctx.fillStyle = 'rgba(255,255,255,0.78)';
-      ctx.font = '400 36px “Plus Jakarta Sans”, sans-serif';
+      // Summary
+      ctx.fillStyle = 'rgba(255,255,255,0.82)';
+      ctx.font = '400 38px “Plus Jakarta Sans”, sans-serif';
       ctx.textAlign = 'center';
-      var sumLines = wrapCanvasText(ctx, d.summary, S - pad * 2 - 40);
-      var sumY = divY + 62;
-      sumLines.slice(0, 4).forEach(function(l) { ctx.fillText(l, S / 2, sumY); sumY += 52; });
+      var sumLines = wrapCanvasText(ctx, d.summary, W - pad * 2 - 40);
+      var sumY = divY + 70;
+      sumLines.slice(0, 5).forEach(function(l) { ctx.fillText(l, W / 2, sumY); sumY += 56; });
 
+      // Watermark
       ctx.fillStyle = 'rgba(255,255,255,0.22)';
       ctx.font = '400 28px “Plus Jakarta Sans”, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('selah-app.my.id', S / 2, S - pad + 16);
+      ctx.fillText('selah-app.my.id', W / 2, H - pad + 16);
     }
 
     function shareHandler() {
@@ -505,7 +512,7 @@
     });
     {{end}}
 
-    {{if and (eq .Entry.Status "completed") (not .ShowShareCard)}}
+    {{if .PendingShareCard}}
     (function() {
       var entryId = {{.Entry.ID}};
       var pending = document.getElementById('share-card-pending');

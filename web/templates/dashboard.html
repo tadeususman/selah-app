@@ -11,6 +11,7 @@
       <p class="brand-wordmark brand-small">selah<span class="dot">,</span></p>
       <p class="greeting-time">{{.Greeting}},</p>
       <h1 class="greeting">{{.UserName}} 👋</h1>
+      {{if .WelcomeMsg}}<p class="welcome-msg">{{.WelcomeMsg}}</p>{{end}}
     </header>
 
     {{if .ShareCards}}
@@ -81,6 +82,14 @@
   </div>
 
   <style>
+  .welcome-msg {
+    font-size: 14px;
+    color: var(--text-secondary, rgba(0,0,0,0.5));
+    margin: 6px 0 0;
+    line-height: 1.5;
+    font-style: italic;
+  }
+
   .share-card-carousel {
     display: flex;
     gap: 14px;

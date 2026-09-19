@@ -409,6 +409,46 @@
       return lines;
     }
 
+    // Seeded LCG — deterministic per day number, gives each day its own texture character
+    function seededRand(seed) {
+      var s = (Math.abs(parseInt(seed) || 1) * 9301 + 49297) % 233280;
+      return function() { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+    }
+
+    function addTexture(ctx, W, H, isDark, day) {
+      var rand = seededRand(day);
+
+      // Vignette — center drifts slightly per day
+      var cx = W * (0.5  + (rand() - 0.5) * 0.10);
+      var cy = H * (0.44 + (rand() - 0.5) * 0.08);
+      var vg = ctx.createRadialGradient(cx, cy, H * 0.14, cx, cy, H * 0.86);
+      vg.addColorStop(0, 'rgba(0,0,0,0)');
+      vg.addColorStop(1, isDark ? 'rgba(0,0,0,0.22)' : 'rgba(0,0,0,0.08)');
+      ctx.fillStyle = vg;
+      ctx.fillRect(0, 0, W, H);
+
+      // Grain — scale (5–6×) and opacity (0.05–0.09) seeded; pixels truly random
+      var scale = 5 + Math.floor(rand() * 2);
+      var opacity = 0.05 + rand() * 0.04;
+      var gW = Math.ceil(W / scale), gH = Math.ceil(H / scale);
+      var gc = document.createElement('canvas');
+      gc.width = gW; gc.height = gH;
+      var gx = gc.getContext('2d');
+      var gd = gx.createImageData(gW, gH);
+      for (var i = 0; i < gd.data.length; i += 4) {
+        var v = Math.floor(Math.random() * 255);
+        gd.data[i] = gd.data[i+1] = gd.data[i+2] = v;
+        gd.data[i+3] = Math.floor(Math.random() * 180 + 30);
+      }
+      gx.putImageData(gd, 0, 0);
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+      ctx.globalCompositeOperation = 'soft-light';
+      ctx.globalAlpha = opacity;
+      ctx.drawImage(gc, 0, 0, W, H);
+      ctx.restore();
+    }
+
     // Default card to opposite of app theme (contrast pairing)
     var cardIsDark = document.documentElement.dataset.theme !== 'dark';
 
@@ -435,6 +475,7 @@
 
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, W, H);
+      addTexture(ctx, W, H, cardIsDark, d.day);
 
       // Wordmark top-left
       ctx.fillStyle = wordmark;

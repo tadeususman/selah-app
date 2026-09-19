@@ -7,6 +7,13 @@
   "orientation": "portrait",
   "background_color": "#F7F3EC",
   "theme_color": "#2C4468",
+  "id": "https://selah-app.my.id",
+  "dir": "ltr",
+  "lang": "id",
+  "categories": [
+    "lifestyle",
+    "productivity"
+  ],
   "icons": [
     {
       "src": "/static/favicon-32-light.png",

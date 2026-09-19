@@ -401,19 +401,24 @@ func (a *App) JournalComplete(w http.ResponseWriter, r *http.Request) {
 				entry.ID, closing)
 		}
 
-		// Share summary: background goroutine so it never blocks the response
-		entryID := entry.ID
-		vRef, vText, bg, refl := entry.VerseRef, entry.VerseText, entry.AIBackground, entry.Reflection
-		go func() {
-			ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
-			defer cancel()
-			summary, err := a.AI.GenerateShareSummary(ctx, vRef, vText, bg, refl, step)
-			if err == nil && summary != "" {
-				_, _ = a.DB.ExecContext(ctx,
-					`UPDATE journal_entries SET share_summary = $1 WHERE id = $2`,
-					summary, entryID)
-			}
-		}()
+		// Share summary: only if user has card generation enabled
+		var generateShareCard bool
+		_ = a.DB.QueryRowContext(r.Context(),
+			`SELECT generate_share_card FROM users WHERE id = $1`, entry.UserID).Scan(&generateShareCard)
+		if generateShareCard {
+			entryID := entry.ID
+			vRef, vText, bg, refl := entry.VerseRef, entry.VerseText, entry.AIBackground, entry.Reflection
+			go func() {
+				ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
+				defer cancel()
+				summary, err := a.AI.GenerateShareSummary(ctx, vRef, vText, bg, refl, step)
+				if err == nil && summary != "" {
+					_, _ = a.DB.ExecContext(ctx,
+						`UPDATE journal_entries SET share_summary = $1 WHERE id = $2`,
+						summary, entryID)
+				}
+			}()
+		}
 	}
 
 	http.Redirect(w, r, "/journal/"+strconv.FormatInt(entry.ID, 10), http.StatusSeeOther)

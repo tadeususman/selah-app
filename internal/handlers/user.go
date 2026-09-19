@@ -14,6 +14,7 @@ type userPageData struct {
 	Name                string
 	IsAdmin             bool
 	DiscussOriginalLang bool
+	GenerateShareCard   bool
 	LanguageStyle       string
 	Theme               string
 	Version             string
@@ -25,9 +26,9 @@ type userPageData struct {
 func (a *App) UserPage(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.UserID(r)
 	var name, email, langStyle, theme string
-	var isAdmin, discussOriginalLang bool
+	var isAdmin, discussOriginalLang, generateShareCard bool
 	err := a.DB.QueryRowContext(r.Context(),
-		`SELECT name, email, is_admin, discuss_original_lang, language_style, theme FROM users WHERE id = $1`, userID).Scan(&name, &email, &isAdmin, &discussOriginalLang, &langStyle, &theme)
+		`SELECT name, COALESCE(email,''), is_admin, discuss_original_lang, language_style, theme, generate_share_card FROM users WHERE id = $1`, userID).Scan(&name, &email, &isAdmin, &discussOriginalLang, &langStyle, &theme, &generateShareCard)
 	if err != nil {
 		http.Error(w, "could not load user", http.StatusInternalServerError)
 		return
@@ -38,7 +39,7 @@ func (a *App) UserPage(w http.ResponseWriter, r *http.Request) {
 	if theme == "" {
 		theme = "default"
 	}
-	data := userPageData{Name: name, Email: email, IsAdmin: isAdmin, DiscussOriginalLang: discussOriginalLang, LanguageStyle: langStyle, Theme: theme, Version: appconfig.Version, Year: time.Now().Year()}
+	data := userPageData{Name: name, Email: email, IsAdmin: isAdmin, DiscussOriginalLang: discussOriginalLang, GenerateShareCard: generateShareCard, LanguageStyle: langStyle, Theme: theme, Version: appconfig.Version, Year: time.Now().Year()}
 	switch r.URL.Query().Get("ok") {
 	case "email":
 		data.FlashOK = "Email berhasil diperbarui."
@@ -113,8 +114,9 @@ func (a *App) UserUpdatePrefs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	originalLang := r.FormValue("discuss_original_lang") == "on"
+	generateShareCard := r.FormValue("generate_share_card") == "on"
 	_, err := a.DB.ExecContext(r.Context(),
-		`UPDATE users SET discuss_original_lang = $1 WHERE id = $2`, originalLang, userID)
+		`UPDATE users SET discuss_original_lang = $1, generate_share_card = $2 WHERE id = $3`, originalLang, generateShareCard, userID)
 	if err != nil {
 		http.Error(w, "could not update preferences", http.StatusInternalServerError)
 		return

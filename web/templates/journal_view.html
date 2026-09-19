@@ -80,8 +80,14 @@
       style="padding:4px 0 12px;max-width:420px;margin:0 auto">
       <canvas id="share-canvas" style="width:100%;height:auto;border-radius:12px;display:block"></canvas>
       <div style="display:flex;gap:8px;margin-top:10px">
-        <button type="button" class="btn-primary" id="btn-share-native" style="flex:1;font-size:13px;margin-top:0">Bagikan</button>
-        <button type="button" class="btn-secondary" id="btn-save-img" style="flex:1;font-size:13px">Simpan Gambar</button>
+        <button type="button" class="btn-primary" id="btn-share-native" style="flex:1;font-size:14px;margin-top:0;display:flex;align-items:center;justify-content:center;gap:6px">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M18 16a3 3 0 00-2.04.8l-7.43-4.29a3.07 3.07 0 000-1.02l7.43-4.29A3 3 0 1017 5l-7.43 4.29a3 3 0 100 5.42L17 19a3 3 0 101-2.99z"/></svg>
+          Bagikan
+        </button>
+        <button type="button" class="btn-secondary" id="btn-save-img" style="flex:1;font-size:14px;display:flex;align-items:center;justify-content:center;gap:6px">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M5 20h14v-2H5v2zm7-18v10.59l-3.3-3.3-1.41 1.41L12 16l4.71-4.3-1.41-1.41L13 13.59V2h-1z"/></svg>
+          Simpan
+        </button>
       </div>
     </div>
     {{end}}
@@ -406,45 +412,45 @@
       ctx.fillRect(0, 0, S, S);
 
       ctx.fillStyle = gold;
-      ctx.font = '700 36px “Plus Jakarta Sans”, sans-serif';
+      ctx.font = '700 52px “Plus Jakarta Sans”, sans-serif';
       ctx.textAlign = 'left';
-      ctx.fillText('selah,', pad, pad + 36);
+      ctx.fillText('selah,', pad, pad + 52);
 
       ctx.fillStyle = 'rgba(255,255,255,0.45)';
-      ctx.font = '400 24px “Plus Jakarta Sans”, sans-serif';
+      ctx.font = '400 32px “Plus Jakarta Sans”, sans-serif';
       ctx.textAlign = 'right';
-      ctx.fillText(d.date, S - pad, pad + 28);
-      ctx.fillText('Hari ke-' + d.day, S - pad, pad + 56);
+      ctx.fillText(d.date, S - pad, pad + 36);
+      ctx.fillText('Hari ke-' + d.day, S - pad, pad + 76);
 
       ctx.fillStyle = gold;
-      ctx.font = '700 44px “Plus Jakarta Sans”, sans-serif';
+      ctx.font = '700 56px “Plus Jakarta Sans”, sans-serif';
       ctx.textAlign = 'center';
       var ref = d.verseRef.length > 38 ? d.verseRef.slice(0, 38) + '…' : d.verseRef;
-      ctx.fillText(ref, S / 2, 390);
+      ctx.fillText(ref, S / 2, 420);
 
       ctx.fillStyle = '#FFFFFF';
-      ctx.font = 'italic 500 31px Georgia, serif';
+      ctx.font = 'italic 500 40px Georgia, serif';
       ctx.textAlign = 'center';
       var vt = d.verseText.length > 190 ? d.verseText.slice(0, 190) + '…' : d.verseText;
-      var vtLines = wrapCanvasText(ctx, '“' + vt + '”', S - pad * 2 - 40);
-      var vtY = 468;
-      vtLines.forEach(function(l) { ctx.fillText(l, S / 2, vtY); vtY += 50; });
+      var vtLines = wrapCanvasText(ctx, '”' + vt + '”', S - pad * 2 - 40);
+      var vtY = 506;
+      vtLines.forEach(function(l) { ctx.fillText(l, S / 2, vtY); vtY += 58; });
 
-      var divY = Math.min(vtY + 28, 740);
+      var divY = Math.min(vtY + 36, 760);
       ctx.save();
       ctx.strokeStyle = gold; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.3;
       ctx.beginPath(); ctx.moveTo(pad + 80, divY); ctx.lineTo(S - pad - 80, divY); ctx.stroke();
       ctx.restore();
 
       ctx.fillStyle = 'rgba(255,255,255,0.78)';
-      ctx.font = '400 27px “Plus Jakarta Sans”, sans-serif';
+      ctx.font = '400 36px “Plus Jakarta Sans”, sans-serif';
       ctx.textAlign = 'center';
       var sumLines = wrapCanvasText(ctx, d.summary, S - pad * 2 - 40);
-      var sumY = divY + 54;
-      sumLines.slice(0, 4).forEach(function(l) { ctx.fillText(l, S / 2, sumY); sumY += 42; });
+      var sumY = divY + 62;
+      sumLines.slice(0, 4).forEach(function(l) { ctx.fillText(l, S / 2, sumY); sumY += 52; });
 
       ctx.fillStyle = 'rgba(255,255,255,0.22)';
-      ctx.font = '400 20px “Plus Jakarta Sans”, sans-serif';
+      ctx.font = '400 28px “Plus Jakarta Sans”, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText('selah-app.my.id', S / 2, S - pad + 16);
     }
@@ -453,14 +459,33 @@
     if (btnShareNative) {
       btnShareNative.addEventListener('click', function() {
         var d = shareSection.dataset;
-        var text = d.verseRef + '\n\n“' + d.verseText + '”\n\n' + d.summary + '\n\n— Selah, jurnal devotional';
-        if (navigator.share) {
-          navigator.share({ title: 'Selah · ' + d.verseRef, text: text, url: 'https://selah-app.my.id' }).catch(function() {});
+        var text = d.verseRef + '\n\n”' + d.verseText + '”\n\n' + d.summary + '\n\n— Selah, jurnal devotional';
+        var filename = 'selah-hari-ke-' + d.day + '.png';
+
+        function fallbackTextShare() {
+          if (navigator.share) {
+            navigator.share({ title: 'Selah · ' + d.verseRef, text: text, url: 'https://selah-app.my.id' }).catch(function() {});
+          } else if (navigator.clipboard) {
+            navigator.clipboard.writeText(text).then(function() {
+              var label = btnShareNative.querySelector('span') || btnShareNative;
+              var prev = label.textContent;
+              label.textContent = 'Tersalin!';
+              setTimeout(function() { label.textContent = prev; }, 2000);
+            });
+          }
+        }
+
+        if (navigator.canShare) {
+          shareCanvas.toBlob(function(blob) {
+            var file = new File([blob], filename, { type: 'image/png' });
+            if (navigator.canShare({ files: [file] })) {
+              navigator.share({ title: 'Selah · ' + d.verseRef, text: text, files: [file] }).catch(function() {});
+            } else {
+              fallbackTextShare();
+            }
+          }, 'image/png');
         } else {
-          navigator.clipboard.writeText(text).then(function() {
-            btnShareNative.textContent = 'Tersalin!';
-            setTimeout(function() { btnShareNative.textContent = 'Bagikan'; }, 2000);
-          });
+          fallbackTextShare();
         }
       });
     }

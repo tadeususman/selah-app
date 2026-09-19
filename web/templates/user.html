@@ -56,13 +56,21 @@
 
     <section class="admin-section">
       <h3>Preferensi Diskusi</h3>
-      <form method="POST" action="/user/prefs">
+      <form method="POST" action="/user/prefs" id="prefs-form">
         <label class="toggle-row">
           <span class="toggle-label">
             <span class="toggle-label-title">Diskusi dengan bahasa asli</span>
             <span class="toggle-label-desc">Teman Selah akan menyertakan analisis kata Ibrani/Yunani saat berdiskusi ayat</span>
           </span>
           <input type="checkbox" name="discuss_original_lang" class="toggle-checkbox" {{if .DiscussOriginalLang}}checked{{end}} onchange="this.form.submit()">
+          <span class="toggle-switch"></span>
+        </label>
+        <label class="toggle-row" style="margin-top:12px">
+          <span class="toggle-label">
+            <span class="toggle-label-title">Generate kartu berbagi</span>
+            <span class="toggle-label-desc">Teman Selah akan membuat kartu gambar untuk dibagikan setelah jurnal selesai</span>
+          </span>
+          <input type="checkbox" name="generate_share_card" class="toggle-checkbox" {{if .GenerateShareCard}}checked{{end}} onchange="this.form.submit()">
           <span class="toggle-switch"></span>
         </label>
       </form>

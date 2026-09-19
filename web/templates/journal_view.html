@@ -86,6 +86,13 @@
     </div>
     {{end}}
 
+    {{if and (eq .Entry.Status "completed") (not .ShowShareCard)}}
+    <div style="text-align:center;padding:12px 0 4px">
+      <p style="font-size:13px;color:var(--text-muted);margin:0">Kartu berbagi sedang disiapkan...</p>
+    </div>
+    <script>setTimeout(function(){ window.location.reload(); }, 6000);</script>
+    {{end}}
+
     {{if eq .Entry.Status "completed"}}
       {{if .Entry.PracticalStep}}
       <section class="summary-box">

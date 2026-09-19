@@ -510,7 +510,7 @@
       // ── Pre-measure content for dynamic vertical centering ──
       var textW = W - pad * 2 - 60;
       var vtFont  = 'italic 400 44px Lora, serif';
-      var sumFont = '400 38px “Plus Jakarta Sans”, sans-serif';
+      var sumFont = '400 38px Lora, serif';
 
       ctx.font = vtFont;
       var vtLines = wrapCanvasText(ctx, d.verseText, textW);
@@ -555,9 +555,9 @@
 
       // Opening “ — large, low-opacity, decorative
       ctx.fillStyle = quoteColor;
-      ctx.font = '400 180px Georgia, serif';
+      ctx.font = '400 140px Georgia, serif';
       ctx.textAlign = 'left';
-      ctx.fillText('“', pad - 8, sumBaseY + 80);
+      ctx.fillText('“', pad - 8, sumBaseY + 60);
 
       // Summary text
       ctx.fillStyle = sumTxt;
@@ -567,11 +567,12 @@
         ctx.fillText(l, W / 2, sumBaseY + (i + 1) * sumLH);
       });
 
-      // Closing “ — anchored after last summary line
+      // Closing “ — clamped so it never overlaps watermark
       ctx.fillStyle = quoteColor;
-      ctx.font = '400 180px Georgia, serif';
+      ctx.font = '400 140px Georgia, serif';
       ctx.textAlign = 'right';
-      ctx.fillText('”', W - pad + 8, sumBaseY + sumLines.length * sumLH + 20);
+      var closeQuoteY = Math.min(sumBaseY + sumLines.length * sumLH + 16, H - 180);
+      ctx.fillText('”', W - pad + 8, closeQuoteY);
 
       // ── Watermark ──
       ctx.fillStyle = wm;

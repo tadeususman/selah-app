@@ -87,7 +87,16 @@
       {{end}}
     {{else}}
 
-      {{if not .Entry.Reflection}}
+      {{if .ShowShareCard}}
+    <div style="padding:0 0 8px;text-align:center">
+      <button type="button" onclick="openShareModal()" style="display:inline-flex;align-items:center;gap:7px;background:none;border:1.5px solid var(--gold,#F0A93B);border-radius:20px;padding:9px 22px;font-size:13px;font-weight:600;color:var(--gold,#F0A93B);cursor:pointer;transition:all .2s">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        Bagikan sesi ini
+      </button>
+    </div>
+    {{end}}
+
+    {{if not .Entry.Reflection}}
       <div class="action-btns" id="action-btns">
         <button class="action-btn" id="btn-ask" onclick="togglePanel('panel-ask')">
           <span class="action-btn-icon">
@@ -503,7 +512,8 @@
 
     {{if .ShowShareCard}}
     window.addEventListener('load', function() {
-      setTimeout(openShareModal, 400);
+      var shareBtn = document.querySelector('[onclick="openShareModal()"]');
+      if (shareBtn) shareBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
     {{end}}
   </script>

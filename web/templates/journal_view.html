@@ -70,6 +70,22 @@
     </section>
     {{end}}
 
+    {{if .ShowShareCard}}
+    <div id="share-card-section"
+      data-verse-ref="{{.Entry.VerseRef}}"
+      data-verse-text="{{.Entry.VerseText}}"
+      data-day="{{.Entry.DayNumber}}"
+      data-date="{{idDate .Entry.EntryDate}}"
+      data-summary="{{.Entry.ShareSummary}}"
+      style="padding:4px 0 12px">
+      <canvas id="share-canvas" style="width:100%;border-radius:12px;display:block"></canvas>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button type="button" class="btn-primary" id="btn-share-native" style="flex:1;font-size:13px;margin-top:0">Bagikan</button>
+        <button type="button" class="btn-secondary" id="btn-save-img" style="flex:1;font-size:13px">Simpan Gambar</button>
+      </div>
+    </div>
+    {{end}}
+
     {{if eq .Entry.Status "completed"}}
       {{if .Entry.PracticalStep}}
       <section class="summary-box">
@@ -77,24 +93,7 @@
         <p>{{.Entry.PracticalStep}}</p>
       </section>
       {{end}}
-      {{if .Entry.ShareSummary}}
-      <div style="text-align:center;margin:16px 0 8px">
-        <button type="button" onclick="openShareModal()" style="display:inline-flex;align-items:center;gap:6px;background:none;border:1px solid var(--border);border-radius:8px;padding:8px 18px;font-size:13px;color:var(--text-muted);cursor:pointer;transition:all .2s">
-          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-          Bagikan sesi ini
-        </button>
-      </div>
-      {{end}}
     {{else}}
-
-      {{if .ShowShareCard}}
-    <div style="padding:0 0 8px;text-align:center">
-      <button type="button" onclick="openShareModal()" style="display:inline-flex;align-items:center;gap:7px;background:none;border:1.5px solid var(--gold,#F0A93B);border-radius:20px;padding:9px 22px;font-size:13px;font-weight:600;color:var(--gold,#F0A93B);cursor:pointer;transition:all .2s">
-        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-        Bagikan sesi ini
-      </button>
-    </div>
-    {{end}}
 
     {{if not .Entry.Reflection}}
       <div class="action-btns" id="action-btns">
@@ -162,27 +161,6 @@
   </main>
 
   {{template "nav" .}}
-
-  {{if .Entry.ShareSummary}}
-  <!-- Share card modal -->
-  <div id="share-modal" class="modal-backdrop" style="display:none"
-    onclick="if(event.target===this)closeShareModal()"
-    data-verse-ref="{{.Entry.VerseRef}}"
-    data-verse-text="{{.Entry.VerseText}}"
-    data-day="{{.Entry.DayNumber}}"
-    data-date="{{idDate .Entry.EntryDate}}"
-    data-summary="{{.Entry.ShareSummary}}">
-    <div class="modal-card" style="max-width:360px;padding:20px 16px">
-      <p style="font-size:14px;font-weight:700;margin:0 0 12px;color:var(--text);text-align:center">Bagikan sesi ini ✨</p>
-      <canvas id="share-canvas" style="width:100%;border-radius:10px;display:block"></canvas>
-      <div style="display:flex;gap:8px;margin-top:12px">
-        <button type="button" class="btn-primary" id="btn-share-native" style="flex:1;font-size:13px;margin-top:0">Bagikan</button>
-        <button type="button" class="btn-secondary" id="btn-save-img" style="flex:1;font-size:13px">Simpan</button>
-      </div>
-      <button type="button" class="modal-btn-cancel" style="width:100%;margin-top:8px;font-size:13px" onclick="closeShareModal()">Lewati</button>
-    </div>
-  </div>
-  {{end}}
 
   <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
   <script>
@@ -393,8 +371,8 @@
       }
     })();
 
-    // ── Share card ──
-    var shareModal = document.getElementById('share-modal');
+    // ── Share card (inline) ──
+    var shareSection = document.getElementById('share-card-section');
     var shareCanvas = document.getElementById('share-canvas');
 
     function wrapCanvasText(ctx, text, maxWidth) {
@@ -410,8 +388,8 @@
     }
 
     function drawShareCard() {
-      if (!shareCanvas || !shareModal) return;
-      var d = shareModal.dataset;
+      if (!shareCanvas || !shareSection) return;
+      var d = shareSection.dataset;
       var ctx = shareCanvas.getContext('2d');
       var S = 1080;
       shareCanvas.width = S; shareCanvas.height = S;
@@ -420,27 +398,23 @@
       ctx.fillStyle = navy;
       ctx.fillRect(0, 0, S, S);
 
-      // Wordmark
       ctx.fillStyle = gold;
-      ctx.font = '700 36px "Plus Jakarta Sans", sans-serif';
+      ctx.font = '700 36px “Plus Jakarta Sans”, sans-serif';
       ctx.textAlign = 'left';
       ctx.fillText('selah,', pad, pad + 36);
 
-      // Date + day
       ctx.fillStyle = 'rgba(255,255,255,0.45)';
-      ctx.font = '400 24px "Plus Jakarta Sans", sans-serif';
+      ctx.font = '400 24px “Plus Jakarta Sans”, sans-serif';
       ctx.textAlign = 'right';
       ctx.fillText(d.date, S - pad, pad + 28);
       ctx.fillText('Hari ke-' + d.day, S - pad, pad + 56);
 
-      // Verse ref
       ctx.fillStyle = gold;
-      ctx.font = '700 44px "Plus Jakarta Sans", sans-serif';
+      ctx.font = '700 44px “Plus Jakarta Sans”, sans-serif';
       ctx.textAlign = 'center';
       var ref = d.verseRef.length > 38 ? d.verseRef.slice(0, 38) + '…' : d.verseRef;
       ctx.fillText(ref, S / 2, 390);
 
-      // Verse text (italic, wrapped)
       ctx.fillStyle = '#FFFFFF';
       ctx.font = 'italic 500 31px Georgia, serif';
       ctx.textAlign = 'center';
@@ -449,45 +423,29 @@
       var vtY = 468;
       vtLines.forEach(function(l) { ctx.fillText(l, S / 2, vtY); vtY += 50; });
 
-      // Divider
       var divY = Math.min(vtY + 28, 740);
       ctx.save();
       ctx.strokeStyle = gold; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.3;
       ctx.beginPath(); ctx.moveTo(pad + 80, divY); ctx.lineTo(S - pad - 80, divY); ctx.stroke();
       ctx.restore();
 
-      // Summary
       ctx.fillStyle = 'rgba(255,255,255,0.78)';
-      ctx.font = '400 27px "Plus Jakarta Sans", sans-serif';
+      ctx.font = '400 27px “Plus Jakarta Sans”, sans-serif';
       ctx.textAlign = 'center';
       var sumLines = wrapCanvasText(ctx, d.summary, S - pad * 2 - 40);
       var sumY = divY + 54;
       sumLines.slice(0, 4).forEach(function(l) { ctx.fillText(l, S / 2, sumY); sumY += 42; });
 
-      // Watermark
       ctx.fillStyle = 'rgba(255,255,255,0.22)';
-      ctx.font = '400 20px "Plus Jakarta Sans", sans-serif';
+      ctx.font = '400 20px “Plus Jakarta Sans”, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText('selah-app.my.id', S / 2, S - pad + 16);
-    }
-
-    function openShareModal() {
-      if (!shareModal) return;
-      shareModal.style.display = 'flex';
-      document.fonts.ready.then(function() { drawShareCard(); });
-    }
-
-    function closeShareModal() {
-      if (shareModal) shareModal.style.display = 'none';
-      if (window.history.replaceState) {
-        window.history.replaceState({}, '', window.location.pathname);
-      }
     }
 
     var btnShareNative = document.getElementById('btn-share-native');
     if (btnShareNative) {
       btnShareNative.addEventListener('click', function() {
-        var d = shareModal.dataset;
+        var d = shareSection.dataset;
         var text = d.verseRef + '\n\n“' + d.verseText + '”\n\n' + d.summary + '\n\n— Selah, jurnal devotional';
         if (navigator.share) {
           navigator.share({ title: 'Selah · ' + d.verseRef, text: text, url: 'https://selah-app.my.id' }).catch(function() {});
@@ -504,16 +462,23 @@
     if (btnSaveImg) {
       btnSaveImg.addEventListener('click', function() {
         var a = document.createElement('a');
-        a.download = 'selah-hari-ke-' + shareModal.dataset.day + '.png';
+        a.download = 'selah-hari-ke-' + shareSection.dataset.day + '.png';
         a.href = shareCanvas.toDataURL('image/png');
         a.click();
       });
     }
 
     {{if .ShowShareCard}}
-    window.addEventListener('load', function() {
-      var shareBtn = document.querySelector('[onclick="openShareModal()"]');
-      if (shareBtn) shareBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    document.fonts.ready.then(function() {
+      drawShareCard();
+      if (window.location.search.indexOf('share=1') !== -1) {
+        setTimeout(function() {
+          shareSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 300);
+        if (window.history.replaceState) {
+          window.history.replaceState({}, '', window.location.pathname);
+        }
+      }
     });
     {{end}}
   </script>

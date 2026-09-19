@@ -232,7 +232,7 @@ func (a *App) JournalView(w http.ResponseWriter, r *http.Request) {
 		viewLangStyle = "casual"
 	}
 
-	showShare := r.URL.Query().Get("share") == "1" && entry.Status == "completed" && entry.ShareSummary != ""
+	showShare := entry.Status == "completed" && entry.ShareSummary != ""
 	a.render(w, "journal_view.html", journalViewData{Entry: entry, Messages: messages, CompletedCount: completedCount, LanguageStyle: viewLangStyle, ShowShareCard: showShare})
 }
 

@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 	"unicode/utf8"
 
@@ -191,6 +192,7 @@ type journalViewData struct {
 	Messages       []models.JournalMessage
 	CompletedCount int
 	LanguageStyle  string
+	ShowShareCard  bool
 }
 
 func (a *App) JournalView(w http.ResponseWriter, r *http.Request) {
@@ -230,7 +232,8 @@ func (a *App) JournalView(w http.ResponseWriter, r *http.Request) {
 		viewLangStyle = "casual"
 	}
 
-	a.render(w, "journal_view.html", journalViewData{Entry: entry, Messages: messages, CompletedCount: completedCount, LanguageStyle: viewLangStyle})
+	showShare := r.URL.Query().Get("share") == "1" && entry.Status == "completed" && entry.ShareSummary != ""
+	a.render(w, "journal_view.html", journalViewData{Entry: entry, Messages: messages, CompletedCount: completedCount, LanguageStyle: viewLangStyle, ShowShareCard: showShare})
 }
 
 // ---- POST /journal/{id}/reflect (save "apa yang didapat setelah membaca") ----
@@ -361,6 +364,7 @@ func (a *App) JournalComplete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Build full session context for closing message
+	var closing, shareSummary string
 	rows, err := a.DB.QueryContext(r.Context(),
 		`SELECT role, content FROM journal_messages WHERE entry_id = $1 ORDER BY created_at ASC`,
 		entry.ID)
@@ -388,15 +392,37 @@ func (a *App) JournalComplete(w http.ResponseWriter, r *http.Request) {
 		if closingLangStyle == "" {
 			closingLangStyle = "casual"
 		}
-		closing, aiErr := a.AI.ClosingMessage(r.Context(), toChatMessages(history), closingLangStyle)
-		if aiErr == nil && closing != "" {
+
+		// Run closing message and share summary in parallel
+		var wg sync.WaitGroup
+		wg.Add(2)
+		go func() {
+			defer wg.Done()
+			closing, _ = a.AI.ClosingMessage(r.Context(), toChatMessages(history), closingLangStyle)
+		}()
+		go func() {
+			defer wg.Done()
+			shareSummary, _ = a.AI.GenerateShareSummary(r.Context(), entry.VerseRef, entry.VerseText, entry.AIBackground, entry.Reflection, step)
+		}()
+		wg.Wait()
+
+		if closing != "" {
 			_, _ = a.DB.ExecContext(r.Context(),
 				`INSERT INTO journal_messages (entry_id, role, content) VALUES ($1, 'ai', $2)`,
 				entry.ID, closing)
 		}
+		if shareSummary != "" {
+			_, _ = a.DB.ExecContext(r.Context(),
+				`UPDATE journal_entries SET share_summary = $1 WHERE id = $2`,
+				shareSummary, entry.ID)
+		}
 	}
 
-	http.Redirect(w, r, "/journal/"+strconv.FormatInt(entry.ID, 10), http.StatusSeeOther)
+	dest := "/journal/" + strconv.FormatInt(entry.ID, 10)
+	if shareSummary != "" {
+		dest += "?share=1"
+	}
+	http.Redirect(w, r, dest, http.StatusSeeOther)
 }
 
 // ---- POST /journal/{id}/delete ----
@@ -437,12 +463,12 @@ func (a *App) loadOwnedEntry(w http.ResponseWriter, r *http.Request) (models.Jou
 	err = a.DB.QueryRowContext(r.Context(), `
 		SELECT id, user_id, day_number, entry_date, entry_time, location,
 		       verse_ref, verse_text, ai_background, reflection, practical_step,
-		       status, created_at, updated_at
+		       status, share_summary, created_at, updated_at
 		FROM journal_entries WHERE id = $1 AND user_id = $2`,
 		id, userID,
 	).Scan(&e.ID, &e.UserID, &e.DayNumber, &entryDate, &entryTime, &e.Location,
 		&e.VerseRef, &e.VerseText, &e.AIBackground, &e.Reflection, &e.PracticalStep,
-		&e.Status, &e.CreatedAt, &e.UpdatedAt)
+		&e.Status, &e.ShareSummary, &e.CreatedAt, &e.UpdatedAt)
 	if err != nil {
 		http.NotFound(w, r)
 		return models.JournalEntry{}, false

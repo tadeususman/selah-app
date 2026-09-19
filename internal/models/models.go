@@ -23,6 +23,7 @@ type JournalEntry struct {
 	Reflection     string
 	PracticalStep  string
 	Status         string // "draft" | "completed"
+	ShareSummary   string
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 }

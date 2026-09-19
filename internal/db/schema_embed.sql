@@ -26,6 +26,7 @@ END $$;
 UPDATE users SET theme = 'sakura' WHERE theme = 'mawar';
 ALTER TABLE journal_entries ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION;
 ALTER TABLE journal_entries ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION;
+ALTER TABLE journal_entries ADD COLUMN IF NOT EXISTS share_summary TEXT NOT NULL DEFAULT '';
 
 -- One row per devotion session ("Day N" in the reference UI).
 CREATE TABLE IF NOT EXISTS journal_entries (

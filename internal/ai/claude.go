@@ -554,6 +554,38 @@ func (c *Client) SearchVerse(ctx context.Context, query string) ([]string, error
 	return refs, nil
 }
 
+const shareSummarySystemPrompt = `Kamu menulis satu kutipan inspiratif singkat dari sesi saat teduh yang baru selesai.
+Berdasarkan ayat dan refleksi yang ada, tulis 1-2 kalimat yang natural, hangat, dan spesifik — bukan quote template, tapi lahir dari sesi ini.
+Tulis dalam bahasa Indonesia. Tidak ada markdown. Tidak ada label. Hanya kalimat mengalir.
+Maksimal 160 karakter. Langsung ke inti — jangan buka dengan "Hari ini" atau "Dalam sesi ini".`
+
+// GenerateShareSummary creates a short shareable quote from a completed devotion session.
+func (c *Client) GenerateShareSummary(ctx context.Context, verseRef, verseText, background, reflection, step string) (string, error) {
+	var sb strings.Builder
+	sb.WriteString("Ayat: " + verseRef + " — " + verseText + "\n\n")
+	if background != "" {
+		bg := background
+		if len(bg) > 300 {
+			bg = bg[:300] + "..."
+		}
+		sb.WriteString("Konteks: " + bg + "\n\n")
+	}
+	if reflection != "" {
+		sb.WriteString("Refleksi: " + reflection + "\n\n")
+	}
+	if step != "" {
+		sb.WriteString("Langkah praktis: " + step)
+	}
+	result, err := c.send(ctx, shareSummarySystemPrompt, []ChatMessage{{Role: "user", Content: sb.String()}})
+	if err != nil {
+		return "", err
+	}
+	// Strip any stray markdown
+	result = strings.ReplaceAll(result, "**", "")
+	result = strings.ReplaceAll(result, "*", "")
+	return strings.TrimSpace(result), nil
+}
+
 // ClosingMessage generates a warm closing/encouragement message at the end of a devotion session.
 // history should include the full session context including reflection and practical step.
 func (c *Client) ClosingMessage(ctx context.Context, history []ChatMessage, langStyle string) (string, error) {

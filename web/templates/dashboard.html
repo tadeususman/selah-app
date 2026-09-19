@@ -14,24 +14,6 @@
       {{if .WelcomeMsg}}<p class="welcome-msg">{{.WelcomeMsg}}</p>{{end}}
     </header>
 
-    {{if .ShareCards}}
-    <div class="section-title-row">
-      <h2>Kartu Renunganmu</h2>
-    </div>
-    <div class="share-card-carousel">
-      {{range .ShareCards}}
-      <div class="share-card-slide">
-        <a href="/journal/{{.ID}}" class="share-card-mini">
-          <div class="share-card-mini-ref">{{.VerseRef}}</div>
-          <p class="share-card-mini-summary">{{.ShareSummary}}</p>
-          <div class="share-card-mini-date">{{idDate .EntryDate}}</div>
-        </a>
-        <a href="/journal/{{.ID}}#share" class="btn-bagikan">Bagikan</a>
-      </div>
-      {{end}}
-    </div>
-    {{end}}
-
     <div class="section-title-row">
       <h2>Terakhir</h2>
       <a href="/journal" class="section-link">Semua →</a>
@@ -54,6 +36,41 @@
       </a>
       {{end}}
     </div>
+
+    {{if .ShareCards}}
+    <div class="section-title-row" style="margin-top:8px">
+      <h2>Kartu Renunganmu</h2>
+    </div>
+    <div class="dash-card-outer">
+      <div class="dash-card-track" id="dash-card-track">
+        {{range $i, $c := .ShareCards}}
+        <div class="dash-card-slide"
+             data-idx="{{$i}}"
+             data-verse-ref="{{$c.VerseRef}}"
+             data-verse-text="{{$c.VerseText}}"
+             data-day="{{$c.DayNumber}}"
+             data-date="{{idDate $c.EntryDate}}"
+             data-weekday="{{idDay $c.EntryDate}}"
+             data-summary="{{$c.ShareSummary}}"
+             data-username="{{$.UserName}}">
+          <canvas style="width:100%;height:auto;border-radius:16px;display:block"></canvas>
+          <div class="dash-card-actions">
+            <button class="dash-btn-share" title="Bagikan">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M18 16a3 3 0 00-2.04.8l-7.43-4.29a3.07 3.07 0 000-1.02l7.43-4.29A3 3 0 1017 5l-7.43 4.29a3 3 0 100 5.42L17 19a3 3 0 101-2.99z"/></svg>
+            </button>
+          </div>
+        </div>
+        {{end}}
+      </div>
+      {{if gt (len .ShareCards) 1}}
+      <div class="dash-card-dots" id="dash-card-dots">
+        {{range $i, $c := .ShareCards}}
+        <span class="dash-dot{{if eq $i 0}} active{{end}}"></span>
+        {{end}}
+      </div>
+      {{end}}
+    </div>
+    {{end}}
 
     <a href="/journal/new" class="fab" aria-label="Tambah journal baru">
       <span class="fab-plus">+</span>
@@ -110,53 +127,65 @@
     gap: 10px;
   }
 
-  .share-card-mini {
-    background: #F7F3EC;
-    border-radius: 16px;
-    padding: 20px 18px 16px;
+  .dash-card-outer {
+    margin: 0 -20px 24px;
+    padding: 0 20px;
+  }
+
+  .dash-card-track {
     display: flex;
-    flex-direction: column;
-    gap: 10px;
-    text-decoration: none;
-    min-height: 160px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 16px;
+  }
+  .dash-card-track::-webkit-scrollbar { display: none; }
+
+  .dash-card-slide {
+    scroll-snap-align: start;
+    flex: 0 0 100%;
+    max-width: 420px;
   }
 
-  .share-card-mini-ref {
-    font-family: 'Playfair Display', serif;
-    font-size: 15px;
-    font-weight: 700;
-    letter-spacing: 0.01em;
+  .dash-card-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 12px;
   }
 
-  .share-card-mini-summary {
-    font-family: 'Lora', serif;
-    font-size: 13px;
-    font-style: italic;
-    line-height: 1.55;
-    margin: 0;
-    flex: 1;
+  .dash-btn-share {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: none;
+    background: var(--navy);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
   }
 
-  .share-card-mini-date {
-    font-size: 11px;
-    font-family: 'Plus Jakarta Sans', sans-serif;
+  .dash-card-dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 14px;
   }
 
-  .btn-bagikan {
-    display: block;
-    text-align: center;
-    background: transparent;
-    border: 1.5px solid currentColor;
-    border-radius: 10px;
-    padding: 9px 0;
-    font-size: 13px;
-    font-weight: 600;
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    text-decoration: none;
-    transition: background 0.15s, color 0.15s;
+  .dash-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: background 0.2s, width 0.2s;
+    display: inline-block;
   }
-  .btn-bagikan:active {
-    color: white !important;
+  .dash-dot.active {
+    background: var(--navy);
+    width: 18px;
+    border-radius: 3px;
   }
 
   .section-link {
@@ -268,35 +297,180 @@
     render(0);
   })();
 
-  // Apply theme color to share card mini previews
+  // ── Share card carousel ──
   (function() {
-    var themeColors = {
-      default:  [44,  68,  104],
-      sakura:   [176, 85,  128],
-      rose:     [160, 48,  64 ],
-      lavender: [110, 92,  168],
-      sage:     [61,  122, 88 ],
-      mono:     [64,  64,  64 ]
-    };
-    var tc = themeColors[localStorage.getItem('selah-color')] || themeColors.default;
-    var hex = '#' + tc.map(function(v){ return ('0'+v.toString(16)).slice(-2); }).join('');
-    function rgba(a) { return 'rgba('+tc[0]+','+tc[1]+','+tc[2]+','+a+')'; }
+    var track = document.getElementById('dash-card-track');
+    if (!track) return;
+    var slides = track.querySelectorAll('.dash-card-slide');
+    var dotsEl = document.getElementById('dash-card-dots');
+    var dots = dotsEl ? dotsEl.querySelectorAll('.dash-dot') : [];
+    var cardIsDark = document.documentElement.dataset.theme !== 'dark';
 
-    document.querySelectorAll('.share-card-mini').forEach(function(card) {
-      card.querySelector('.share-card-mini-ref').style.color   = hex;
-      card.querySelector('.share-card-mini-summary').style.color = rgba(0.82);
-      card.querySelector('.share-card-mini-date').style.color  = rgba(0.45);
-    });
-    document.querySelectorAll('.btn-bagikan').forEach(function(btn) {
-      btn.style.color       = hex;
-      btn.style.borderColor = hex;
-      btn.addEventListener('pointerdown', function() {
-        btn.style.background = hex;
-        btn.style.color = '#fff';
+    function wrapText(ctx, text, maxWidth) {
+      var words = text.split(' '), lines = [], cur = '';
+      words.forEach(function(w) {
+        var test = cur ? cur + ' ' + w : w;
+        if (ctx.measureText(test).width > maxWidth && cur) { lines.push(cur); cur = w; }
+        else cur = test;
       });
-      btn.addEventListener('pointerup', function() {
-        btn.style.background = '';
-        btn.style.color = hex;
+      if (cur) lines.push(cur);
+      return lines;
+    }
+
+    function seededRand(seed) {
+      var s = (Math.abs(parseInt(seed) || 1) * 9301 + 49297) % 233280;
+      return function() { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+    }
+
+    function addTexture(ctx, W, H, isDark, day) {
+      var rand = seededRand(day);
+      var cx = W * (0.5 + (rand() - 0.5) * 0.10);
+      var cy = H * (0.44 + (rand() - 0.5) * 0.08);
+      var vg = ctx.createRadialGradient(cx, cy, H * 0.14, cx, cy, H * 0.86);
+      vg.addColorStop(0, 'rgba(0,0,0,0)');
+      vg.addColorStop(1, isDark ? 'rgba(0,0,0,0.22)' : 'rgba(0,0,0,0.08)');
+      ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+      var scale = 5 + Math.floor(rand() * 2), opacity = 0.05 + rand() * 0.04;
+      var gW = Math.ceil(W / scale), gH = Math.ceil(H / scale);
+      var gc = document.createElement('canvas'); gc.width = gW; gc.height = gH;
+      var gx = gc.getContext('2d'), gd = gx.createImageData(gW, gH);
+      for (var i = 0; i < gd.data.length; i += 4) {
+        var v = Math.floor(Math.random() * 255);
+        gd.data[i] = gd.data[i+1] = gd.data[i+2] = v;
+        gd.data[i+3] = Math.floor(Math.random() * 180 + 30);
+      }
+      gx.putImageData(gd, 0, 0);
+      ctx.save(); ctx.imageSmoothingEnabled = false;
+      ctx.globalCompositeOperation = 'soft-light'; ctx.globalAlpha = opacity;
+      ctx.drawImage(gc, 0, 0, W, H); ctx.restore();
+    }
+
+    function drawCard(slide) {
+      var canvas = slide.querySelector('canvas');
+      if (!canvas) return;
+      var d = slide.dataset;
+      var ctx = canvas.getContext('2d');
+      var W = 1080, H = 1350, pad = 80, gold = '#F0A93B';
+      canvas.width = W; canvas.height = H;
+
+      var themeColors = { default:[44,68,104], sakura:[176,85,128], rose:[160,48,64], lavender:[110,92,168], sage:[61,122,88], mono:[64,64,64] };
+      var tc = themeColors[localStorage.getItem('selah-color')] || themeColors.default;
+      function tRgba(a) { return 'rgba('+tc[0]+','+tc[1]+','+tc[2]+','+a+')'; }
+      function tHex() { return '#'+tc.map(function(v){return('0'+v.toString(16)).slice(-2);}).join(''); }
+
+      var bg, wordmark, dateTxt, refColor, verseTxt, divColor, sumTxt, wm;
+      if (cardIsDark) {
+        bg='#2C4468'; wordmark=gold; dateTxt='rgba(255,255,255,0.45)';
+        refColor=gold; verseTxt='#FFFFFF'; divColor=gold;
+        sumTxt='rgba(255,255,255,0.90)'; wm='rgba(255,255,255,0.22)';
+      } else {
+        bg='#F7F3EC'; wordmark=tHex(); dateTxt=tRgba(0.5);
+        refColor=tHex(); verseTxt=tRgba(0.9); divColor=tHex();
+        sumTxt=tRgba(0.82); wm=tRgba(0.25);
+      }
+
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+      addTexture(ctx, W, H, cardIsDark, d.day);
+
+      ctx.fillStyle = wordmark; ctx.font = '700 52px "Plus Jakarta Sans", sans-serif';
+      ctx.textAlign = 'left'; ctx.fillText('selah,', pad, pad + 52);
+
+      var monthAbbr = {'Januari':'Jan','Februari':'Feb','Maret':'Mar','April':'Apr','Mei':'Mei','Juni':'Jun','Juli':'Jul','Agustus':'Agt','September':'Sep','Oktober':'Okt','November':'Nov','Desember':'Des'};
+      var dp = d.date.split(' ');
+      var monthYear = (monthAbbr[dp[1]] || dp[1]) + ' ' + dp[2];
+      ctx.fillStyle = dateTxt; ctx.textAlign = 'right';
+      ctx.font = '400 26px "Plus Jakarta Sans", sans-serif'; ctx.fillText(d.weekday, W-pad, pad+32);
+      ctx.font = '700 68px "Plus Jakarta Sans", sans-serif'; ctx.fillText(dp[0], W-pad, pad+104);
+      ctx.font = '400 26px "Plus Jakarta Sans", sans-serif'; ctx.fillText(monthYear, W-pad, pad+136);
+
+      var textW = W - pad*2 - 60;
+      var vtFontSize = 44, vtFont = 'italic 400 '+vtFontSize+'px Lora, serif';
+      var sumFont = '400 34px "Plus Jakarta Sans", sans-serif';
+      ctx.font = vtFont;
+      var vtLines = wrapText(ctx, d.verseText, textW);
+      if (vtLines.length > 7) {
+        vtFontSize = Math.max(34, Math.floor(44 * 7 / vtLines.length));
+        vtFont = 'italic 400 '+vtFontSize+'px Lora, serif';
+        ctx.font = vtFont; vtLines = wrapText(ctx, d.verseText, textW);
+      }
+      ctx.font = sumFont;
+      var sumLines = wrapText(ctx, '"' + d.summary + '"', textW).slice(0, 4);
+
+      var refLH=66, vtLH=Math.round(vtFontSize*1.45), sumLH=52;
+      var gapRefVt=44, gapVtDiv=68, gapDivSum=76;
+      var vtH=vtLines.length*vtLH, sumH=sumLines.length*sumLH;
+      var totalH=refLH+gapRefVt+vtH+gapVtDiv+gapDivSum+sumH+32;
+      var startY=250+Math.max(16,((1230-250)-totalH)/2);
+
+      ctx.fillStyle=refColor; ctx.font='700 58px "Playfair Display", serif'; ctx.textAlign='center';
+      var ref=d.verseRef.length>38?d.verseRef.slice(0,38)+'…':d.verseRef;
+      ctx.fillText(ref, W/2, startY+refLH);
+
+      ctx.fillStyle=verseTxt; ctx.font=vtFont;
+      var vtBaseY=startY+refLH+gapRefVt;
+      vtLines.forEach(function(l,i){ ctx.fillText(l, W/2, vtBaseY+(i+1)*vtLH); });
+
+      var divY=vtBaseY+vtLines.length*vtLH+gapVtDiv;
+      ctx.save(); ctx.strokeStyle=divColor; ctx.lineWidth=1.5; ctx.globalAlpha=0.3;
+      ctx.beginPath(); ctx.moveTo(pad+80,divY); ctx.lineTo(W-pad-80,divY); ctx.stroke(); ctx.restore();
+
+      ctx.fillStyle=sumTxt; ctx.font=sumFont; ctx.textAlign='center';
+      var sumBaseY=divY+gapDivSum;
+      sumLines.forEach(function(l,i){ ctx.fillText(l, W/2, sumBaseY+(i+1)*sumLH); });
+
+      ctx.fillStyle=wm; ctx.textAlign='center';
+      var username=d.username||'';
+      if (username) {
+        ctx.font='600 30px "Plus Jakarta Sans", sans-serif'; ctx.fillText('— '+username, W/2, H-88);
+        ctx.font='400 26px "Plus Jakarta Sans", sans-serif'; ctx.fillText('selah-app.my.id', W/2, H-50);
+      } else {
+        ctx.font='400 28px "Plus Jakarta Sans", sans-serif'; ctx.fillText('selah-app.my.id', W/2, H-54);
+      }
+    }
+
+    // Draw first card immediately, lazy-draw others on scroll
+    var drawn = new Set();
+    function ensureDrawn(idx) {
+      if (drawn.has(idx)) return;
+      drawn.add(idx);
+      drawCard(slides[idx]);
+    }
+    ensureDrawn(0);
+
+    // Dots sync + lazy draw on scroll
+    var activeIdx = 0;
+    track.addEventListener('scroll', function() {
+      var slideW = slides[0].offsetWidth + 16;
+      var idx = Math.round(track.scrollLeft / slideW);
+      idx = Math.max(0, Math.min(idx, slides.length - 1));
+      if (idx !== activeIdx) {
+        if (dots[activeIdx]) dots[activeIdx].classList.remove('active');
+        if (dots[idx]) dots[idx].classList.add('active');
+        activeIdx = idx;
+        ensureDrawn(idx);
+      }
+    }, { passive: true });
+
+    // Share handler per card
+    slides.forEach(function(slide) {
+      var btn = slide.querySelector('.dash-btn-share');
+      if (!btn) return;
+      btn.addEventListener('click', function() {
+        var canvas = slide.querySelector('canvas');
+        var d = slide.dataset;
+        var caption = 'Selah · ' + d.verseRef + '\nDaily Devotion Journal\nhttps://selah-app.my.id' + (d.username ? '\n— ' + d.username : '');
+        var filename = 'selah-' + d.verseRef.replace(/[^a-zA-Z0-9]/g, '-') + '.png';
+        function fallback() {
+          if (navigator.share) navigator.share({ title: 'Selah · ' + d.verseRef, text: caption }).catch(function(){});
+        }
+        if (navigator.canShare && canvas) {
+          canvas.toBlob(function(blob) {
+            var file = new File([blob], filename, { type: 'image/png' });
+            if (navigator.canShare({ files: [file] })) {
+              navigator.share({ title: 'Selah · ' + d.verseRef, text: caption, files: [file] }).catch(function(){});
+            } else { fallback(); }
+          }, 'image/png');
+        } else { fallback(); }
       });
     });
   })();

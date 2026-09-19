@@ -11,7 +11,9 @@ import (
 type shareCardPreview struct {
 	ID           int64
 	VerseRef     string
+	VerseText    string
 	ShareSummary string
+	DayNumber    int
 	EntryDate    time.Time
 }
 
@@ -167,7 +169,7 @@ func (a *App) Dashboard(w http.ResponseWriter, r *http.Request) {
 
 	// Last 4 completed entries with a share summary for the card carousel.
 	cardRows, err := a.DB.QueryContext(r.Context(), `
-		SELECT id, verse_ref, share_summary, entry_date
+		SELECT id, verse_ref, verse_text, share_summary, day_number, entry_date
 		FROM journal_entries
 		WHERE user_id = $1 AND status = 'completed' AND share_summary != ''
 		ORDER BY entry_date DESC, day_number DESC
@@ -177,7 +179,7 @@ func (a *App) Dashboard(w http.ResponseWriter, r *http.Request) {
 		defer cardRows.Close()
 		for cardRows.Next() {
 			var c shareCardPreview
-			if cardRows.Scan(&c.ID, &c.VerseRef, &c.ShareSummary, &c.EntryDate) == nil {
+			if cardRows.Scan(&c.ID, &c.VerseRef, &c.VerseText, &c.ShareSummary, &c.DayNumber, &c.EntryDate) == nil {
 				shareCards = append(shareCards, c)
 			}
 		}

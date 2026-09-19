@@ -13,6 +13,7 @@ import (
 	"unicode/utf8"
 
 	"journalflow/internal/ai"
+	"journalflow/internal/middleware"
 )
 
 type sabdaXML struct {
@@ -88,7 +89,25 @@ func (a *App) VerseRecommend(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	userInput := strings.TrimSpace(r.FormValue("q"))
+
+	// Seed exclude list with user's last 20 reflected verses to avoid repetition.
+	userID := middleware.UserID(r)
 	var exclude []string
+	rows, err := a.DB.QueryContext(r.Context(),
+		`SELECT verse_ref FROM journal_entries
+		 WHERE user_id = $1 AND verse_ref != '' AND status = 'completed'
+		 ORDER BY created_at DESC LIMIT 20`, userID)
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var ref string
+			if rows.Scan(&ref) == nil && ref != "" {
+				exclude = append(exclude, ref)
+			}
+		}
+	}
+
+	// Also merge any session-level excludes sent by the frontend (refresh flow).
 	if ex := strings.TrimSpace(r.FormValue("exclude")); ex != "" {
 		for _, ref := range strings.Split(ex, ",") {
 			if ref = strings.TrimSpace(ref); ref != "" {

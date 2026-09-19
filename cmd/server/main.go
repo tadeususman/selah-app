@@ -102,6 +102,7 @@ func main() {
 		r.Get("/dashboard", app.Dashboard)
 
 		r.Get("/journal", app.JournalList)
+		r.Get("/journal/more", app.JournalMore)
 		r.Get("/journal/new", app.JournalNewPage)
 		r.Post("/journal", app.JournalCreate)
 		r.Get("/journal/{id}", app.JournalView)

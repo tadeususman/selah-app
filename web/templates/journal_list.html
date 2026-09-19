@@ -42,6 +42,7 @@
       {{end}}
       {{range .Entries}}
         <a href="/journal/{{.ID}}" class="entry-card entry-card-list"
+           data-id="{{.ID}}"
            data-search="{{.VerseRef}} {{.VerseText}}"
            data-date="{{.EntryDate.Format "2006-01-02"}}">
           <div class="list-card-left">
@@ -60,6 +61,7 @@
       {{end}}
       <p class="empty-state" id="no-results" style="display:none">Tidak ada journal yang cocok.</p>
     </div>
+    <div id="scroll-sentinel" style="height:1px;margin-bottom:80px"></div>
 
     <a href="/journal/new" class="fab" aria-label="Tambah journal baru">
       <span class="fab-plus">+</span>
@@ -119,6 +121,77 @@
       resetBtn.style.display = 'none';
       applyFilters();
     });
+
+    // ── Infinite scroll ──
+    var sentinel = document.getElementById('scroll-sentinel');
+    var entryList = document.getElementById('entry-list');
+    var loading = false;
+    var noMore = false;
+
+    function lastEntryID() {
+      var cards = entryList.querySelectorAll('.entry-card-list[data-id]');
+      if (!cards.length) return null;
+      return cards[cards.length - 1].dataset.id;
+    }
+
+    function renderCard(e) {
+      var status = e.status === 'completed'
+        ? '<span class="meta-done">Selesai ✓</span>'
+        : '<span class="meta-draft">Lanjutkan →</span>';
+      var meta = e.entry_time + (e.location ? ' · ' + e.location : '') + ' · ' + status;
+      var verseRef = e.verse_ref ? '<div class="list-verse-ref">' + e.verse_ref + '</div>' : '';
+      return '<a href="/journal/' + e.id + '" class="entry-card entry-card-list"'
+        + ' data-id="' + e.id + '"'
+        + ' data-search="' + e.verse_ref + ' ' + e.verse_text + '"'
+        + ' data-date="' + e.entry_date + '">'
+        + '<div class="list-card-left">'
+        + '<div class="list-card-month">' + e.month_short + '</div>'
+        + '<div class="entry-card-title">' + e.day + '</div>'
+        + '<div class="entry-card-day">' + e.weekday + '</div>'
+        + '</div>'
+        + '<div class="list-card-right">'
+        + verseRef
+        + '<div class="list-verse-text">' + e.verse_text + '</div>'
+        + '<div class="list-card-meta">' + meta + '</div>'
+        + '</div>'
+        + '</a>';
+    }
+
+    function loadMore() {
+      if (loading || noMore) return;
+      var id = lastEntryID();
+      if (!id) return;
+      loading = true;
+      fetch('/journal/more?before=' + id)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          var noResults = document.getElementById('no-results');
+          data.entries.forEach(function(e) {
+            var tmp = document.createElement('div');
+            tmp.innerHTML = renderCard(e);
+            entryList.insertBefore(tmp.firstChild, noResults);
+          });
+          if (!data.has_more) {
+            noMore = true;
+            var parent = sentinel.parentNode;
+            sentinel.remove();
+            var end = document.createElement('p');
+            end.className = 'empty-state';
+            end.style.marginBottom = '80px';
+            end.textContent = 'Semua journal sudah ditampilkan.';
+            parent.appendChild(end);
+          }
+          applyFilters();
+          loading = false;
+        })
+        .catch(function() { loading = false; });
+    }
+
+    if (sentinel && typeof IntersectionObserver !== 'undefined') {
+      new IntersectionObserver(function(entries) {
+        if (entries[0].isIntersecting) loadMore();
+      }, { rootMargin: '200px' }).observe(sentinel);
+    }
   </script>
 </body>
 </html>

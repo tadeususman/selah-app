@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"strconv"
 	"time"
@@ -53,6 +54,84 @@ func (a *App) JournalList(w http.ResponseWriter, r *http.Request) {
 		entries = append(entries, p)
 	}
 	a.render(w, "journal_list.html", journalListData{Entries: entries})
+}
+
+// ---- GET /journal/more?before=<id> (infinite scroll, returns JSON) ----
+
+type journalPreviewJSON struct {
+	ID        int64  `json:"id"`
+	EntryDate string `json:"entry_date"`
+	EntryTime string `json:"entry_time"`
+	Location  string `json:"location"`
+	VerseRef  string `json:"verse_ref"`
+	VerseText string `json:"verse_text"`
+	Status    string `json:"status"`
+	Day       int    `json:"day"`
+	Weekday   string `json:"weekday"`
+	MonthShort string `json:"month_short"`
+}
+
+func (a *App) JournalMore(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.UserID(r)
+	beforeID, _ := strconv.ParseInt(r.URL.Query().Get("before"), 10, 64)
+	if beforeID <= 0 {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{"entries": []any{}, "has_more": false})
+		return
+	}
+
+	rows, err := a.DB.QueryContext(r.Context(), `
+		SELECT id, day_number, entry_date, entry_time,
+		       COALESCE(location, ''),
+		       COALESCE(NULLIF(verse_ref, ''), '') AS verse_ref,
+		       COALESCE(NULLIF(verse_text, ''), '') AS verse_text,
+		       status
+		FROM journal_entries
+		WHERE user_id = $1 AND id < $2
+		ORDER BY entry_date DESC, day_number DESC
+		LIMIT 16`, userID, beforeID)
+	if err != nil {
+		http.Error(w, "could not load journals", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	loc, _ := time.LoadLocation("Asia/Jakarta")
+	idDaysMap := map[time.Weekday]string{0: "Minggu", 1: "Senin", 2: "Selasa", 3: "Rabu", 4: "Kamis", 5: "Jumat", 6: "Sabtu"}
+	idMonthsMap := map[time.Month]string{1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr", 5: "Mei", 6: "Jun", 7: "Jul", 8: "Agt", 9: "Sep", 10: "Okt", 11: "Nov", 12: "Des"}
+
+	var entries []journalPreviewJSON
+	for rows.Next() {
+		var p models.Preview
+		if err := rows.Scan(&p.ID, &p.DayNumber, &p.EntryDate, &p.EntryTime, &p.Location, &p.VerseRef, &p.VerseText, &p.Status); err != nil {
+			http.Error(w, "could not read journals", http.StatusInternalServerError)
+			return
+		}
+		if len(p.VerseText) > 100 {
+			p.VerseText = p.VerseText[:100] + "…"
+		}
+		entryTime := p.EntryTime.In(loc)
+		entries = append(entries, journalPreviewJSON{
+			ID:         p.ID,
+			EntryDate:  p.EntryDate.Format("2006-01-02"),
+			EntryTime:  entryTime.Format("15:04"),
+			Location:   p.Location,
+			VerseRef:   p.VerseRef,
+			VerseText:  p.VerseText,
+			Status:     p.Status,
+			Day:        p.EntryDate.Day(),
+			Weekday:    idDaysMap[p.EntryDate.Weekday()],
+			MonthShort: idMonthsMap[p.EntryDate.Month()] + " " + strconv.Itoa(p.EntryDate.Year()%100),
+		})
+	}
+
+	hasMore := len(entries) == 16
+	if hasMore {
+		entries = entries[:15]
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]any{"entries": entries, "has_more": hasMore})
 }
 
 // ---- GET /journal/new (step 1: ask which verse to reflect on) ----

@@ -562,12 +562,12 @@
       var sumBaseY = divY + gapDivSum;
 
       // Draw quotes as background BEFORE text so they never overlap
-      ctx.font = '400 160px Georgia, serif';
+      ctx.font = '400 90px Georgia, serif';
       ctx.fillStyle = quoteColor;
       ctx.textAlign = 'left';
-      ctx.fillText('”', pad - 12, sumBaseY + sumLH * 0.8);
+      ctx.fillText('”', pad + 20, sumBaseY + 66);
       ctx.textAlign = 'right';
-      ctx.fillText('”', W - pad + 12, sumBaseY + sumLines.length * sumLH + sumLH * 0.2);
+      ctx.fillText('”', W - pad - 20, sumBaseY + sumLines.length * sumLH);
 
       // Summary text on top
       ctx.fillStyle = sumTxt;

@@ -424,6 +424,57 @@ func (a *App) JournalComplete(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/journal/"+strconv.FormatInt(entry.ID, 10), http.StatusSeeOther)
 }
 
+// ---- GET /journal/{id}/share-status (polling endpoint, returns JSON) ----
+
+func (a *App) JournalShareStatus(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.UserID(r)
+	idStr := chi.URLParam(r, "id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	var summary string
+	err = a.DB.QueryRowContext(r.Context(),
+		`SELECT share_summary FROM journal_entries WHERE id = $1 AND user_id = $2`,
+		id, userID).Scan(&summary)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if summary == "" {
+		w.Write([]byte(`{"summary":""}`))
+	} else {
+		// Minimal safe JSON encode — summary is plain prose, no quotes/backslashes expected,
+		// but escape the few characters that would break JSON.
+		safe := jsonEscapeString(summary)
+		w.Write([]byte(`{"summary":"` + safe + `"}`))
+	}
+}
+
+func jsonEscapeString(s string) string {
+	var b []byte
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		switch c {
+		case '"':
+			b = append(b, '\\', '"')
+		case '\\':
+			b = append(b, '\\', '\\')
+		case '\n':
+			b = append(b, '\\', 'n')
+		case '\r':
+			b = append(b, '\\', 'r')
+		case '\t':
+			b = append(b, '\\', 't')
+		default:
+			b = append(b, c)
+		}
+	}
+	return string(b)
+}
+
 // ---- POST /journal/{id}/delete ----
 
 func (a *App) JournalDelete(w http.ResponseWriter, r *http.Request) {

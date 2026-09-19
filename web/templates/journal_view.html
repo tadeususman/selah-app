@@ -93,10 +93,9 @@
     {{end}}
 
     {{if and (eq .Entry.Status "completed") (not .ShowShareCard)}}
-    <div style="text-align:center;padding:12px 0 4px">
+    <div id="share-card-pending" style="text-align:center;padding:12px 0 4px">
       <p style="font-size:13px;color:var(--text-muted);margin:0">Kartu berbagi sedang disiapkan...</p>
     </div>
-    <script>setTimeout(function(){ window.location.reload(); }, 6000);</script>
     {{end}}
 
     {{if eq .Entry.Status "completed"}}
@@ -455,63 +454,107 @@
       ctx.fillText('selah-app.my.id', S / 2, S - pad + 16);
     }
 
-    var btnShareNative = document.getElementById('btn-share-native');
-    if (btnShareNative) {
-      btnShareNative.addEventListener('click', function() {
-        var d = shareSection.dataset;
-        var text = d.verseRef + '\n\n”' + d.verseText + '”\n\n' + d.summary + '\n\n— Selah, jurnal devotional';
-        var filename = 'selah-hari-ke-' + d.day + '.png';
+    function shareHandler() {
+      var d = shareSection.dataset;
+      var text = d.verseRef + '\n\n”' + d.verseText + '”\n\n' + d.summary + '\n\n— Selah, jurnal devotional';
+      var filename = 'selah-hari-ke-' + d.day + '.png';
+      var btn = this;
 
-        function fallbackTextShare() {
-          if (navigator.share) {
-            navigator.share({ title: 'Selah · ' + d.verseRef, text: text, url: 'https://selah-app.my.id' }).catch(function() {});
-          } else if (navigator.clipboard) {
-            navigator.clipboard.writeText(text).then(function() {
-              var label = btnShareNative.querySelector('span') || btnShareNative;
-              var prev = label.textContent;
-              label.textContent = 'Tersalin!';
-              setTimeout(function() { label.textContent = prev; }, 2000);
-            });
+      function fallbackTextShare() {
+        if (navigator.share) {
+          navigator.share({ title: 'Selah · ' + d.verseRef, text: text, url: 'https://selah-app.my.id' }).catch(function() {});
+        } else if (navigator.clipboard) {
+          navigator.clipboard.writeText(text).then(function() {
+            var prev = btn.innerHTML;
+            btn.textContent = 'Tersalin!';
+            setTimeout(function() { btn.innerHTML = prev; }, 2000);
+          });
+        }
+      }
+
+      if (navigator.canShare) {
+        shareCanvas.toBlob(function(blob) {
+          var file = new File([blob], filename, { type: 'image/png' });
+          if (navigator.canShare({ files: [file] })) {
+            navigator.share({ title: 'Selah · ' + d.verseRef, text: text, files: [file] }).catch(function() {});
+          } else {
+            fallbackTextShare();
           }
-        }
-
-        if (navigator.canShare) {
-          shareCanvas.toBlob(function(blob) {
-            var file = new File([blob], filename, { type: 'image/png' });
-            if (navigator.canShare({ files: [file] })) {
-              navigator.share({ title: 'Selah · ' + d.verseRef, text: text, files: [file] }).catch(function() {});
-            } else {
-              fallbackTextShare();
-            }
-          }, 'image/png');
-        } else {
-          fallbackTextShare();
-        }
-      });
+        }, 'image/png');
+      } else {
+        fallbackTextShare();
+      }
     }
+
+    function saveHandler() {
+      var a = document.createElement('a');
+      a.download = 'selah-hari-ke-' + shareSection.dataset.day + '.png';
+      a.href = shareCanvas.toDataURL('image/png');
+      a.click();
+    }
+
+    var btnShareNative = document.getElementById('btn-share-native');
+    if (btnShareNative) btnShareNative.addEventListener('click', shareHandler);
 
     var btnSaveImg = document.getElementById('btn-save-img');
-    if (btnSaveImg) {
-      btnSaveImg.addEventListener('click', function() {
-        var a = document.createElement('a');
-        a.download = 'selah-hari-ke-' + shareSection.dataset.day + '.png';
-        a.href = shareCanvas.toDataURL('image/png');
-        a.click();
-      });
-    }
+    if (btnSaveImg) btnSaveImg.addEventListener('click', saveHandler);
 
     {{if .ShowShareCard}}
     document.fonts.ready.then(function() {
       drawShareCard();
-      if (window.location.search.indexOf('share=1') !== -1) {
-        setTimeout(function() {
-          shareSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }, 300);
-        if (window.history.replaceState) {
-          window.history.replaceState({}, '', window.location.pathname);
-        }
-      }
     });
+    {{end}}
+
+    {{if and (eq .Entry.Status "completed") (not .ShowShareCard)}}
+    (function() {
+      var entryId = {{.Entry.ID}};
+      var pending = document.getElementById('share-card-pending');
+      var attempts = 0;
+      var maxAttempts = 20; // stop after ~80s
+      var timer = setInterval(function() {
+        attempts++;
+        if (attempts > maxAttempts) { clearInterval(timer); return; }
+        fetch('/journal/' + entryId + '/share-status')
+          .then(function(res) { return res.json(); })
+          .then(function(data) {
+            if (!data.summary) return;
+            clearInterval(timer);
+            // Inject share card section in place of the pending notice
+            var section = document.createElement('div');
+            section.id = 'share-card-section';
+            section.dataset.verseRef  = '{{.Entry.VerseRef}}';
+            section.dataset.verseText = '{{.Entry.VerseText}}';
+            section.dataset.day       = '{{.Entry.DayNumber}}';
+            section.dataset.date      = '{{idDate .Entry.EntryDate}}';
+            section.dataset.summary   = data.summary;
+            section.style.cssText = 'padding:4px 0 12px;max-width:420px;margin:0 auto';
+            section.innerHTML =
+              '<canvas id="share-canvas" style="width:100%;height:auto;border-radius:12px;display:block"></canvas>' +
+              '<div style="display:flex;gap:8px;margin-top:10px">' +
+                '<button type="button" class="btn-primary" id="btn-share-native" style="flex:1;font-size:14px;margin-top:0;display:flex;align-items:center;justify-content:center;gap:6px">' +
+                  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M18 16a3 3 0 00-2.04.8l-7.43-4.29a3.07 3.07 0 000-1.02l7.43-4.29A3 3 0 1017 5l-7.43 4.29a3 3 0 100 5.42L17 19a3 3 0 101-2.99z"/></svg>' +
+                  'Bagikan' +
+                '</button>' +
+                '<button type="button" class="btn-secondary" id="btn-save-img" style="flex:1;font-size:14px;display:flex;align-items:center;justify-content:center;gap:6px">' +
+                  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M5 20h14v-2H5v2zm7-18v10.59l-3.3-3.3-1.41 1.41L12 16l4.71-4.3-1.41-1.41L13 13.59V2h-1z"/></svg>' +
+                  'Simpan' +
+                '</button>' +
+              '</div>';
+            if (pending) pending.replaceWith(section);
+            // Re-bind globals and draw
+            shareSection = section;
+            shareCanvas  = section.querySelector('#share-canvas');
+            document.fonts.ready.then(function() { drawShareCard(); });
+            section.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            // Re-bind share/save buttons
+            var btnS = section.querySelector('#btn-share-native');
+            var btnD = section.querySelector('#btn-save-img');
+            if (btnS) btnS.addEventListener('click', shareHandler);
+            if (btnD) btnD.addEventListener('click', saveHandler);
+          })
+          .catch(function() {});
+      }, 4000);
+    })();
     {{end}}
   </script>
 </body>

@@ -556,8 +556,9 @@ func (c *Client) SearchVerse(ctx context.Context, query string) ([]string, error
 }
 
 const shareSummarySystemPrompt = `Baca refleksi dan langkah praktis yang ditulis pengguna. Tulis 1-2 kalimat pendek yang lahir dari isi spesifik sesi ini — satu insight nyata atau satu niat konkret yang muncul dari perenungan mereka.
-Harus terdengar seperti orang yang baru selesai merenung, berbicara kepada dirinya sendiri — bukan poster rohani, bukan quote motivasi, bukan kesimpulan khotbah.
+Harus terdengar seperti orang yang baru selesai merenung — bukan poster rohani, bukan quote motivasi, bukan kesimpulan khotbah.
 Bahasa Indonesia yang mengalir natural. Tidak ada markdown. Tidak ada label. Di bawah 150 karakter.
+JANGAN gunakan kata ganti "aku", "saya", atau "kamu" — tulis tanpa subjek atau gunakan bentuk umum.
 JANGAN: buka dengan "Tuhan", "Hari ini", "Dalam hidup", "Firman ini", atau kalimat yang bisa berlaku untuk sesi rohani siapapun kapanpun. Jangan sebut waktu hari.`
 
 // TimeOfDay returns the Indonesian time-of-day label for the given time in WIB (Asia/Jakarta).

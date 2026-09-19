@@ -672,6 +672,7 @@
             section.dataset.date      = '{{idDate .Entry.EntryDate}}';
             section.dataset.weekday   = '{{idDay .Entry.EntryDate}}';
             section.dataset.summary   = data.summary;
+            section.dataset.username  = '{{.UserName}}';
             section.style.cssText = 'padding:4px 0 12px;max-width:420px;margin:0 auto';
             section.innerHTML =
               '<canvas id="share-canvas" style="width:100%;height:auto;border-radius:12px;display:block"></canvas>' +

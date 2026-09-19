@@ -13,13 +13,32 @@
       <h1 class="greeting">{{.UserName}} 👋</h1>
     </header>
 
+    {{if .ShareCards}}
     <div class="section-title-row">
-      <h2>{{.MonthLabel}}</h2>
+      <h2>Kartu Renunganmu</h2>
+    </div>
+    <div class="share-card-carousel">
+      {{range .ShareCards}}
+      <div class="share-card-slide">
+        <a href="/journal/{{.ID}}" class="share-card-mini">
+          <div class="share-card-mini-ref">{{.VerseRef}}</div>
+          <p class="share-card-mini-summary">{{.ShareSummary}}</p>
+          <div class="share-card-mini-date">{{idDate .EntryDate}}</div>
+        </a>
+        <a href="/journal/{{.ID}}#share" class="btn-bagikan">Bagikan</a>
+      </div>
+      {{end}}
+    </div>
+    {{end}}
+
+    <div class="section-title-row">
+      <h2>Terakhir</h2>
+      <a href="/journal" class="section-link">Semua →</a>
     </div>
 
     <div class="entry-list">
       {{if not .Entries}}
-        <p class="empty-state">Belum ada journal bulan ini. Tekan + untuk mulai.</p>
+        <p class="empty-state">Belum ada journal. Tekan + untuk mulai.</p>
       {{end}}
       {{range .Entries}}
       <a href="/journal/{{.ID}}" class="entry-card entry-card-list">
@@ -61,6 +80,90 @@
     </div>
   </div>
 
+  <style>
+  .share-card-carousel {
+    display: flex;
+    gap: 14px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 20px 4px;
+    margin: 0 -20px 20px;
+    scrollbar-width: none;
+  }
+  .share-card-carousel::-webkit-scrollbar { display: none; }
+
+  .share-card-slide {
+    scroll-snap-align: start;
+    flex: 0 0 260px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .share-card-mini {
+    background: var(--navy);
+    border-radius: 16px;
+    padding: 20px 18px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    text-decoration: none;
+    min-height: 160px;
+  }
+
+  .share-card-mini-ref {
+    font-family: 'Playfair Display', serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 0.01em;
+  }
+
+  .share-card-mini-summary {
+    font-family: 'Lora', serif;
+    font-size: 13px;
+    font-style: italic;
+    color: rgba(255,255,255,0.88);
+    line-height: 1.55;
+    margin: 0;
+    flex: 1;
+  }
+
+  .share-card-mini-date {
+    font-size: 11px;
+    color: rgba(255,255,255,0.45);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+
+  .btn-bagikan {
+    display: block;
+    text-align: center;
+    background: transparent;
+    border: 1.5px solid var(--navy);
+    color: var(--navy);
+    border-radius: 10px;
+    padding: 9px 0;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    text-decoration: none;
+    transition: background 0.15s, color 0.15s;
+  }
+  .btn-bagikan:active {
+    background: var(--navy);
+    color: white;
+  }
+
+  .section-link {
+    font-size: 13px;
+    color: var(--navy);
+    text-decoration: none;
+    font-weight: 600;
+    opacity: 0.7;
+  }
+  </style>
+
   <script>
   (function() {
     var tourKey = 'selah-tour-v1-{{.UserID}}';
@@ -95,15 +198,12 @@
 
     var cur = 0;
 
-    // Overlay — dark background, blocks clicks on page
     var overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.65);';
 
-    // Spotlight — visual cutout over target element, sits inside overlay
     var spotlight = document.createElement('div');
     spotlight.style.cssText = 'position:fixed;z-index:9001;border-radius:16px;pointer-events:none;display:none;';
 
-    // Card — the tooltip, sits on top of everything
     var card = document.createElement('div');
     card.className = 'tour-tooltip';
     card.style.cssText = 'position:fixed;z-index:9002;width:' + Math.min(300, window.innerWidth - 32) + 'px;';
@@ -118,7 +218,6 @@
         var el = document.querySelector(step.target);
         var r = el.getBoundingClientRect();
 
-        // Spotlight: box-shadow creates dark overlay with cutout over target
         spotlight.style.display = 'block';
         spotlight.style.top    = (r.top  - pad) + 'px';
         spotlight.style.left   = (r.left - pad) + 'px';
@@ -126,7 +225,6 @@
         spotlight.style.height = (r.height + pad * 2) + 'px';
         spotlight.style.boxShadow = '0 0 0 9999px rgba(0,0,0,0.65)';
 
-        // Card always anchored at bottom-center (above nav bar), safe on all screen sizes
         var tw = Math.min(380, window.innerWidth - 32);
         card.style.width = tw + 'px';
         card.style.left = ((window.innerWidth - tw) / 2) + 'px';
@@ -166,7 +264,6 @@
     render(0);
   })();
 
-  // Changelog popup — muncul sekali per versi, hanya setelah tur selesai
   var clKey = 'selah-cl-{{.UserID}}-v0.5.1';
   var tourKey = 'selah-tour-v1-{{.UserID}}';
   function closeCl() {

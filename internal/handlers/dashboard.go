@@ -8,12 +8,19 @@ import (
 	"journalflow/internal/models"
 )
 
+type shareCardPreview struct {
+	ID           int64
+	VerseRef     string
+	ShareSummary string
+	EntryDate    time.Time
+}
+
 type dashboardData struct {
 	UserID        int64
 	UserName      string
 	Greeting      string
-	MonthLabel    string
 	Entries       []models.Preview
+	ShareCards    []shareCardPreview
 	LanguageStyle string
 }
 
@@ -28,17 +35,15 @@ func (a *App) Dashboard(w http.ResponseWriter, r *http.Request) {
 		langStyle = "casual"
 	}
 
-	monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
-	monthEnd := monthStart.AddDate(0, 1, 0)
-
+	// Last 3 journal entries regardless of month.
 	rows, err := a.DB.QueryContext(r.Context(), `
 		SELECT id, day_number, entry_date,
 		       COALESCE(NULLIF(reflection, ''), NULLIF(verse_text, ''), 'Belum ada isi') AS snippet,
 		       COALESCE(verse_ref, ''), verse_text
 		FROM journal_entries
-		WHERE user_id = $1 AND entry_date >= $2 AND entry_date < $3
-		ORDER BY entry_date DESC, day_number DESC`,
-		userID, monthStart, monthEnd)
+		WHERE user_id = $1
+		ORDER BY entry_date DESC, day_number DESC
+		LIMIT 3`, userID)
 	if err != nil {
 		http.Error(w, "could not load journals", http.StatusInternalServerError)
 		return
@@ -58,8 +63,23 @@ func (a *App) Dashboard(w http.ResponseWriter, r *http.Request) {
 		entries = append(entries, p)
 	}
 
-	idMonths := [13]string{"", "Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"}
-	monthLabel := idMonths[now.Month()] + " " + now.Format("2006")
+	// Last 4 completed entries with a share summary for the card carousel.
+	cardRows, err := a.DB.QueryContext(r.Context(), `
+		SELECT id, verse_ref, share_summary, entry_date
+		FROM journal_entries
+		WHERE user_id = $1 AND status = 'completed' AND share_summary != ''
+		ORDER BY entry_date DESC, day_number DESC
+		LIMIT 4`, userID)
+	var shareCards []shareCardPreview
+	if err == nil {
+		defer cardRows.Close()
+		for cardRows.Next() {
+			var c shareCardPreview
+			if cardRows.Scan(&c.ID, &c.VerseRef, &c.ShareSummary, &c.EntryDate) == nil {
+				shareCards = append(shareCards, c)
+			}
+		}
+	}
 
 	wib, _ := time.LoadLocation("Asia/Jakarta")
 	hour := now.In(wib).Hour()
@@ -77,8 +97,8 @@ func (a *App) Dashboard(w http.ResponseWriter, r *http.Request) {
 		UserID:        userID,
 		UserName:      userName,
 		Greeting:      greeting,
-		MonthLabel:    monthLabel,
 		Entries:       entries,
+		ShareCards:    shareCards,
 		LanguageStyle: langStyle,
 	})
 }

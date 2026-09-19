@@ -38,5 +38,42 @@
       "type": "image/png",
       "purpose": "maskable"
     }
+  ],
+  "screenshots": [
+    {
+      "src": "/static/screenshots/journal-list.jpeg",
+      "sizes": "576x1280",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Journal List"
+    },
+    {
+      "src": "/static/screenshots/new-journal.jpeg",
+      "sizes": "576x1280",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "New Journal"
+    },
+    {
+      "src": "/static/screenshots/journal.jpeg",
+      "sizes": "576x1280",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Journal View"
+    },
+    {
+      "src": "/static/screenshots/discussion.jpeg",
+      "sizes": "576x1280",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Discussion"
+    },
+    {
+      "src": "/static/screenshots/dark-mode.jpeg",
+      "sizes": "576x1280",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Dark Mode"
+    }
   ]
 }

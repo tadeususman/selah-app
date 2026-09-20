@@ -40,6 +40,13 @@
     {{if .ShareCards}}
     <div class="section-title-row" style="margin-top:28px">
       <h2>Momen Selah</h2>
+      {{if gt (len .ShareCards) 1}}
+      <div class="dash-card-dots" id="dash-card-dots">
+        {{range $i, $c := .ShareCards}}
+        <span class="dash-dot{{if eq $i 0}} active{{end}}"></span>
+        {{end}}
+      </div>
+      {{end}}
     </div>
     <div class="dash-card-outer">
       <div class="dash-card-track-wrap">
@@ -59,7 +66,8 @@
           <canvas style="width:100%;height:auto;border-radius:16px;display:block"></canvas>
           <div class="dash-card-actions">
             <button class="dash-btn-share" title="Bagikan">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M18 16a3 3 0 00-2.04.8l-7.43-4.29a3.07 3.07 0 000-1.02l7.43-4.29A3 3 0 1017 5l-7.43 4.29a3 3 0 100 5.42L17 19a3 3 0 101-2.99z"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="15" height="15"><path d="M18 16a3 3 0 00-2.04.8l-7.43-4.29a3.07 3.07 0 000-1.02l7.43-4.29A3 3 0 1017 5l-7.43 4.29a3 3 0 100 5.42L17 19a3 3 0 101-2.99z"/></svg>
+              Bagikan
             </button>
           </div>
         </div>
@@ -67,13 +75,6 @@
       </div>
       </div><!-- end track -->
       </div><!-- end track-wrap -->
-      {{if gt (len .ShareCards) 1}}
-      <div class="dash-card-dots" id="dash-card-dots">
-        {{range $i, $c := .ShareCards}}
-        <span class="dash-dot{{if eq $i 0}} active{{end}}"></span>
-        {{end}}
-      </div>
-      {{end}}
     </div>
     {{end}}
 
@@ -111,26 +112,6 @@
     line-height: 1.5;
   }
 
-  .share-card-carousel {
-    display: flex;
-    gap: 14px;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
-    padding: 0 20px 4px;
-    margin: 0 -20px 20px;
-    scrollbar-width: none;
-  }
-  .share-card-carousel::-webkit-scrollbar { display: none; }
-
-  .share-card-slide {
-    scroll-snap-align: start;
-    flex: 0 0 260px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
   .dash-card-outer {
     margin: 0 -20px 24px;
     padding: 0 20px;
@@ -154,20 +135,22 @@
 
   .dash-card-actions {
     display: flex;
-    justify-content: center;
-    margin-top: 12px;
+    justify-content: flex-start;
+    margin-top: 10px;
   }
 
   .dash-btn-share {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 20px;
     border: none;
     background: var(--navy);
     color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
     cursor: pointer;
   }
 
@@ -205,9 +188,8 @@
 
   .dash-card-dots {
     display: flex;
-    justify-content: center;
+    align-items: center;
     gap: 6px;
-    margin-top: 14px;
   }
 
   .dash-dot {

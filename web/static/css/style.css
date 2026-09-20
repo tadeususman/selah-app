@@ -1657,7 +1657,7 @@ input:focus, textarea:focus {
 .help-btn-top {
   position: fixed;
   top: 16px;
-  right: max(60px, calc(50vw - 240px + 60px));
+  right: max(68px, calc(50vw - 240px + 68px));
   width: 36px;
   height: 36px;
   border-radius: 50%;

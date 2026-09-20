@@ -42,6 +42,9 @@
       <h2>Momen Selah</h2>
     </div>
     <div class="dash-card-outer">
+      <div class="dash-card-track-wrap">
+        <button class="dash-nav-btn dash-nav-prev" id="dash-prev" aria-label="Sebelumnya">&#8249;</button>
+        <button class="dash-nav-btn dash-nav-next" id="dash-next" aria-label="Berikutnya">&#8250;</button>
       <div class="dash-card-track" id="dash-card-track">
         {{range $i, $c := .ShareCards}}
         <div class="dash-card-slide"
@@ -62,6 +65,8 @@
         </div>
         {{end}}
       </div>
+      </div><!-- end track -->
+      </div><!-- end track-wrap -->
       {{if gt (len .ShareCards) 1}}
       <div class="dash-card-dots" id="dash-card-dots">
         {{range $i, $c := .ShareCards}}
@@ -101,7 +106,7 @@
   <style>
   .welcome-msg {
     font-size: 14px;
-    color: var(--text-secondary, rgba(0,0,0,0.5));
+    color: var(--text-muted);
     margin: 6px 0 0;
     line-height: 1.5;
     font-style: italic;
@@ -165,6 +170,38 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
+  }
+
+  .dash-card-track-wrap {
+    position: relative;
+  }
+
+  .dash-nav-btn {
+    display: none;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-60%);
+    z-index: 10;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,0.75);
+    backdrop-filter: blur(4px);
+    color: var(--navy);
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    transition: background 0.15s;
+  }
+  .dash-nav-btn:hover { background: rgba(255,255,255,0.95); }
+  .dash-nav-prev { left: -12px; }
+  .dash-nav-next { right: -12px; }
+  .dash-nav-btn:disabled { opacity: 0.3; cursor: default; }
+
+  @media (hover: hover) {
+    .dash-nav-btn { display: flex; align-items: center; justify-content: center; }
   }
 
   .dash-card-dots {
@@ -448,8 +485,28 @@
         if (dots[idx]) dots[idx].classList.add('active');
         activeIdx = idx;
         ensureDrawn(idx);
+        updateNavBtns();
       }
     }, { passive: true });
+
+    // Prev/next nav buttons
+    var prevBtn = document.getElementById('dash-prev');
+    var nextBtn = document.getElementById('dash-next');
+    function updateNavBtns() {
+      if (prevBtn) prevBtn.disabled = activeIdx === 0;
+      if (nextBtn) nextBtn.disabled = activeIdx === slides.length - 1;
+    }
+    updateNavBtns();
+    if (prevBtn) prevBtn.addEventListener('click', function() {
+      var newIdx = Math.max(0, activeIdx - 1);
+      var slideW = slides[0].offsetWidth + 16;
+      track.scrollTo({ left: newIdx * slideW, behavior: 'smooth' });
+    });
+    if (nextBtn) nextBtn.addEventListener('click', function() {
+      var newIdx = Math.min(slides.length - 1, activeIdx + 1);
+      var slideW = slides[0].offsetWidth + 16;
+      track.scrollTo({ left: newIdx * slideW, behavior: 'smooth' });
+    });
 
     // Share handler per card
     slides.forEach(function(slide) {

@@ -36,22 +36,22 @@ func welcomeMsg(condition, lastVerseRef string, seed int) string {
 	switch condition {
 	case "new":
 		return pick([]string{
-			"Ini ruang jedamu. Mulai kapan saja, tidak ada yang terlambat.",
-			"Selamat datang di selah. Ruang ini menantimu.",
-			"Tidak perlu sempurna untuk memulai. Cukup hadir.",
-			"Ruang ini dibuat untukmu. Mulai dari mana saja.",
+			"Ini ruang jedamu. Mulai kapan saja.",
+			"Tidak ada yang terlambat untuk memulai.",
+			"Ruang ini untukmu — tidak perlu buru-buru.",
+			"Cukup mulai dari sini.",
 		}, seed)
 
 	case "done":
 		return pick([]string{
-			"Renungan hari ini sudah selesai. Semoga firman-Nya tinggal sepanjang hari.",
-			"Sudah meluangkan waktu untuk yang paling penting hari ini.",
-			"Sesi hari ini sudah tertulis. Bawa pesannya ke mana pun kamu pergi.",
-			"Firman hari ini sudah kamu renungkan — itu bekal yang cukup.",
-			"Sudah memulai hari dengan yang terbaik. Semoga terus terasa.",
-			"Renungan hari ini sudah ada. Semoga kata-kata itu menemanimu.",
-			"Satu langkah kecil yang berarti — renungan hari ini sudah selesai.",
-			"Waktu yang kamu sisihkan tadi tidak sia-sia.",
+			"Sudah renungan hari ini. Semoga firman-Nya menemanimu.",
+			"Waktu yang kamu luangkan tadi tidak sia-sia.",
+			"Hari ini sudah ada renungan — itu yang terpenting.",
+			"Firman hari ini sudah tertulis. Semoga terasa sepanjang hari.",
+			"Sudah ada waktu untuk yang terpenting hari ini.",
+			"Renungan hari ini sudah selesai. Semoga pesannya tinggal.",
+			"Sudah menyisihkan waktu hari ini. Itu berarti.",
+			"Firman hari ini sudah ada — semoga menemanimu terus.",
 		}, seed)
 
 	case "yesterday":
@@ -60,36 +60,35 @@ func welcomeMsg(condition, lastVerseRef string, seed int) string {
 			ref = "kemarin"
 		}
 		return pick([]string{
-			"Kemarin kamu merenungkan " + ref + ". Siap untuk hari ini?",
-			"Renungan terakhirmu dari " + ref + ". Hari ini mau bawa ayat apa?",
-			"Kemarin bersama " + ref + ". Firman selalu ada untuk hari yang baru.",
-			ref + " menemanimu kemarin. Hari ini ruang ini terbuka lagi.",
+			"Kemarin kamu merenungkan " + ref + ". Hari ini mau mulai lagi?",
+			ref + " menemanimu kemarin. Hari ini ada apa?",
 			"Semoga " + ref + " masih terasa hari ini.",
+			"Kemarin bersama " + ref + ". Ruang ini terbuka lagi.",
+			"Terakhir kamu di sini bersama " + ref + ".",
 		}, seed)
 
 	case "gap":
 		return pick([]string{
-			"Senang kamu kembali ke sini.",
-			"Tidak apa-apa jeda sebentar. Ruang ini selalu terbuka.",
-			"Selamat kembali. Tidak pernah terlambat untuk mulai lagi.",
-			"Selah menunggumu. Senang kamu kembali.",
-			"Kembali lagi — ruang ini tidak kemana-mana.",
-			"Setiap kembali itu berarti. Senang kamu di sini.",
-			"Tidak ada yang tertinggal. Kamu bisa mulai dari sini.",
-			"Ruang ini selalu ada, kapan pun kamu siap.",
-			"Yang penting kamu kembali. Itu sudah cukup.",
+			"Senang kamu kembali.",
+			"Tidak apa-apa jeda sebentar — ruang ini tetap di sini.",
+			"Kembali lagi. Ruang ini tidak kemana-mana.",
+			"Senang kamu di sini lagi.",
+			"Ruang ini masih di sini, menunggumu.",
+			"Tidak ada yang terlewat. Kamu bisa mulai dari sini.",
+			"Kapan pun kamu siap, ruang ini terbuka.",
+			"Senang kamu mampir lagi.",
 		}, seed)
 
 	case "long":
 		return pick([]string{
-			"Sudah beberapa waktu. Ruang ini senang kamu kembali.",
-			"Lama tidak bertemu. Yang penting sekarang kamu di sini.",
-			"Apapun yang terjadi, selamat kembali. Mulai saja dari sini.",
-			"Selah masih di sini. Tidak ada yang tertinggal.",
-			"Kamu kembali — dan itu hal yang baik.",
-			"Tidak ada terlambat di sini. Selamat kembali.",
-			"Jeda panjang tidak apa-apa. Yang penting kamu di sini sekarang.",
-			"Ruang ini tidak berubah. Selamat kembali, kapan pun itu.",
+			"Sudah lama. Senang kamu kembali.",
+			"Ruang ini masih di sini, seperti biasa.",
+			"Kamu kembali — itu yang penting.",
+			"Lama tidak ketemu. Senang kamu di sini.",
+			"Tidak ada yang berubah di sini. Selamat kembali.",
+			"Apapun yang terjadi, ruang ini selalu terbuka.",
+			"Tidak pernah terlambat untuk kembali ke sini.",
+			"Selamat kembali — mulai saja dari sini.",
 		}, seed)
 	}
 	return ""

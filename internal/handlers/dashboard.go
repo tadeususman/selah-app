@@ -36,22 +36,22 @@ func welcomeMsg(condition, lastVerseRef string, seed int) string {
 	switch condition {
 	case "new":
 		return pick([]string{
-			"Ini ruang jedamu. Mulai kapan saja.",
-			"Tidak ada yang terlambat untuk memulai.",
-			"Ruang ini untukmu — tidak perlu buru-buru.",
-			"Cukup mulai dari sini.",
+			"Selah adalah ruang jedamu. Mulai kapan saja.",
+			"Tidak ada yang terlambat untuk memulai di sini.",
+			"Selah selalu terbuka — tidak perlu buru-buru.",
+			"Cukup mulai dari sini, pelan-pelan.",
 		}, seed)
 
 	case "done":
 		return pick([]string{
-			"Sudah renungan hari ini. Semoga firman-Nya menemanimu.",
+			"Sudah renungan hari ini. Semoga firman-Nya tinggal di hatimu.",
 			"Waktu yang kamu luangkan tadi tidak sia-sia.",
-			"Hari ini sudah ada renungan — itu yang terpenting.",
-			"Firman hari ini sudah tertulis. Semoga terasa sepanjang hari.",
-			"Sudah ada waktu untuk yang terpenting hari ini.",
-			"Renungan hari ini sudah selesai. Semoga pesannya tinggal.",
-			"Sudah menyisihkan waktu hari ini. Itu berarti.",
-			"Firman hari ini sudah ada — semoga menemanimu terus.",
+			"Hari ini sudah ada renungan — itu yang paling penting.",
+			"Firman hari ini sudah tertulis. Semoga terasa sampai malam.",
+			"Sudah menyisihkan waktu untuk yang paling penting hari ini.",
+			"Renungan hari ini selesai. Semoga pesannya menetap di hatimu.",
+			"Sudah ada waktu bersama Tuhan hari ini. Itu berarti.",
+			"Firman hari ini sudah ada — bawa terus sepanjang hari.",
 		}, seed)
 
 	case "yesterday":
@@ -60,35 +60,35 @@ func welcomeMsg(condition, lastVerseRef string, seed int) string {
 			ref = "kemarin"
 		}
 		return pick([]string{
-			"Kemarin kamu merenungkan " + ref + ". Hari ini mau mulai lagi?",
-			ref + " menemanimu kemarin. Hari ini ada apa?",
-			"Semoga " + ref + " masih terasa hari ini.",
-			"Kemarin bersama " + ref + ". Ruang ini terbuka lagi.",
-			"Terakhir kamu di sini bersama " + ref + ".",
+			"Kemarin kamu merenungkan " + ref + ". Hari ini mau lanjut lagi?",
+			ref + " menemanimu kemarin. Hari ini ada apa lagi?",
+			"Semoga " + ref + " masih terasa di hatimu hari ini.",
+			"Kemarin bersama " + ref + ". Selah sudah terbuka lagi nih.",
+			"Terakhir kamu di sini bersama " + ref + ". Selamat datang kembali.",
 		}, seed)
 
 	case "gap":
 		return pick([]string{
-			"Senang kamu kembali.",
-			"Tidak apa-apa jeda sebentar — ruang ini tetap di sini.",
-			"Kembali lagi. Ruang ini tidak kemana-mana.",
-			"Senang kamu di sini lagi.",
-			"Ruang ini masih di sini, menunggumu.",
-			"Tidak ada yang terlewat. Kamu bisa mulai dari sini.",
-			"Kapan pun kamu siap, ruang ini terbuka.",
-			"Senang kamu mampir lagi.",
+			"Senang kamu kembali ke Selah.",
+			"Tidak apa-apa istirahat sebentar — Selah tetap ada di sini.",
+			"Kembali lagi. Selah tidak kemana-mana kok.",
+			"Senang kamu mampir lagi ke sini.",
+			"Selah masih di sini, menunggu kamu.",
+			"Tidak ada yang terlewat. Mulai saja dari sini.",
+			"Kapan pun kamu siap, Selah selalu terbuka.",
+			"Hei, senang kamu balik lagi.",
 		}, seed)
 
 	case "long":
 		return pick([]string{
-			"Sudah lama. Senang kamu kembali.",
-			"Ruang ini masih di sini, seperti biasa.",
-			"Kamu kembali — itu yang penting.",
-			"Lama tidak ketemu. Senang kamu di sini.",
-			"Tidak ada yang berubah di sini. Selamat kembali.",
-			"Apapun yang terjadi, ruang ini selalu terbuka.",
+			"Sudah lama tidak ketemu. Senang kamu kembali.",
+			"Selah masih di sini, seperti biasa.",
+			"Kamu kembali — itu yang paling penting.",
+			"Lama tidak ketemu. Senang kamu ada di sini lagi.",
+			"Tidak ada yang berubah di Selah. Selamat kembali.",
+			"Apapun yang terjadi, Selah selalu terbuka buatmu.",
 			"Tidak pernah terlambat untuk kembali ke sini.",
-			"Selamat kembali — mulai saja dari sini.",
+			"Selamat kembali — mulai saja pelan-pelan dari sini.",
 		}, seed)
 	}
 	return ""

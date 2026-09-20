@@ -32,9 +32,19 @@ func pick(variants []string, seed int) string {
 	return variants[seed%len(variants)]
 }
 
-func welcomeMsg(condition, lastVerseRef string, seed int) string {
+func welcomeMsg(condition, lastVerseRef, langStyle string, seed int) string {
+	formal := langStyle == "formal"
+
 	switch condition {
 	case "new":
+		if formal {
+			return pick([]string{
+				"Selah adalah ruang teduh Anda. Mulai kapan saja.",
+				"Tidak ada yang terlambat untuk memulai di sini.",
+				"Selah selalu terbuka — tidak perlu terburu-buru.",
+				"Cukup mulai dari sini, perlahan-lahan.",
+			}, seed)
+		}
 		return pick([]string{
 			"Selah adalah ruang jedamu. Mulai kapan saja.",
 			"Tidak ada yang terlambat untuk memulai di sini.",
@@ -43,6 +53,18 @@ func welcomeMsg(condition, lastVerseRef string, seed int) string {
 		}, seed)
 
 	case "done":
+		if formal {
+			return pick([]string{
+				"Renungan hari ini sudah selesai. Semoga firman-Nya tinggal di hati Anda.",
+				"Waktu yang Anda luangkan tadi tidak sia-sia.",
+				"Hari ini sudah ada renungan — itu yang paling penting.",
+				"Firman hari ini sudah tertulis. Semoga terasa sampai malam.",
+				"Sudah menyisihkan waktu untuk yang paling penting hari ini.",
+				"Semoga pesan dari renungan tadi menetap di hati Anda.",
+				"Sudah ada waktu bersama Tuhan hari ini. Itu sangat berarti.",
+				"Firman hari ini sudah ada — bawa terus sepanjang hari.",
+			}, seed)
+		}
 		return pick([]string{
 			"Sudah renungan hari ini. Semoga firman-Nya tinggal di hatimu.",
 			"Waktu yang kamu luangkan tadi tidak sia-sia.",
@@ -59,6 +81,15 @@ func welcomeMsg(condition, lastVerseRef string, seed int) string {
 		if ref == "" {
 			ref = "kemarin"
 		}
+		if formal {
+			return pick([]string{
+				"Kemarin Anda merenungkan " + ref + ". Hari ini mau lanjut lagi?",
+				ref + " menemani Anda kemarin. Hari ini ada apa lagi?",
+				"Semoga " + ref + " masih terasa di hati Anda hari ini.",
+				"Kemarin bersama " + ref + ". Selah sudah terbuka kembali.",
+				"Terakhir Anda di sini bersama " + ref + ". Selamat datang kembali.",
+			}, seed)
+		}
 		return pick([]string{
 			"Kemarin kamu merenungkan " + ref + ". Hari ini mau lanjut lagi?",
 			ref + " menemanimu kemarin. Hari ini ada apa lagi?",
@@ -68,6 +99,18 @@ func welcomeMsg(condition, lastVerseRef string, seed int) string {
 		}, seed)
 
 	case "gap":
+		if formal {
+			return pick([]string{
+				"Senang Anda kembali ke Selah.",
+				"Tidak apa-apa beristirahat sebentar — Selah tetap ada di sini.",
+				"Selamat datang kembali. Selah tidak kemana-mana.",
+				"Senang Anda mampir lagi ke sini.",
+				"Selah masih di sini, menunggu Anda.",
+				"Tidak ada yang terlewat. Mulai saja dari sini.",
+				"Kapan pun Anda siap, Selah selalu terbuka.",
+				"Senang Anda kembali lagi.",
+			}, seed)
+		}
 		return pick([]string{
 			"Senang kamu kembali ke Selah.",
 			"Tidak apa-apa istirahat sebentar — Selah tetap ada di sini.",
@@ -80,6 +123,18 @@ func welcomeMsg(condition, lastVerseRef string, seed int) string {
 		}, seed)
 
 	case "long":
+		if formal {
+			return pick([]string{
+				"Sudah lama tidak bertemu. Senang Anda kembali.",
+				"Selah masih di sini, seperti biasa.",
+				"Anda kembali — itu yang paling penting.",
+				"Lama tidak bertemu. Senang Anda ada di sini lagi.",
+				"Tidak ada yang berubah di Selah. Selamat datang kembali.",
+				"Apapun yang terjadi, Selah selalu terbuka untuk Anda.",
+				"Tidak pernah terlambat untuk kembali ke sini.",
+				"Selamat datang lagi — mulai saja perlahan dari sini.",
+			}, seed)
+		}
 		return pick([]string{
 			"Sudah lama tidak ketemu. Senang kamu kembali.",
 			"Selah masih di sini, seperti biasa.",
@@ -88,7 +143,7 @@ func welcomeMsg(condition, lastVerseRef string, seed int) string {
 			"Tidak ada yang berubah di Selah. Selamat datang kembali.",
 			"Apapun yang terjadi, Selah selalu terbuka buatmu.",
 			"Tidak pernah terlambat untuk kembali ke sini.",
-			"Selamat kembali — mulai saja pelan-pelan dari sini.",
+			"Selamat datang lagi — mulai saja pelan-pelan dari sini.",
 		}, seed)
 	}
 	return ""
@@ -136,7 +191,7 @@ func (a *App) Dashboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	seed := int(now.Unix() / 86400) // days since epoch — unique per day, never repeats
-	msg := welcomeMsg(condition, lastVerseRef, seed)
+	msg := welcomeMsg(condition, lastVerseRef, langStyle, seed)
 
 	// Last 3 journal entries regardless of month.
 	rows, err := a.DB.QueryContext(r.Context(), `

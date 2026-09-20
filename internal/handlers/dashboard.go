@@ -85,7 +85,7 @@ func welcomeMsg(condition, lastVerseRef string, seed int) string {
 			"Selah masih di sini, seperti biasa.",
 			"Kamu kembali — itu yang paling penting.",
 			"Lama tidak ketemu. Senang kamu ada di sini lagi.",
-			"Tidak ada yang berubah di Selah. Selamat kembali.",
+			"Tidak ada yang berubah di Selah. Selamat datang kembali.",
 			"Apapun yang terjadi, Selah selalu terbuka buatmu.",
 			"Tidak pernah terlambat untuk kembali ke sini.",
 			"Selamat kembali — mulai saja pelan-pelan dari sini.",

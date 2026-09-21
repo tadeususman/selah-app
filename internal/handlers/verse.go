@@ -218,7 +218,7 @@ func (a *App) fetchVerseTexts(refs []string) ([]verseOption, error) {
 			continue
 		}
 		text := strings.Join(parts, " ")
-		if utf8.RuneCountInString(text) > 1000 {
+		if utf8.RuneCountInString(text) > 500 {
 			continue
 		}
 		options = append(options, verseOption{Ref: ref, Text: text})

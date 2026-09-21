@@ -515,9 +515,15 @@
       ctx.font = vtFont;
       var vtLines = wrapCanvasText(ctx, d.verseText, textW);
 
-      // Auto-shrink verse font if too many lines
+      // Auto-shrink verse font if too many lines (two levels)
       if (vtLines.length > 7) {
         vtFontSize = Math.max(34, Math.floor(44 * 7 / vtLines.length));
+        vtFont = 'italic 400 ' + vtFontSize + 'px Lora, serif';
+        ctx.font = vtFont;
+        vtLines = wrapCanvasText(ctx, d.verseText, textW);
+      }
+      if (vtLines.length > 9) {
+        vtFontSize = Math.max(28, Math.floor(34 * 9 / vtLines.length));
         vtFont = 'italic 400 ' + vtFontSize + 'px Lora, serif';
         ctx.font = vtFont;
         vtLines = wrapCanvasText(ctx, d.verseText, textW);

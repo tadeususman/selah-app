@@ -202,8 +202,8 @@ func (a *App) JournalCreate(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Teks ayat wajib diisi", http.StatusBadRequest)
 		return
 	}
-	if utf8.RuneCountInString(verseText) > 1000 {
-		http.Error(w, "Teks ayat terlalu panjang (maksimal 1000 karakter)", http.StatusBadRequest)
+	if utf8.RuneCountInString(verseText) > 500 {
+		http.Error(w, "Teks ayat terlalu panjang. Untuk renungan, cukup 1–2 ayat saja (maksimal 500 karakter)", http.StatusBadRequest)
 		return
 	}
 

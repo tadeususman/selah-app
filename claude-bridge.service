@@ -1,0 +1,13 @@
+[Unit]
+Description=Claude Bridge
+After=network.target
+
+[Service]
+Environment=CLAUDE_MAX_CONCURRENT=3
+ExecStart=/usr/bin/python3 /opt/selah/claude-bridge.py
+WorkingDirectory=/opt/selah
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target

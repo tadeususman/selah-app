@@ -2,3 +2,4 @@
 *.log
 /journalflow
 /tmp/
+__pycache__/

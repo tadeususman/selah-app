@@ -94,15 +94,15 @@
   <div id="cl-popup" class="modal-backdrop" style="display:none" onclick="if(event.target===this)closeCl()">
     <div class="modal-card changelog-modal">
       <div class="changelog-modal-header">
-        <span class="about-version">v0.5.1</span>
-        <span class="changelog-date">12 Sep 2026</span>
+        <span class="about-version">v0.6.0</span>
+        <span class="changelog-date">5 Okt 2026</span>
       </div>
       <p class="modal-title" style="text-align:left;margin-bottom:12px">✨ Yang baru di selah,</p>
       <ul class="changelog-list" style="margin-bottom:20px">
-        <li>Tombol <strong>✦ Pilihkan Ayat</strong> — kalau belum tahu mau renungkan ayat apa, Teman Selah langsung carikan satu ayat untukmu</li>
-        <li>Ceritakan perasaan atau situasimu di kolom teks, Teman Selah akan rekomendasikan ayat yang relevan</li>
-        <li>Mengisi referensi atau teks ayat sekarang saling mengunci kolom yang lain agar tidak bentrok</li>
-        <li>Panduan penggunaan (tombol ?) diperbarui sesuai fitur terbaru</li>
+        <li>Fitur <strong>Plan</strong> — buat rencana renungan harian 3–5 hari, dibimbing Teman Selah dari ayat hingga refleksi</li>
+        <li>Di akhir plan, dapatkan kartu pencapaian untuk dibagikan</li>
+        <li>Tombol <strong>✦ Pilihkan Ayat</strong> tanpa konteks sekarang lebih cepat dan hasilnya lebih beragam</li>
+        <li>Navigasi geser kiri-kanan di Momen Selah dan Plan</li>
       </ul>
       <button onclick="closeCl()" style="width:100%;padding:12px;border-radius:12px;border:none;background:var(--navy);color:white;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer">Tutup</button>
     </div>
@@ -514,7 +514,7 @@
     });
   })();
 
-  var clKey = 'selah-cl-{{.UserID}}-v0.5.1';
+  var clKey = 'selah-cl-{{.UserID}}-v0.6.0';
   var tourKey = 'selah-tour-v1-{{.UserID}}';
   function closeCl() {
     localStorage.setItem(clKey, '1');

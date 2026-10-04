@@ -9,7 +9,12 @@
 <body>
   <main class="page">
     <header class="page-header">
-      <a href="/dashboard" class="back-link">← Kembali</a>
+      {{if .Entry.PlanID}}
+        <a href="/plan/{{.Entry.PlanID}}" class="back-link">← Kembali ke Rencana</a>
+        <div class="plan-journal-badge">Plan: {{.PlanName}} · Hari {{.Entry.PlanDay}}/{{.PlanDuration}}</div>
+      {{else}}
+        <a href="/dashboard" class="back-link">← Kembali</a>
+      {{end}}
 
       <!-- Delete confirmation modal -->
       <div id="delete-modal" class="modal-backdrop" style="display:none" onclick="if(event.target===this)closeDeleteModal()">
@@ -115,6 +120,14 @@
         <h3>Langkah Praktis</h3>
         <p>{{.Entry.PracticalStep}}</p>
       </section>
+      {{end}}
+      {{if .Entry.PlanID}}
+      <div class="plan-return-row">
+        <a href="/plan/{{.Entry.PlanID}}" class="btn-primary plan-return-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16" style="vertical-align:-3px;margin-right:6px"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+          Kembali ke Rencana
+        </a>
+      </div>
       {{end}}
     {{else}}
 

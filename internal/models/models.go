@@ -24,6 +24,8 @@ type JournalEntry struct {
 	PracticalStep  string
 	Status         string // "draft" | "completed"
 	ShareSummary   string
+	PlanID         int64 // 0 if entry is not part of a plan
+	PlanDay        int   // 0 if entry is not part of a plan
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
 }
@@ -32,15 +34,19 @@ type JournalEntry struct {
 // the "Day 243 / It was but a nice day... / 14th July, 2023" cards
 // in the reference UI.
 type Preview struct {
-	ID        int64
-	DayNumber int
-	Snippet   string
-	EntryDate time.Time
-	EntryTime time.Time
-	Location  string
-	VerseRef  string
-	VerseText string
-	Status    string
+	ID           int64
+	DayNumber    int
+	Snippet      string
+	EntryDate    time.Time
+	EntryTime    time.Time
+	Location     string
+	VerseRef     string
+	VerseText    string
+	Status       string
+	PlanID       int64  // 0 if not part of a plan
+	PlanDay      int    // 0 if not part of a plan
+	PlanName     string // "" if not part of a plan
+	PlanDuration int    // 0 if not part of a plan
 }
 
 type JournalMessage struct {
@@ -49,4 +55,39 @@ type JournalMessage struct {
 	Role      string // "user" | "ai"
 	Content   string
 	CreatedAt time.Time
+}
+
+type Plan struct {
+	ID              int64
+	UserID          int64
+	Name            string
+	CoverText       string
+	Duration        int
+	Status          string // "active" | "completed"
+	FinalReflection string
+	ShareSummary    string
+	Location        string
+	CreatedAt       time.Time
+	CompletedAt     *time.Time
+}
+
+type PlanDay struct {
+	ID        int64
+	PlanID    int64
+	DayNumber int
+	VerseRef  string
+	VerseText string
+	IntroText string
+}
+
+// PlanPreview is a trimmed shape for the /plan list page: plan + progress counter.
+type PlanPreview struct {
+	ID          int64
+	Name        string
+	CoverText   string
+	Duration    int
+	Status      string
+	CompletedAt time.Time // zero value when still active
+	CreatedAt   time.Time
+	DoneCount   int // # of plan days with a completed journal entry
 }

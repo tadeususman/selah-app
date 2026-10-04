@@ -51,6 +51,7 @@
             <div class="entry-card-day">{{idDay .EntryDate}}</div>
           </div>
           <div class="list-card-right">
+            {{if .PlanID}}<div class="list-plan-badge">Plan: {{.PlanName}} · Hari {{.PlanDay}}/{{.PlanDuration}}</div>{{end}}
             {{if .VerseRef}}<div class="list-verse-ref">{{.VerseRef}}</div>{{end}}
             <div class="list-verse-text">{{.VerseText}}</div>
             <div class="list-card-meta">
@@ -140,6 +141,7 @@
         : '<span class="meta-draft">Lanjutkan →</span>';
       var meta = e.entry_time + (e.location ? ' · ' + e.location : '') + ' · ' + status;
       var verseRef = e.verse_ref ? '<div class="list-verse-ref">' + e.verse_ref + '</div>' : '';
+      var planBadge = e.plan_id ? '<div class="list-plan-badge">Plan: ' + e.plan_name + ' · Hari ' + e.plan_day + '/' + e.plan_duration + '</div>' : '';
       return '<a href="/journal/' + e.id + '" class="entry-card entry-card-list"'
         + ' data-id="' + e.id + '"'
         + ' data-search="' + e.verse_ref + ' ' + e.verse_text + '"'
@@ -150,6 +152,7 @@
         + '<div class="entry-card-day">' + e.weekday + '</div>'
         + '</div>'
         + '<div class="list-card-right">'
+        + planBadge
         + verseRef
         + '<div class="list-verse-text">' + e.verse_text + '</div>'
         + '<div class="list-card-meta">' + meta + '</div>'

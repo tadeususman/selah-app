@@ -146,6 +146,24 @@
       </form>
     </section>
 
+    <section class="admin-section">
+      <h3>Logout</h3>
+      <p class="danger-desc">Keluar dari sesi ini. Data journal kamu tetap aman.</p>
+      <button type="button" class="btn-secondary" onclick="document.getElementById('logout-modal').style.display='flex'">Logout</button>
+    </section>
+
+    <div id="logout-modal" class="modal-backdrop" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+      <div class="modal-card" style="max-width:300px;text-align:center">
+        <p style="font-size:15px;font-weight:700;margin:0 0 6px;color:var(--text)">Logout?</p>
+        <p style="font-size:13px;color:var(--text-muted);margin:0 0 20px;line-height:1.5">Kamu akan keluar dari sesi ini.</p>
+        <div style="display:flex;gap:8px">
+          <button type="button" class="modal-btn-cancel" style="flex:1;font-size:13px" onclick="document.getElementById('logout-modal').style.display='none'">Batal</button>
+          <button type="button" class="btn-primary" style="flex:1;margin-top:0" onclick="document.getElementById('logout-form').submit()">Ya, Logout</button>
+        </div>
+      </div>
+    </div>
+    <form id="logout-form" action="/logout" method="POST" style="display:none"></form>
+
     <section class="admin-section danger-section">
       <h3>Hapus Akun</h3>
       <p class="danger-desc">Semua data journal dan riwayat diskusi akan dihapus permanen dan tidak bisa dipulihkan.</p>

@@ -116,6 +116,17 @@ func main() {
 		r.Get("/api/verse/search", app.VerseSearch)
 		r.Post("/api/verse/recommend", app.VerseRecommend)
 
+		r.Get("/plan", app.PlanList)
+		r.Get("/plan/new", app.PlanNew)
+		r.Post("/plan", app.PlanCreate)
+		r.Get("/plan/{id}", app.PlanDetail)
+		r.Get("/plan/{id}/final-status", app.PlanFinalStatus)
+		r.Post("/plan/{id}/regenerate-final", app.PlanRegenerateFinal)
+		r.Post("/plan/{id}/generate-share-summary", app.PlanGenerateShareSummary)
+		r.Post("/plan/{id}/rename", app.PlanRename)
+		r.Post("/plan/{id}/day/{day}/regenerate-intro", app.PlanRegenerateIntro)
+		r.Post("/plan/{id}/delete", app.PlanDelete)
+
 		r.Get("/user", app.UserPage)
 		r.Post("/user/email", app.UserUpdateEmail)
 		r.Post("/user/name", app.UserUpdateName)

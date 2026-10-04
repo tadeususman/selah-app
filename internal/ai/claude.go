@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -413,6 +414,7 @@ JANGAN:
 - Mulai dengan "Terima kasih sudah..." atau "Senang bisa menemani..."
 - Komentari kualitas tulisan user — jangan bilang "langkah praktismu sederhana tapi tidak gampang", "itu refleksi yang jujur", "langkah kecil tapi bermakna", "kamu jujur dalam refleksimu", atau sejenisnya. Langsung bahas ISI yang mereka tulis, bukan nilai caranya menulis.
 - Pakai "bawa pulang" — ambigu. Ganti dengan "simpan", "ingat", "pegang", atau "jadikan pegangan".
+- Minta izin atau mengumumkan doa sebelum berdoa dalam bentuk apapun: "boleh aku doakan...", "izinkan aku berdoa...", "doa singkat ya?", "yuk kita doa", "aku tutup dengan doa..." — langsung mulai kalimat doa saja (contoh: "Tuhan, terima kasih...").
 Dalam doa: pakai "kami" — kamu dan pengguna berdoa bersama. Jangan pakai "dia/mereka" untuk sebut pengguna. Sapa Tuhan dengan "Engkau" dan "Mu" — JANGAN pakai "kamu" untuk menyebut Tuhan.
 Sebut waktu hari (pagi/siang/malam) hanya kalau benar-benar relevan dengan isi renungannya — jangan jadikan pembuka atau penutup default. Kalau tidak ada alasan kuat untuk menyebutnya, lewati saja. Kalau perlu disebut, gunakan waktu yang sudah diberikan — jangan mengarang.`
 
@@ -610,6 +612,116 @@ func (c *Client) GenerateShareSummary(ctx context.Context, verseRef, verseText, 
 	return strings.TrimSpace(result), nil
 }
 
+const generatePlanSystemPrompt = `Kamu adalah "Teman Selah" — sahabat rohani yang membantu pengguna menyusun rencana renungan singkat (3-5 hari) berdasarkan situasi, tema, atau pergumulan yang mereka ceritakan.
+
+PANDUAN ISI:
+- Pilih ayat yang membentuk ALUR yang bermakna — bukan daftar acak. Setiap hari membangun dari hari sebelumnya (misalnya: mengakui situasi → melihat karakter Tuhan → janji / penghiburan → langkah iman → syukur).
+- Variasikan sumber ayat: Mazmur, kitab Nabi, Injil, surat-surat Paulus, surat-surat umum. Jangan semua dari satu kitab.
+- Setiap referensi harus BERBEDA. Tidak boleh ada pengulangan.
+- Format referensi: standar Indonesia (contoh: "Mazmur 23:1", "Matius 6:25-27", "Roma 8:28"). Gunakan nama kitab lengkap Bahasa Indonesia (bukan singkatan).
+- Pilih ayat yang pendek-sedang (1-3 ayat per referensi) supaya mudah direnungkan.
+- intro_text: 2-3 kalimat hangat yang mengajak pengguna masuk ke ayat hari itu — bukan khotbah, bukan ringkasan ayat. Pakai "aku" dan "kamu". Jangan buka dengan "Hari ini...". Jangan ulang isi ayat.
+- name: judul plan singkat & personal (3-6 kata). Hindari "Renungan tentang...", "Panduan...", atau "Perjalanan..."
+- cover_text: 1-2 kalimat yang terasa seperti undangan — bukan deskripsi akademis. Pakai "kamu".
+- duration: tentukan sendiri 3, 4, atau 5 sesuai kedalaman tema (3 untuk tema mendesak/fokus, 5 untuk tema yang perlu dicerna perlahan).
+
+GAYA BAHASA (penting — intro_text sering jatuh ke puitis-tapi-kabur):
+- Baca ulang setiap kalimat seperti kamu mengucapkannya ke teman. Kalau kedengaran seperti kutipan buku rohani, tulis ulang lebih sederhana.
+- JANGAN pakai kata kerja ambigu tanpa objek — contoh buruk: "Sebelum berbuat, Yesus merasa." ("berbuat" apa? "merasa" apa?). Pakai bentuk yang jelas: "Sebelum bertindak, Yesus merasakan belas kasihan lebih dulu."
+- Hindari kata "berbuat" sendirian — orang Indonesia sering membacanya ke arah "berbuat salah/jahat". Ganti dengan "bertindak", "melakukan sesuatu", atau sebut tindakannya langsung.
+- Metafora boleh, tapi harus konkret dan langsung dimengerti. HINDARI frasa abstrak yang terdengar indah tapi tidak jelas maknanya — contoh: "gema dari hubungan", "tarian jiwa", "nafas kehadiran-Nya". Kalau tidak bisa dijelaskan dengan sekali baca, ganti dengan kalimat biasa.
+- Hindari kalimat yang sengaja digantung untuk efek dramatis ("Sebelum berbuat, Yesus merasa." / "Dan dari situlah, segalanya."). Kalimat harus lengkap maknanya.
+- Nada: hangat, natural, seperti teman yang menjelaskan — bukan narator buku renungan.
+
+PENTING: Jawab HANYA dengan JSON mentah — tanpa markdown, tanpa backtick, tanpa penjelasan di luar JSON. Format persis:
+
+{"name":"...","cover_text":"...","duration":3,"days":[{"verse_ref":"...","intro_text":"..."},{"verse_ref":"...","intro_text":"..."},{"verse_ref":"...","intro_text":"..."}]}
+
+Jumlah entri di "days" harus persis sama dengan nilai "duration". Jangan tambahkan field lain.`
+
+// PlanDraft is the shape returned by GeneratePlan — the AI's suggestion before verse texts are fetched.
+type PlanDraft struct {
+	Name      string         `json:"name"`
+	CoverText string         `json:"cover_text"`
+	Duration  int            `json:"duration"`
+	Days      []PlanDraftDay `json:"days"`
+}
+
+type PlanDraftDay struct {
+	VerseRef  string `json:"verse_ref"`
+	IntroText string `json:"intro_text"`
+}
+
+// GeneratePlan asks the AI to design a 3-5 day devotional plan around the user's situation.
+// Returns the plan structure with ref + intro per day; verse texts must be fetched separately from SABDA.
+func (c *Client) GeneratePlan(ctx context.Context, situation, langStyle string) (*PlanDraft, error) {
+	situation = strings.TrimSpace(situation)
+	if situation == "" {
+		return nil, fmt.Errorf("situasi kosong")
+	}
+	sys := generatePlanSystemPrompt
+	if langStyle == "formal" {
+		sys = formalizePrompt(sys)
+	}
+	prompt := fmt.Sprintf("Situasi atau tema yang sedang dipikirkan pengguna:\n%s\n\nSusun rencana renungan 3-5 hari.", situation)
+	raw, err := c.send(ctx, sys, []ChatMessage{{Role: "user", Content: prompt}})
+	if err != nil {
+		return nil, err
+	}
+
+	jsonStr := extractJSONObject(raw)
+	var draft PlanDraft
+	if err := json.Unmarshal([]byte(jsonStr), &draft); err != nil {
+		snippet := raw
+		if len(snippet) > 400 {
+			snippet = snippet[:400] + "..."
+		}
+		return nil, fmt.Errorf("gagal parse rencana: %w (raw: %s)", err, snippet)
+	}
+
+	draft.Name = strings.TrimSpace(draft.Name)
+	draft.CoverText = strings.TrimSpace(draft.CoverText)
+	if draft.Name == "" || draft.CoverText == "" {
+		return nil, fmt.Errorf("rencana tidak lengkap (nama/cover kosong)")
+	}
+	if draft.Duration < 3 || draft.Duration > 5 {
+		return nil, fmt.Errorf("durasi tidak valid: %d", draft.Duration)
+	}
+	if len(draft.Days) != draft.Duration {
+		return nil, fmt.Errorf("jumlah hari (%d) tidak sesuai durasi (%d)", len(draft.Days), draft.Duration)
+	}
+	seen := map[string]bool{}
+	for i := range draft.Days {
+		draft.Days[i].VerseRef = strings.TrimSpace(draft.Days[i].VerseRef)
+		draft.Days[i].IntroText = strings.TrimSpace(draft.Days[i].IntroText)
+		if draft.Days[i].VerseRef == "" || draft.Days[i].IntroText == "" {
+			return nil, fmt.Errorf("hari %d: referensi atau pengantar kosong", i+1)
+		}
+		key := strings.ToLower(draft.Days[i].VerseRef)
+		if seen[key] {
+			return nil, fmt.Errorf("ayat berulang terdeteksi: %s", draft.Days[i].VerseRef)
+		}
+		seen[key] = true
+	}
+	return &draft, nil
+}
+
+// extractJSONObject strips markdown fences and returns the first top-level {...} block.
+func extractJSONObject(s string) string {
+	s = strings.TrimSpace(s)
+	s = strings.TrimPrefix(s, "```json")
+	s = strings.TrimPrefix(s, "```JSON")
+	s = strings.TrimPrefix(s, "```")
+	s = strings.TrimSuffix(s, "```")
+	s = strings.TrimSpace(s)
+	start := strings.Index(s, "{")
+	end := strings.LastIndex(s, "}")
+	if start >= 0 && end > start {
+		return s[start : end+1]
+	}
+	return s
+}
+
 // ClosingMessage generates a warm closing/encouragement message at the end of a devotion session.
 // history should include the full session context including reflection and practical step.
 // timeOfDay is the Indonesian time label ("pagi"/"siang"/"sore"/"malam") when the session ends.
@@ -619,4 +731,186 @@ func (c *Client) ClosingMessage(ctx context.Context, history []ChatMessage, lang
 		sys = formalizePrompt(sys)
 	}
 	return c.send(ctx, sys, history)
+}
+
+const finalReflectionSystemPrompt = `Kamu adalah "Teman Selah" — teman rohani yang sudah menemani pengguna sepanjang rencana renungan ini dari hari pertama sampai hari terakhir.
+
+Tugasmu sekarang: menulis refleksi penutup yang menyimpulkan perjalanan rencana ini — bukan ringkasan tiap hari, tapi SATU benang merah yang terasa seperti kesan utuh dari seluruh rencana.
+
+PANDUAN:
+- Pakai "aku" dan "kamu". Nada: hangat, personal, bukan ceramah.
+- Bentuk: 2 paragraf pendek (total 60-80 kata). Setiap paragraf 2-3 kalimat.
+- Mulai dengan menyebut tema atau nuansa yang muncul dari refleksi pengguna sepanjang hari — bukan dari ayat-ayatnya. Tunjukkan kamu benar-benar membaca apa yang mereka tulis.
+- Paragraf tengah: sebut satu-dua detail spesifik dari refleksi mereka (jangan kutip panjang, cukup singgung). Hubungkan dengan satu ayat yang paling resonan dari rencana ini.
+- Paragraf penutup: dorongan yang bersumber dari isi rencana, bukan semangat generik. Boleh menyebut bahwa rencana sudah selesai, tapi bukan hal yang dicapai pengguna.
+- Kristus adalah pusat. Kalau ada tema teologi besar, kaitkan ke Kristus dengan lembut.
+
+JANGAN:
+- Jangan buka dengan memuji ("refleksi yang jujur", "kamu luar biasa", "perjalanan yang indah")
+- Jangan susun seperti daftar hari ("Hari 1 kita belajar..., Hari 2...")
+- Jangan tutup dengan semangat generik ("semangat ya!", "Tuhan menyertai!") kecuali mengalir natural
+- Jangan sebut diri sebagai AI, model, atau asisten
+- Jangan pakai: "tentunya", "pastinya", "sesungguhnya", "memang benar"
+- Jangan narasikan proses berpikirmu
+
+Balas HANYA dengan isi refleksinya. Tanpa salam pembuka ("Hai...", "Selamat..."). Tanpa heading, tanpa markdown, tanpa tanda petik di luar yang perlu.`
+
+// FinalReflection generates a closing synthesis after a plan's last day is completed.
+// Receives the plan's name + per-day data (ref, verse text, user's reflection, practical step).
+func (c *Client) FinalReflection(ctx context.Context, planName string, days []FinalReflectionDay, langStyle string) (string, error) {
+	if len(days) == 0 {
+		return "", fmt.Errorf("tidak ada hari untuk direfleksikan")
+	}
+	sys := finalReflectionSystemPrompt
+	if langStyle == "formal" {
+		sys = formalizePrompt(sys)
+	}
+	var sb strings.Builder
+	sb.WriteString("Rencana: " + planName + "\n\n")
+	for _, d := range days {
+		fmt.Fprintf(&sb, "— Hari %d · %s\n", d.DayNumber, d.VerseRef)
+		if d.VerseText != "" {
+			sb.WriteString("Ayat: " + d.VerseText + "\n")
+		}
+		if d.Reflection != "" {
+			sb.WriteString("Refleksi pengguna: " + d.Reflection + "\n")
+		}
+		if d.PracticalStep != "" {
+			sb.WriteString("Langkah praktis: " + d.PracticalStep + "\n")
+		}
+		sb.WriteString("\n")
+	}
+	sb.WriteString("Tulis refleksi penutup untuk seluruh rencana ini.")
+	result, err := c.send(ctx, sys, []ChatMessage{{Role: "user", Content: sb.String()}})
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(result), nil
+}
+
+// PlanShareSummary generates a short personal summary for the plan gift card,
+// based on the user's actual reflections across all days.
+func (c *Client) PlanShareSummary(ctx context.Context, planName string, days []FinalReflectionDay) (string, error) {
+	var b strings.Builder
+	b.WriteString("Nama plan: ")
+	b.WriteString(planName)
+	b.WriteString("\n\n")
+	for _, d := range days {
+		fmt.Fprintf(&b, "Hari %d — %s\n", d.DayNumber, d.VerseRef)
+		if d.Reflection != "" {
+			fmt.Fprintf(&b, "Refleksi: %s\n", d.Reflection)
+		}
+		if d.PracticalStep != "" {
+			fmt.Fprintf(&b, "Langkah: %s\n", d.PracticalStep)
+		}
+		b.WriteByte('\n')
+	}
+	result, err := c.send(ctx, planShareSummaryPrompt, []ChatMessage{{Role: "user", Content: b.String()}})
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(result), nil
+}
+
+const planShareSummaryPrompt = `Baca refleksi pengguna dari beberapa hari renungan ini. Tulis 2-3 kalimat yang merangkum insight atau hal yang ditemukan selama perjalanan itu — seolah seseorang sedang berbagi apa yang ia pelajari kepada orang lain.
+Gunakan "kita" — bukan "aku", "saya", atau "kami" — supaya pesannya terasa universal dan bisa resonan ke siapapun yang membaca kartu ini.
+Angkat hal konkret dari refleksi di atas — bukan deskripsi tentang plan-nya.
+Bahasa Indonesia yang hangat, langsung, dan konkret — mudah dimengerti saat dibaca sekali. Hindari bahasa terlalu santai seperti "nggak", "ngerasa", "banget". Tidak ada markdown. Tidak ada label. Total 40-60 kata.
+JANGAN pakai referensi ambigu seperti "di dalamnya", "di situlah", "di titik itulah". JANGAN kutip ulang teks ayat secara harfiah. JANGAN gunakan "aku", "saya", atau "kamu".
+JANGAN buka dengan "Tuhan", "Yesus", "Dalam hidup", "Perjalanan ini", atau kalimat generik rohani. Jangan pakai struktur template.
+
+Balas HANYA teksnya saja. Tanpa tanda kutip, tanpa penjelasan tambahan.`
+
+// FinalReflectionDay is the per-day input shape for FinalReflection.
+type FinalReflectionDay struct {
+	DayNumber     int
+	VerseRef      string
+	VerseText     string
+	Reflection    string
+	PracticalStep string
+}
+
+const regenerateIntroSystemPrompt = `Kamu adalah "Teman Selah" — sahabat rohani. Pengguna meminta kamu MENULIS ULANG pengantar (intro_text) untuk SATU hari dari rencana renungan yang sudah ada.
+
+Tugasmu: tulis intro_text yang lebih natural untuk hari yang diminta, dengan tetap mempertahankan alur rencana secara keseluruhan.
+
+PANDUAN ISI:
+- 2-3 kalimat hangat yang mengajak pengguna masuk ke ayat hari itu — bukan khotbah, bukan ringkasan ayat.
+- Pakai "aku" dan "kamu". Jangan buka dengan "Hari ini...". Jangan ulang isi ayat.
+- Perhatikan hari sebelumnya & sesudahnya supaya alur rencana tetap mengalir.
+
+GAYA BAHASA (penting — jangan jatuh ke puitis-tapi-kabur):
+- Baca ulang setiap kalimat seperti kamu mengucapkannya ke teman. Kalau kedengaran seperti kutipan buku rohani, tulis ulang lebih sederhana.
+- JANGAN pakai kata kerja ambigu tanpa objek — contoh buruk: "Sebelum berbuat, Yesus merasa." ("berbuat" apa? "merasa" apa?). Pakai bentuk yang jelas: "Sebelum bertindak, Yesus merasakan belas kasihan lebih dulu."
+- Hindari kata "berbuat" sendirian — orang Indonesia sering membacanya ke arah "berbuat salah/jahat". Ganti dengan "bertindak", "melakukan sesuatu", atau sebut tindakannya langsung.
+- Metafora boleh, tapi harus konkret dan langsung dimengerti. HINDARI frasa abstrak yang terdengar indah tapi tidak jelas maknanya — contoh: "gema dari hubungan", "tarian jiwa", "nafas kehadiran-Nya".
+- Hindari kalimat yang sengaja digantung untuk efek dramatis. Kalimat harus lengkap maknanya.
+- Nada: hangat, natural, seperti teman yang menjelaskan — bukan narator buku renungan.
+
+Jawab HANYA dengan teks pengantar baru — tanpa prefix "intro_text:", tanpa tanda petik, tanpa markdown, tanpa penjelasan di luar isi pengantar.`
+
+// PlanDayContext represents one day in a plan — used as surrounding context when
+// regenerating an intro so the AI preserves the overall flow.
+type PlanDayContext struct {
+	DayNumber int
+	VerseRef  string
+	VerseText string
+	IntroText string
+}
+
+// RegeneratePlanDayIntro produces a fresh intro_text for one day of an existing plan.
+// Pass all days as context so the AI can preserve the overall arc.
+func (c *Client) RegeneratePlanDayIntro(ctx context.Context, planName, coverText, langStyle string, targetDay int, days []PlanDayContext) (string, error) {
+	if len(days) == 0 {
+		return "", fmt.Errorf("rencana tidak punya hari")
+	}
+	var target *PlanDayContext
+	for i := range days {
+		if days[i].DayNumber == targetDay {
+			target = &days[i]
+			break
+		}
+	}
+	if target == nil {
+		return "", fmt.Errorf("hari %d tidak ditemukan", targetDay)
+	}
+
+	var sb strings.Builder
+	sb.WriteString("Rencana: " + planName + "\n")
+	if coverText != "" {
+		sb.WriteString("Pengantar rencana: " + coverText + "\n")
+	}
+	fmt.Fprintf(&sb, "Total hari: %d\n\n", len(days))
+	sb.WriteString("Semua hari dalam rencana (untuk menjaga alur):\n")
+	for _, d := range days {
+		marker := ""
+		if d.DayNumber == targetDay {
+			marker = "  ← HARI YANG DIMINTA UNTUK DITULIS ULANG"
+		}
+		fmt.Fprintf(&sb, "— Hari %d · %s%s\n", d.DayNumber, d.VerseRef, marker)
+		if d.VerseText != "" {
+			sb.WriteString("  Ayat: " + d.VerseText + "\n")
+		}
+		if d.IntroText != "" && d.DayNumber != targetDay {
+			sb.WriteString("  Pengantar saat ini: " + d.IntroText + "\n")
+		}
+	}
+	sb.WriteString("\nTulis pengantar baru untuk Hari ")
+	sb.WriteString(strconv.Itoa(targetDay))
+	sb.WriteString(" (" + target.VerseRef + "). Isi pengantar lama (kalau ada) boleh kamu ganti sepenuhnya.")
+
+	sys := regenerateIntroSystemPrompt
+	if langStyle == "formal" {
+		sys = formalizePrompt(sys)
+	}
+	result, err := c.send(ctx, sys, []ChatMessage{{Role: "user", Content: sb.String()}})
+	if err != nil {
+		return "", err
+	}
+	result = strings.TrimSpace(result)
+	// Strip stray quotes/markdown if the model slipped them in.
+	result = strings.TrimPrefix(result, `"`)
+	result = strings.TrimSuffix(result, `"`)
+	result = strings.ReplaceAll(result, "**", "")
+	return strings.TrimSpace(result), nil
 }

@@ -26,13 +26,16 @@ type journalListData struct {
 func (a *App) JournalList(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.UserID(r)
 	rows, err := a.DB.QueryContext(r.Context(), `
-		SELECT id, day_number, entry_date, entry_time,
-		       COALESCE(location, ''),
-		       COALESCE(NULLIF(reflection, ''), NULLIF(verse_text, ''), 'Belum ada isi') AS snippet,
-		       COALESCE(verse_ref, ''), verse_text, status
-		FROM journal_entries
-		WHERE user_id = $1
-		ORDER BY entry_date DESC, day_number DESC
+		SELECT je.id, je.day_number, je.entry_date, je.entry_time,
+		       COALESCE(je.location, ''),
+		       COALESCE(NULLIF(je.reflection, ''), NULLIF(je.verse_text, ''), 'Belum ada isi') AS snippet,
+		       COALESCE(je.verse_ref, ''), je.verse_text, je.status,
+		       COALESCE(je.plan_id, 0), COALESCE(je.plan_day, 0),
+		       COALESCE(p.name, ''), COALESCE(p.duration, 0)
+		FROM journal_entries je
+		LEFT JOIN plans p ON p.id = je.plan_id
+		WHERE je.user_id = $1
+		ORDER BY je.entry_date DESC, je.day_number DESC
 		LIMIT 15`,
 		userID)
 	if err != nil {
@@ -44,7 +47,8 @@ func (a *App) JournalList(w http.ResponseWriter, r *http.Request) {
 	var entries []models.Preview
 	for rows.Next() {
 		var p models.Preview
-		if err := rows.Scan(&p.ID, &p.DayNumber, &p.EntryDate, &p.EntryTime, &p.Location, &p.Snippet, &p.VerseRef, &p.VerseText, &p.Status); err != nil {
+		if err := rows.Scan(&p.ID, &p.DayNumber, &p.EntryDate, &p.EntryTime, &p.Location, &p.Snippet, &p.VerseRef, &p.VerseText, &p.Status,
+			&p.PlanID, &p.PlanDay, &p.PlanName, &p.PlanDuration); err != nil {
 			http.Error(w, "could not read journals", http.StatusInternalServerError)
 			return
 		}
@@ -69,6 +73,10 @@ type journalPreviewJSON struct {
 	Day       int    `json:"day"`
 	Weekday   string `json:"weekday"`
 	MonthShort string `json:"month_short"`
+	PlanID       int64  `json:"plan_id,omitempty"`
+	PlanDay      int    `json:"plan_day,omitempty"`
+	PlanName     string `json:"plan_name,omitempty"`
+	PlanDuration int    `json:"plan_duration,omitempty"`
 }
 
 func (a *App) JournalMore(w http.ResponseWriter, r *http.Request) {
@@ -81,14 +89,17 @@ func (a *App) JournalMore(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rows, err := a.DB.QueryContext(r.Context(), `
-		SELECT id, day_number, entry_date, entry_time,
-		       COALESCE(location, ''),
-		       COALESCE(NULLIF(verse_ref, ''), '') AS verse_ref,
-		       COALESCE(NULLIF(verse_text, ''), '') AS verse_text,
-		       status
-		FROM journal_entries
-		WHERE user_id = $1 AND id < $2
-		ORDER BY entry_date DESC, day_number DESC
+		SELECT je.id, je.day_number, je.entry_date, je.entry_time,
+		       COALESCE(je.location, ''),
+		       COALESCE(NULLIF(je.verse_ref, ''), '') AS verse_ref,
+		       COALESCE(NULLIF(je.verse_text, ''), '') AS verse_text,
+		       je.status,
+		       COALESCE(je.plan_id, 0), COALESCE(je.plan_day, 0),
+		       COALESCE(p.name, ''), COALESCE(p.duration, 0)
+		FROM journal_entries je
+		LEFT JOIN plans p ON p.id = je.plan_id
+		WHERE je.user_id = $1 AND je.id < $2
+		ORDER BY je.entry_date DESC, je.day_number DESC
 		LIMIT 16`, userID, beforeID)
 	if err != nil {
 		http.Error(w, "could not load journals", http.StatusInternalServerError)
@@ -103,7 +114,8 @@ func (a *App) JournalMore(w http.ResponseWriter, r *http.Request) {
 	var entries []journalPreviewJSON
 	for rows.Next() {
 		var p models.Preview
-		if err := rows.Scan(&p.ID, &p.DayNumber, &p.EntryDate, &p.EntryTime, &p.Location, &p.VerseRef, &p.VerseText, &p.Status); err != nil {
+		if err := rows.Scan(&p.ID, &p.DayNumber, &p.EntryDate, &p.EntryTime, &p.Location, &p.VerseRef, &p.VerseText, &p.Status,
+			&p.PlanID, &p.PlanDay, &p.PlanName, &p.PlanDuration); err != nil {
 			http.Error(w, "could not read journals", http.StatusInternalServerError)
 			return
 		}
@@ -122,6 +134,10 @@ func (a *App) JournalMore(w http.ResponseWriter, r *http.Request) {
 			Day:        p.EntryDate.Day(),
 			Weekday:    idDaysMap[p.EntryDate.Weekday()],
 			MonthShort: idMonthsMap[p.EntryDate.Month()] + " " + strconv.Itoa(p.EntryDate.Year()%100),
+			PlanID:       p.PlanID,
+			PlanDay:      p.PlanDay,
+			PlanName:     p.PlanName,
+			PlanDuration: p.PlanDuration,
 		})
 	}
 
@@ -136,10 +152,21 @@ func (a *App) JournalMore(w http.ResponseWriter, r *http.Request) {
 
 // ---- GET /journal/new (step 1: ask which verse to reflect on) ----
 
+type planContextForJournal struct {
+	PlanID    int64
+	PlanName  string
+	Day       int
+	Duration  int
+	VerseRef  string
+	VerseText string
+	IntroText string
+}
+
 type journalNewData struct {
 	UserID        int64
 	Error         string
 	LanguageStyle string
+	PlanCtx       *planContextForJournal
 }
 
 func (a *App) JournalNewPage(w http.ResponseWriter, r *http.Request) {
@@ -151,6 +178,33 @@ func (a *App) JournalNewPage(w http.ResponseWriter, r *http.Request) {
 		langStyle = "casual"
 	}
 	data := journalNewData{UserID: userID, LanguageStyle: langStyle}
+
+	// Plan context: /journal/new?plan_id=X&day=Y pre-fills verse and locks fields
+	planID, _ := strconv.ParseInt(r.URL.Query().Get("plan_id"), 10, 64)
+	day, _ := strconv.Atoi(r.URL.Query().Get("day"))
+	if planID > 0 && day > 0 {
+		// If an entry already exists for this plan+day, jump straight to it
+		var existingID int64
+		err := a.DB.QueryRowContext(r.Context(),
+			`SELECT id FROM journal_entries WHERE plan_id = $1 AND plan_day = $2 AND user_id = $3`,
+			planID, day, userID).Scan(&existingID)
+		if err == nil && existingID > 0 {
+			http.Redirect(w, r, "/journal/"+strconv.FormatInt(existingID, 10), http.StatusSeeOther)
+			return
+		}
+		var ctx planContextForJournal
+		err = a.DB.QueryRowContext(r.Context(), `
+			SELECT p.id, p.name, pd.day_number, p.duration, pd.verse_ref, pd.verse_text, pd.intro_text
+			FROM plan_days pd
+			JOIN plans p ON p.id = pd.plan_id
+			WHERE pd.plan_id = $1 AND pd.day_number = $2 AND p.user_id = $3`,
+			planID, day, userID,
+		).Scan(&ctx.PlanID, &ctx.PlanName, &ctx.Day, &ctx.Duration, &ctx.VerseRef, &ctx.VerseText, &ctx.IntroText)
+		if err == nil {
+			data.PlanCtx = &ctx
+		}
+	}
+
 	if r.URL.Query().Get("err") == "rate_limit" {
 		if langStyle == "formal" {
 			data.Error = "Anda sudah membuat 10 journal hari ini. Coba lagi besok. 🙏"
@@ -184,6 +238,29 @@ func (a *App) JournalCreate(w http.ResponseWriter, r *http.Request) {
 	location := r.FormValue("location")
 	dateStr := r.FormValue("entry_date")
 	timeStr := r.FormValue("entry_time")
+
+	// Optional plan link — if present, this entry is tied to a specific day of a plan
+	var planIDVal, planDayVal interface{}
+	if pid, err := strconv.ParseInt(r.FormValue("plan_id"), 10, 64); err == nil && pid > 0 {
+		if pd, err := strconv.Atoi(r.FormValue("plan_day")); err == nil && pd > 0 {
+			// Verify the plan belongs to the user before trusting these values
+			var owned int
+			_ = a.DB.QueryRowContext(r.Context(),
+				`SELECT 1 FROM plans WHERE id = $1 AND user_id = $2`, pid, userID).Scan(&owned)
+			if owned == 1 {
+				// Dedupe: if an entry already exists for this plan+day, redirect to it
+				var existingID int64
+				if a.DB.QueryRowContext(r.Context(),
+					`SELECT id FROM journal_entries WHERE plan_id = $1 AND plan_day = $2 AND user_id = $3`,
+					pid, pd, userID).Scan(&existingID) == nil && existingID > 0 {
+					http.Redirect(w, r, "/journal/"+strconv.FormatInt(existingID, 10), http.StatusSeeOther)
+					return
+				}
+				planIDVal = pid
+				planDayVal = pd
+			}
+		}
+	}
 
 	// Coordinates — optional, only present if user allowed geolocation
 	var lat, lon *float64
@@ -245,10 +322,10 @@ func (a *App) JournalCreate(w http.ResponseWriter, r *http.Request) {
 	var entryID int64
 	err = a.DB.QueryRowContext(r.Context(), `
 		INSERT INTO journal_entries
-			(user_id, day_number, entry_date, entry_time, location, verse_ref, verse_text, ai_background, latitude, longitude)
-		VALUES ($1, $2, $3::date, $4::time, $5, $6, $7, $8, $9, $10)
+			(user_id, day_number, entry_date, entry_time, location, verse_ref, verse_text, ai_background, latitude, longitude, plan_id, plan_day)
+		VALUES ($1, $2, $3::date, $4::time, $5, $6, $7, $8, $9, $10, $11, $12)
 		RETURNING id`,
-		userID, nextDay, dateStr, timeStr, location, verseRef, verseText, background, lat, lon,
+		userID, nextDay, dateStr, timeStr, location, verseRef, verseText, background, lat, lon, planIDVal, planDayVal,
 	).Scan(&entryID)
 	if err != nil {
 		http.Error(w, "could not create journal entry", http.StatusInternalServerError)
@@ -274,6 +351,8 @@ type journalViewData struct {
 	ShowShareCard    bool
 	PendingShareCard bool
 	UserName         string
+	PlanName         string // "" if entry is not part of a plan
+	PlanDuration     int
 }
 
 func (a *App) JournalView(w http.ResponseWriter, r *http.Request) {
@@ -318,10 +397,21 @@ func (a *App) JournalView(w http.ResponseWriter, r *http.Request) {
 	// Only show pending notice if: card feature is on, completed recently (within 10 min), and no summary yet
 	pendingShare := entry.Status == "completed" && entry.ShareSummary == "" &&
 		generateShareCard && time.Since(entry.UpdatedAt) < 10*time.Minute
+
+	var planName string
+	var planDuration int
+	if entry.PlanID > 0 {
+		_ = a.DB.QueryRowContext(r.Context(),
+			`SELECT name, duration FROM plans WHERE id = $1 AND user_id = $2`,
+			entry.PlanID, entry.UserID).Scan(&planName, &planDuration)
+	}
+
 	a.render(w, "journal_view.html", journalViewData{
 		Entry: entry, Messages: messages, CompletedCount: completedCount,
 		LanguageStyle: viewLangStyle, ShowShareCard: showShare, PendingShareCard: pendingShare,
-		UserName: userName,
+		UserName:  userName,
+		PlanName:  planName,
+		PlanDuration: planDuration,
 	})
 }
 
@@ -510,7 +600,105 @@ func (a *App) JournalComplete(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Plan completion: if this journal belongs to a plan AND all N days are now completed,
+	// flip plan.status to 'completed' synchronously (so UI badge updates immediately) and
+	// kick off FinalReflection generation in a goroutine (polled via /plan/{id}/final-status).
+	if entry.PlanID > 0 {
+		a.maybeCompletePlan(r.Context(), entry.PlanID, entry.UserID)
+	}
+
 	http.Redirect(w, r, "/journal/"+strconv.FormatInt(entry.ID, 10), http.StatusSeeOther)
+}
+
+// maybeCompletePlan checks whether all days of a plan are now completed. If yes, it:
+//   - synchronously flips plans.status = 'completed' and sets completed_at
+//   - kicks off an async goroutine to generate the final reflection and persist it
+//
+// If the plan is already marked completed or still has pending days, this is a no-op.
+func (a *App) maybeCompletePlan(ctx context.Context, planID, userID int64) {
+	var duration int
+	var status string
+	err := a.DB.QueryRowContext(ctx,
+		`SELECT duration, status FROM plans WHERE id = $1 AND user_id = $2`, planID, userID,
+	).Scan(&duration, &status)
+	if err != nil || status == "completed" {
+		return
+	}
+	var doneCount int
+	_ = a.DB.QueryRowContext(ctx, `
+		SELECT COUNT(DISTINCT plan_day) FROM journal_entries
+		WHERE plan_id = $1 AND user_id = $2 AND status = 'completed' AND plan_day IS NOT NULL`,
+		planID, userID,
+	).Scan(&doneCount)
+	if doneCount < duration {
+		return
+	}
+	// All days done — flip status now so the UI reflects completion on next load.
+	if _, err := a.DB.ExecContext(ctx,
+		`UPDATE plans SET status = 'completed', completed_at = now() WHERE id = $1 AND status = 'active'`,
+		planID); err != nil {
+		return
+	}
+
+	// Pull everything the AI needs, then generate in the background.
+	go a.generatePlanFinalReflection(planID, userID)
+}
+
+func generatePlanFinalReflectionFor(a *App, planID, userID int64) {
+	a.generatePlanFinalReflection(planID, userID)
+}
+
+func (a *App) generatePlanFinalReflection(planID, userID int64) {
+	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
+	defer cancel()
+
+	var planName, langStyle string
+	err := a.DB.QueryRowContext(ctx, `
+		SELECT p.name, COALESCE(u.language_style, 'casual')
+		FROM plans p JOIN users u ON u.id = p.user_id
+		WHERE p.id = $1 AND p.user_id = $2`, planID, userID,
+	).Scan(&planName, &langStyle)
+	if err != nil {
+		return
+	}
+
+	rows, err := a.DB.QueryContext(ctx, `
+		SELECT pd.day_number, pd.verse_ref, pd.verse_text,
+		       COALESCE(je.reflection, ''), COALESCE(je.practical_step, '')
+		FROM plan_days pd
+		LEFT JOIN journal_entries je
+		       ON je.plan_id = pd.plan_id
+		      AND je.plan_day = pd.day_number
+		      AND je.user_id = $2
+		WHERE pd.plan_id = $1
+		ORDER BY pd.day_number ASC`, planID, userID)
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+	var days []ai.FinalReflectionDay
+	for rows.Next() {
+		var d ai.FinalReflectionDay
+		if err := rows.Scan(&d.DayNumber, &d.VerseRef, &d.VerseText, &d.Reflection, &d.PracticalStep); err == nil {
+			days = append(days, d)
+		}
+	}
+
+	reflection, err := a.AI.FinalReflection(ctx, planName, days, langStyle)
+	if err != nil || reflection == "" {
+		return
+	}
+	_, _ = a.DB.ExecContext(ctx,
+		`UPDATE plans SET final_reflection = $1 WHERE id = $2`,
+		reflection, planID)
+
+	// Generate public-facing share summary (for gift card)
+	summary, err := a.AI.PlanShareSummary(ctx, planName, days)
+	if err == nil && summary != "" {
+		_, _ = a.DB.ExecContext(ctx,
+			`UPDATE plans SET share_summary = $1 WHERE id = $2`,
+			summary, planID)
+	}
 }
 
 // ---- GET /journal/{id}/share-status (polling endpoint, returns JSON) ----
@@ -602,12 +790,13 @@ func (a *App) loadOwnedEntry(w http.ResponseWriter, r *http.Request) (models.Jou
 	err = a.DB.QueryRowContext(r.Context(), `
 		SELECT id, user_id, day_number, entry_date, entry_time, location,
 		       verse_ref, verse_text, ai_background, reflection, practical_step,
-		       status, share_summary, created_at, updated_at
+		       status, share_summary, COALESCE(plan_id, 0), COALESCE(plan_day, 0),
+		       created_at, updated_at
 		FROM journal_entries WHERE id = $1 AND user_id = $2`,
 		id, userID,
 	).Scan(&e.ID, &e.UserID, &e.DayNumber, &entryDate, &entryTime, &e.Location,
 		&e.VerseRef, &e.VerseText, &e.AIBackground, &e.Reflection, &e.PracticalStep,
-		&e.Status, &e.ShareSummary, &e.CreatedAt, &e.UpdatedAt)
+		&e.Status, &e.ShareSummary, &e.PlanID, &e.PlanDay, &e.CreatedAt, &e.UpdatedAt)
 	if err != nil {
 		http.NotFound(w, r)
 		return models.JournalEntry{}, false

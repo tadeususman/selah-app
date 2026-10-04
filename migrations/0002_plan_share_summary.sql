@@ -1,0 +1,1 @@
+ALTER TABLE plans ADD COLUMN IF NOT EXISTS share_summary TEXT;

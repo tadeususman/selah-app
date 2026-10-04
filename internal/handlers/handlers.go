@@ -63,8 +63,31 @@ func LoadTemplates(dir string) *template.Template {
 		"idMonthShort": func(t time.Time) string {
 			return fmt.Sprintf("%s %02d", idMonths[t.Month()], t.Year()%100)
 		},
+		// "2 Oktober 2026" for nullable time
+		"idDatePtr": func(t *time.Time) string {
+			if t == nil {
+				return ""
+			}
+			return fmt.Sprintf("%d %s %d", t.Day(), idMonthsFull[t.Month()], t.Year())
+		},
 		// human-readable byte size: 1048576 → "1.0 MB"
 		"fmtBytes": func(b uint64) string { return fmtBytes(b) },
+		// integer addition — useful for 1-based indexing in templates
+		"add": func(a, b int) int { return a + b },
+		// percentage of a over b, integer 0-100 (0 if b==0)
+		"percent": func(a, b int) int {
+			if b == 0 {
+				return 0
+			}
+			p := a * 100 / b
+			if p < 0 {
+				return 0
+			}
+			if p > 100 {
+				return 100
+			}
+			return p
+		},
 		// format integer with dot thousand separator: 36389 → "36.389"
 		"fmtInt": func(n int) string {
 			s := fmt.Sprintf("%d", n)

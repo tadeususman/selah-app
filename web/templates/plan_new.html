@@ -1,0 +1,152 @@
+{{define "plan_new.html"}}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <title>Buat Plan · selah,</title>
+  {{template "head" .}}
+</head>
+<body>
+  <main class="page">
+    <header class="page-header">
+      <a href="/plan" class="back-link">← Kembali</a>
+      <h1>Apa yang ingin kamu renungkan?</h1>
+      <p class="page-sub">Ceritakan situasi, perasaan, atau tema yang sedang di pikiranmu — Teman Selah akan menyusun rencana 3-5 hari untukmu.</p>
+    </header>
+
+    {{if .Error}}<p class="form-error" style="margin-bottom:12px">{{.Error}}</p>{{end}}
+
+    <form method="POST" action="/plan" class="stacked-form" id="plan-form">
+      <input type="hidden" name="lat" id="lat-input">
+      <input type="hidden" name="lon" id="lon-input">
+
+      <div class="location-tag-wrap">
+        <button type="button" id="loc-btn" class="location-pin-btn" title="Deteksi lokasi otomatis">
+          <svg id="loc-icon" class="location-pin-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+          </svg>
+          <svg id="loc-spinner" class="location-spinner" style="display:none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="12" cy="12" r="9" stroke-opacity="0.25"/>
+            <path d="M12 3a9 9 0 019 9" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <input type="text" id="location-input" name="location" class="location-input" placeholder="Ketuk pin disamping atau ketik lokasi (opsional)" maxlength="200">
+      </div>
+
+      <label for="situation">Ceritamu</label>
+      <textarea name="situation" id="situation" rows="7"
+        placeholder="Contoh: Aku sedang cemas dengan pekerjaan baru dan ingin belajar percaya pada Tuhan di masa transisi ini."
+        maxlength="500" required autofocus>{{.Situation}}</textarea>
+      <div class="char-counter" id="situation-counter">0 / 500</div>
+
+      <div style="display:flex;gap:8px;align-items:center;margin-top:16px">
+        <button type="submit" class="btn-primary" id="submit-btn" style="flex:1;margin-top:0">Buatkan Plan</button>
+      </div>
+
+      <div id="plan-loading" style="display:none;align-items:center;justify-content:center;gap:10px;margin-top:16px;flex-direction:column">
+        <div style="display:flex;align-items:center;gap:10px">
+          <svg class="location-spinner" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2.5" style="width:18px;height:18px;flex-shrink:0">
+            <circle cx="12" cy="12" r="9" stroke-opacity="0.2"/>
+            <path d="M12 3a9 9 0 019 9" stroke-linecap="round"/>
+          </svg>
+          <span id="plan-loading-text" style="font-size:13px;color:var(--text-muted);font-weight:600">Teman Selah sedang menyusun rencana…</span>
+        </div>
+        <p style="margin:4px 0 0;font-size:12px;color:var(--text-muted);text-align:center">Ini bisa makan waktu 20-40 detik. Jangan tutup halaman ya.</p>
+      </div>
+    </form>
+
+    <div style="height:40px"></div>
+  </main>
+
+  {{template "nav" .}}
+
+  <script>
+    (function() {
+      const ta = document.getElementById('situation');
+      const counter = document.getElementById('situation-counter');
+      const form = document.getElementById('plan-form');
+      const btn = document.getElementById('submit-btn');
+      const loading = document.getElementById('plan-loading');
+      const loadingText = document.getElementById('plan-loading-text');
+
+      const update = () => {
+        const n = [...ta.value].length;
+        counter.textContent = n + ' / 500';
+      };
+      ta.addEventListener('input', update);
+      update();
+
+      const waitMessages = [
+        'Teman Selah sedang mencari ayat-ayat yang pas…',
+        'Menyusun alur renungan untukmu…',
+        'Memilih ayat dari berbagai bagian Alkitab…',
+        'Hampir selesai menyusun rencana…',
+      ];
+      let msgIdx = 0;
+      let msgTimer = null;
+
+      form.addEventListener('submit', (e) => {
+        if (!ta.value.trim()) { e.preventDefault(); return; }
+        btn.disabled = true;
+        btn.textContent = 'Menyusun…';
+        loading.style.display = 'flex';
+        msgTimer = setInterval(() => {
+          msgIdx = (msgIdx + 1) % waitMessages.length;
+          loadingText.textContent = waitMessages[msgIdx];
+        }, 6000);
+      });
+    })();
+
+    // Location pin — same pattern as journal_new
+    document.getElementById('loc-btn').addEventListener('click', function() {
+      if (!navigator.geolocation) {
+        document.getElementById('location-input').placeholder = 'Geolokasi tidak didukung';
+        return;
+      }
+      var icon = document.getElementById('loc-icon');
+      var spinner = document.getElementById('loc-spinner');
+      icon.style.display = 'none';
+      spinner.style.display = 'block';
+      this.disabled = true;
+
+      navigator.geolocation.getCurrentPosition(
+        function(pos) {
+          var lat = pos.coords.latitude, lon = pos.coords.longitude;
+          document.getElementById('lat-input').value = lat;
+          document.getElementById('lon-input').value = lon;
+          fetch('https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lon + '&format=json&accept-language=id')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+              var a = data.address || {};
+              var city = a.city || a.town || a.municipality || a.county || '';
+              var isRtRw = function(s) { return /^R[TW]\s*\d/i.test(s || ''); };
+              var area = (!isRtRw(a.village) && a.village)
+                      || (!isRtRw(a.neighbourhood) && a.neighbourhood)
+                      || (!isRtRw(a.city_district) && a.city_district)
+                      || (!isRtRw(a.quarter) && a.quarter)
+                      || (!isRtRw(a.suburb) && a.suburb)
+                      || '';
+              var name = city && area ? city + ' - ' + area : city || area;
+              document.getElementById('location-input').value = name;
+            })
+            .catch(function() {
+              document.getElementById('location-input').placeholder = 'Gagal mendapatkan nama lokasi';
+            })
+            .finally(function() {
+              icon.style.display = 'block';
+              spinner.style.display = 'none';
+              document.getElementById('loc-btn').disabled = false;
+            });
+        },
+        function() {
+          icon.style.display = 'block';
+          spinner.style.display = 'none';
+          document.getElementById('loc-btn').disabled = false;
+          document.getElementById('location-input').placeholder = 'Izin lokasi ditolak';
+        },
+        { timeout: 10000 }
+      );
+    });
+  </script>
+</body>
+</html>
+{{end}}

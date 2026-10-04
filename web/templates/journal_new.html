@@ -8,9 +8,22 @@
 <body>
   <main class="page">
     <header class="page-header">
-      <a href="/dashboard" class="back-link">← Kembali</a>
-      <h1>{{if eq .LanguageStyle "formal"}}Ayat apa yang ingin Anda renungkan hari ini?{{else}}Ayat apa yang ingin kamu renungkan hari ini?{{end}}</h1>
+      {{if .PlanCtx}}
+        <a href="/plan/{{.PlanCtx.PlanID}}" class="back-link">← Kembali ke Rencana</a>
+        <div class="plan-journal-badge">Plan: {{.PlanCtx.PlanName}} · Hari {{.PlanCtx.Day}}/{{.PlanCtx.Duration}}</div>
+        <h1>Hari {{.PlanCtx.Day}} · {{.PlanCtx.VerseRef}}</h1>
+      {{else}}
+        <a href="/dashboard" class="back-link">← Kembali</a>
+        <h1>{{if eq .LanguageStyle "formal"}}Ayat apa yang ingin Anda renungkan hari ini?{{else}}Ayat apa yang ingin kamu renungkan hari ini?{{end}}</h1>
+      {{end}}
     </header>
+
+    {{if .PlanCtx}}
+      <div class="plan-intro-box">
+        <div class="plan-intro-label">Pengantar hari ini</div>
+        <p class="plan-intro-text">{{.PlanCtx.IntroText}}</p>
+      </div>
+    {{end}}
 
     <div class="modal-backdrop" id="new-hint" style="display:none" onclick="if(event.target===this)closeHint()">
       <div class="modal-card" style="text-align:left;max-width:340px">
@@ -78,11 +91,13 @@
 
     {{if .Error}}<p class="form-error" style="margin-bottom:12px">{{.Error}}</p>{{end}}
 
-    <form method="POST" action="/journal" class="stacked-form">
+    <form method="POST" action="/journal" class="stacked-form{{if .PlanCtx}} plan-locked{{end}}">
       <input type="hidden" name="entry_date" id="entry-date">
       <input type="hidden" name="entry_time" id="entry-time">
       <input type="hidden" name="lat" id="lat-input">
       <input type="hidden" name="lon" id="lon-input">
+      {{if .PlanCtx}}<input type="hidden" name="plan_id" value="{{.PlanCtx.PlanID}}">{{end}}
+      {{if .PlanCtx}}<input type="hidden" name="plan_day" value="{{.PlanCtx.Day}}">{{end}}
       <div class="location-tag-wrap">
         <button type="button" id="loc-btn" class="location-pin-btn" title="Deteksi lokasi otomatis">
           <svg id="loc-icon" class="location-pin-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
@@ -98,33 +113,39 @@
 
       <label>Referensi ayat</label>
       <div class="verse-ref-wrap">
-        <input type="text" name="verse_ref" id="verse-ref" placeholder="Ketik Mazmur 23:1-2 — atau klik Pilihkan Ayat" maxlength="100" required autofocus>
-        <button type="button" id="fetch-verse-btn" class="btn-fetch-verse">Ambil ayat</button>
+        <input type="text" name="verse_ref" id="verse-ref" placeholder="Ketik Mazmur 23:1-2 — atau klik Pilihkan Ayat" maxlength="100" required{{if not .PlanCtx}} autofocus{{end}}{{if .PlanCtx}} value="{{.PlanCtx.VerseRef}}" readonly{{end}}>
+        {{if not .PlanCtx}}<button type="button" id="fetch-verse-btn" class="btn-fetch-verse">Ambil ayat</button>{{end}}
       </div>
       <div id="fetch-status" style="display:none"></div>
 
       <label>Teks ayat</label>
-      <textarea name="verse_text" id="verse-text" rows="6" placeholder="Ketik atau tempel ayat di sini. Tidak tahu referensinya? Tulis frasa yang kamu ingat, atau ceritakan apa yang sedang kamu rasakan — Teman Selah akan carikan ayatnya." required></textarea>
+      <textarea name="verse_text" id="verse-text" rows="6" placeholder="Ketik atau tempel ayat di sini. Tidak tahu referensinya? Tulis frasa yang kamu ingat, atau ceritakan apa yang sedang kamu rasakan — Teman Selah akan carikan ayatnya." required{{if .PlanCtx}} readonly{{end}}>{{if .PlanCtx}}{{.PlanCtx.VerseText}}{{end}}</textarea>
       <div class="char-counter" id="verse-text-counter">0 / 500</div>
       <div class="fetch-status-info" id="verse-too-long" style="display:none">Teks ayat terlalu panjang. Untuk renungan, cukup 1–2 ayat saja. Kalau ingin menggali konteks yang lebih luas, bisa diskusi dengan Teman Selah nanti.</div>
 
-      <div id="verse-search-results" class="verse-search-results" style="display:none"></div>
+      {{if not .PlanCtx}}
+        <div id="verse-search-results" class="verse-search-results" style="display:none"></div>
 
-      <div id="search-row" style="display:none;flex-direction:row;gap:8px;align-items:center">
-        <button type="button" class="btn-ghost" onclick="resetInput()" style="margin-top:0;flex-shrink:0">Ulangi</button>
-        <button type="button" class="btn-primary" id="search-verse-btn" style="flex:1;margin-top:0">Cari ayat</button>
-      </div>
-      <div id="search-loading" style="display:none;align-items:center;justify-content:center;gap:10px;margin-top:16px">
-        <svg class="location-spinner" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2.5" style="width:18px;height:18px;flex-shrink:0">
-          <circle cx="12" cy="12" r="9" stroke-opacity="0.2"/>
-          <path d="M12 3a9 9 0 019 9" stroke-linecap="round"/>
-        </svg>
-        <span style="font-size:13px;color:var(--text-muted);font-weight:600">Teman Selah sedang mencari ayatnya…</span>
-      </div>
-      <div id="submit-row" style="display:none;flex-direction:row;gap:8px;align-items:center;">
-        <button type="button" class="btn-ghost" id="reset-btn" onclick="resetForm()">Ganti Ayat</button>
-        <button type="submit" class="btn-primary" id="submit-btn" style="flex:1;margin-top:0">Renungkan Ayat Ini</button>
-      </div>
+        <div id="search-row" style="display:none;flex-direction:row;gap:8px;align-items:center">
+          <button type="button" class="btn-ghost" onclick="resetInput()" style="margin-top:0;flex-shrink:0">Ulangi</button>
+          <button type="button" class="btn-primary" id="search-verse-btn" style="flex:1;margin-top:0">Cari ayat</button>
+        </div>
+        <div id="search-loading" style="display:none;align-items:center;justify-content:center;gap:10px;margin-top:16px">
+          <svg class="location-spinner" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2.5" style="width:18px;height:18px;flex-shrink:0">
+            <circle cx="12" cy="12" r="9" stroke-opacity="0.2"/>
+            <path d="M12 3a9 9 0 019 9" stroke-linecap="round"/>
+          </svg>
+          <span style="font-size:13px;color:var(--text-muted);font-weight:600">Teman Selah sedang mencari ayatnya…</span>
+        </div>
+        <div id="submit-row" style="display:none;flex-direction:row;gap:8px;align-items:center;">
+          <button type="button" class="btn-ghost" id="reset-btn" onclick="resetForm()">Ganti Ayat</button>
+          <button type="submit" class="btn-primary" id="submit-btn" style="flex:1;margin-top:0">Renungkan Ayat Ini</button>
+        </div>
+      {{else}}
+        <div id="submit-row" style="display:flex;flex-direction:row;gap:8px;align-items:center;margin-top:16px">
+          <button type="submit" class="btn-primary" id="submit-btn" style="flex:1;margin-top:0">Renungkan Ayat Ini</button>
+        </div>
+      {{end}}
     </form>
 
     <section class="thread" id="new-loading-thread" style="display:none;margin-top:24px">
@@ -138,7 +159,7 @@
 
   {{template "nav" .}}
 
-  <button type="button" class="help-btn-top" onclick="openHint()" title="Cara penggunaan">?</button>
+  {{if not .PlanCtx}}<button type="button" class="help-btn-top" onclick="openHint()" title="Cara penggunaan">?</button>{{end}}
 
   <script>
     var waitingMessages = [
@@ -151,6 +172,7 @@
       'Lagi diproses, sebentar ya...',
     ];
 
+    {{if not .PlanCtx}}
     function openHint() {
       document.getElementById('new-hint').style.display = 'flex';
     }
@@ -161,7 +183,9 @@
     if (!localStorage.getItem('selah-hint-new-{{.UserID}}')) {
       document.getElementById('new-hint').style.display = 'flex';
     }
+    {{end}}
 
+    {{if not .PlanCtx}}
     var VERSE_MAX = 500;
     var VERSE_TEXT_PLACEHOLDER = "{{if eq .LanguageStyle "formal"}}Ketik atau tempel ayat di sini. Tidak tahu referensinya? Tulis frasa yang Anda ingat, atau ceritakan apa yang sedang Anda rasakan — Teman Selah akan carikan ayatnya.{{else}}Ketik atau tempel ayat di sini. Tidak tahu referensinya? Tulis frasa yang kamu ingat, atau ceritakan apa yang sedang kamu rasakan — Teman Selah akan carikan ayatnya.{{end}}";
     var SPARKLE_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="vertical-align:-2px;margin-right:5px;flex-shrink:0;color:var(--gold)"><path d="M9 4.5a.75.75 0 0 1 .721.544l.813 2.846a3.75 3.75 0 0 0 2.576 2.576l2.846.813a.75.75 0 0 1 0 1.442l-2.846.813a3.75 3.75 0 0 0-2.576 2.576l-.813 2.846a.75.75 0 0 1-1.442 0l-.813-2.846a3.75 3.75 0 0 0-2.576-2.576l-2.846-.813a.75.75 0 0 1 0-1.442l2.846-.813A3.75 3.75 0 0 0 7.466 7.89l.813-2.846A.75.75 0 0 1 9 4.5ZM18 1.5a.75.75 0 0 1 .728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 0 1 0 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 0 1-1.456 0l-.258-1.036a2.625 2.625 0 0 0-1.91-1.91l-1.036-.258a.75.75 0 0 1 0-1.456l1.036-.258a2.625 2.625 0 0 0 1.91-1.91l.258-1.036A.75.75 0 0 1 18 1.5ZM16.5 15a.75.75 0 0 1 .712.513l.394 1.183c.15.447.5.799.948.948l1.183.394a.75.75 0 0 1 0 1.422l-1.183.395c-.447.15-.799.5-.948.948l-.395 1.183a.75.75 0 0 1-1.422 0l-.395-1.183a1.5 1.5 0 0 0-.948-.948l-1.183-.395a.75.75 0 0 1 0-1.422l1.183-.395c.447-.15.799-.5.948-.948l.395-1.183A.75.75 0 0 1 16.5 15Z"/></svg>';
@@ -495,6 +519,37 @@
     }
 
     searchBtn.addEventListener('click', runVerseSearch);
+    {{end}}
+
+    {{if .PlanCtx}}
+    // Plan-mode submit: fields are pre-filled; just stamp date/time + show loading.
+    (function() {
+      var submitBtn = document.getElementById('submit-btn');
+      document.querySelector('form').addEventListener('submit', function() {
+        var now = new Date();
+        var pad = function(n) { return String(n).padStart(2, '0'); };
+        document.getElementById('entry-date').value =
+          now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate());
+        document.getElementById('entry-time').value =
+          pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+        submitBtn.disabled = true;
+        var thread = document.getElementById('new-loading-thread');
+        thread.style.display = 'flex';
+        thread.querySelector('.bubble').scrollIntoView({ behavior: 'smooth', block: 'end' });
+        var msgEl = document.getElementById('waiting-msg');
+        var idx = 0;
+        msgEl.textContent = waitingMessages[idx];
+        setInterval(function() {
+          idx = (idx + 1) % waitingMessages.length;
+          msgEl.style.opacity = '0';
+          setTimeout(function() {
+            msgEl.textContent = waitingMessages[idx];
+            msgEl.style.opacity = '1';
+          }, 300);
+        }, 10000);
+      });
+    })();
+    {{end}}
 
     document.getElementById('loc-btn').addEventListener('click', function() {
       if (!navigator.geolocation) {

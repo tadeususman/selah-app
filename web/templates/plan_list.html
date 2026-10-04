@@ -1,0 +1,171 @@
+{{define "plan_list.html"}}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <title>Plan · selah,</title>
+  {{template "head" .}}
+</head>
+<body>
+  <main class="page">
+    <header class="page-header">
+      <h1>Plan</h1>
+      <p class="page-sub">Mau fokus merenungkan sesuatu? Teman Selah bantu susun rencananya.</p>
+    </header>
+
+    {{if and (not .Active) (not .Completed)}}
+      <div class="plan-empty" style="text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:60vh;padding:20px">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 170" width="200" height="131" style="margin-bottom:20px" aria-hidden="true">
+          <g fill="none" stroke="var(--navy)" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" opacity="0.75">
+            <path d="M20 50 Q 70 40 120 48 Q 155 54 175 68 C 190 78 185 95 170 95 C 158 95 155 82 168 80 C 180 80 185 92 175 100"/>
+            <path d="M55 78 Q 90 74 125 80"/>
+            <path d="M40 95 Q 75 92 105 97"/>
+            <path d="M70 115 Q 115 110 160 118 Q 195 125 215 138 C 230 148 225 162 210 162 C 198 162 195 150 208 148 C 220 148 225 160 215 165"/>
+          </g>
+          <g>
+            <g transform="translate(135 28) rotate(-20)">
+              <ellipse cx="0" cy="0" rx="4" ry="7" fill="#7fa968"/>
+              <line x1="-0.5" y1="-5" x2="0.8" y2="5" stroke="#4a6b3a" stroke-width="0.7" stroke-linecap="round"/>
+            </g>
+            <g transform="translate(45 68) rotate(30)">
+              <ellipse cx="0" cy="0" rx="4" ry="7" fill="#7fa968"/>
+              <line x1="-0.5" y1="-5" x2="0.8" y2="5" stroke="#4a6b3a" stroke-width="0.7" stroke-linecap="round"/>
+            </g>
+            <g transform="translate(230 50) rotate(-35)">
+              <ellipse cx="0" cy="0" rx="4" ry="7" fill="#7fa968"/>
+              <line x1="-0.5" y1="-5" x2="0.8" y2="5" stroke="#4a6b3a" stroke-width="0.7" stroke-linecap="round"/>
+            </g>
+            <g transform="translate(115 135) rotate(50)">
+              <ellipse cx="0" cy="0" rx="4" ry="7" fill="#7fa968"/>
+              <line x1="-0.5" y1="-5" x2="0.8" y2="5" stroke="#4a6b3a" stroke-width="0.7" stroke-linecap="round"/>
+            </g>
+            <g transform="translate(195 100) rotate(-15)">
+              <ellipse cx="0" cy="0" rx="3.5" ry="6" fill="#7fa968"/>
+              <line x1="-0.5" y1="-4" x2="0.8" y2="4" stroke="#4a6b3a" stroke-width="0.7" stroke-linecap="round"/>
+            </g>
+          </g>
+        </svg>
+        <p style="margin:0 0 10px;font-size:15px;font-weight:600;color:var(--text)">Belum ada plan renungan</p>
+        <p style="margin:0 auto;max-width:300px;font-size:13px;color:var(--text-muted);line-height:1.6">Ceritakan apa yang ingin kamu renungkan — Teman Selah akan menyusun rencana 3-5 hari untukmu.</p>
+      </div>
+    {{else}}
+      <div class="plan-toolbar">
+        <div class="search-wrap plan-search-wrap">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="search-icon"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          <input type="search" id="plan-search" class="search-input" placeholder="Cari plan...">
+        </div>
+        <div class="plan-filter-icons" role="tablist">
+          <button type="button" class="plan-filter-icon-btn active" data-filter="active" role="tab" aria-selected="true" title="Aktif" aria-label="Aktif">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M15.49 9.63c-.18-2.79-1.31-5.51-3.43-7.63-2.14 2.14-3.32 4.86-3.55 7.63 1.28.68 2.46 1.56 3.49 2.63 1.03-1.06 2.21-1.94 3.49-2.63zM12 15.45C9.85 12.17 6.18 10 2 10c0 5.32 3.36 9.82 8.03 11.49.63.23 1.29.4 1.97.51.68-.12 1.33-.29 1.97-.51C18.64 19.82 22 15.32 22 10c-4.18 0-7.85 2.17-10 5.45z"/></svg>
+          </button>
+          <button type="button" class="plan-filter-icon-btn" data-filter="done" role="tab" aria-selected="false" title="Selesai" aria-label="Selesai">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M20.54 5.23l-1.39-1.68C18.88 3.21 18.47 3 18 3H6c-.47 0-.88.21-1.17.55L3.46 5.23C3.17 5.57 3 6.02 3 6.5V19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6.5c0-.48-.17-.93-.46-1.27zM12 17.5L6.5 12H10v-2h4v2h3.5L12 17.5zM5.12 5l.81-1h12l.94 1H5.12z"/></svg>
+          </button>
+        </div>
+      </div>
+
+      {{if not .Active}}
+        <div id="plan-empty-active" class="plan-empty-active">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="40" height="40" style="color:var(--text-muted)"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><path d="M12 8v4l3 3"/></svg>
+          <p class="plan-empty-active-title">Tidak ada plan yang aktif</p>
+          <p class="plan-empty-active-sub">Mau mulai renungan baru? Teman Selah siap menyusun rencana 3–5 hari untukmu.</p>
+        </div>
+      {{end}}
+
+      <div class="plan-list" id="plan-list">
+        {{range .Active}}
+          <a href="/plan/{{.ID}}" class="plan-card plan-card-active"
+             data-status="active"
+             data-search="{{.Name}} {{.CoverText}}">
+            <div class="plan-card-body">
+              <div class="plan-card-header">
+                <h3 class="plan-card-title">{{.Name}}</h3>
+                <span class="plan-card-status plan-card-status-active">Aktif</span>
+              </div>
+              {{if .CoverText}}<p class="plan-card-cover">{{.CoverText}}</p>{{end}}
+              <div class="plan-card-foot-row">
+                <div class="plan-card-progress">
+                  <div class="plan-card-progress-bar">
+                    <div class="plan-card-progress-fill" style="width:{{percent .DoneCount .Duration}}%"></div>
+                  </div>
+                  <div class="plan-card-progress-text">Hari {{.DoneCount}}/{{.Duration}}</div>
+                </div>
+                <div class="plan-card-foot">Dibuat {{.CreatedAt.Day}} {{idMonthShort .CreatedAt}}</div>
+              </div>
+            </div>
+          </a>
+        {{end}}
+        {{range .Completed}}
+          <a href="/plan/{{.ID}}" class="plan-card plan-card-done"
+             data-status="done"
+             data-search="{{.Name}} {{.CoverText}}">
+            <div class="plan-card-body">
+              <div class="plan-card-header">
+                <h3 class="plan-card-title">{{.Name}}</h3>
+                <span class="plan-card-status plan-card-status-done">Selesai ✓</span>
+              </div>
+              {{if .CoverText}}<p class="plan-card-cover">{{.CoverText}}</p>{{end}}
+              <div class="plan-card-foot-row">
+                <div class="plan-card-foot">{{.Duration}} hari</div>
+                {{if not .CompletedAt.IsZero}}<div class="plan-card-foot">Selesai {{.CompletedAt.Day}} {{idMonthShort .CompletedAt}}</div>{{end}}
+              </div>
+            </div>
+          </a>
+        {{end}}
+      </div>
+
+      <p class="empty-state" id="plan-no-results" style="display:none">Tidak ada plan yang cocok.</p>
+    {{end}}
+
+    <div style="height:80px"></div>
+
+    <a href="/plan/new" class="fab" aria-label="Buat plan baru">
+      <span class="fab-plus">+</span>
+      <span class="fab-label">Buat Plan</span>
+    </a>
+  </main>
+
+  {{template "nav" .}}
+
+  <script>
+    (function() {
+      var searchInput = document.getElementById('plan-search');
+      if (!searchInput) return;
+      var tabs = document.querySelectorAll('.plan-filter-icon-btn');
+      var cards = document.querySelectorAll('#plan-list .plan-card');
+      var noResults = document.getElementById('plan-no-results');
+      var currentFilter = 'active';
+
+      function apply() {
+        var q = searchInput.value.toLowerCase().trim();
+        var anyVisible = false;
+        cards.forEach(function(card) {
+          var matchStatus = card.dataset.status === currentFilter;
+          var matchText = !q || card.dataset.search.toLowerCase().includes(q);
+          var show = matchStatus && matchText;
+          card.style.display = show ? '' : 'none';
+          if (show) anyVisible = true;
+        });
+        var emptyShowing = emptyActive && !emptyActive.hidden;
+        noResults.style.display = (anyVisible || emptyShowing) ? 'none' : '';
+      }
+
+      var emptyActive = document.getElementById('plan-empty-active');
+      tabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+          currentFilter = tab.dataset.filter;
+          tabs.forEach(function(t) {
+            var active = t === tab;
+            t.classList.toggle('active', active);
+            t.setAttribute('aria-selected', active ? 'true' : 'false');
+          });
+          if (emptyActive) emptyActive.hidden = (currentFilter !== 'active');
+          apply();
+        });
+      });
+      searchInput.addEventListener('input', apply);
+      apply();
+    })();
+  </script>
+</body>
+</html>
+{{end}}

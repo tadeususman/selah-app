@@ -1,0 +1,678 @@
+{{define "plan_detail.html"}}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <title>{{.Plan.Name}} · selah,</title>
+  {{template "head" .}}
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@1,400&family=Playfair+Display:wght@700&display=swap">
+</head>
+<body>
+  <main class="page">
+    <header class="page-header">
+      <a href="/plan" class="back-link">← Kembali ke Plan</a>
+
+      <!-- Delete confirmation modal -->
+      <div id="plan-delete-modal" class="modal-backdrop" style="display:none" onclick="if(event.target===this)closePlanDeleteModal()">
+        <div class="modal-card">
+          <h3 class="modal-title">Hapus plan ini?</h3>
+          <p style="font-size:13px;color:var(--text-muted);line-height:1.55;margin:0 0 16px">Rencana akan dihapus permanen. Journal yang sudah kamu buat selama rencana ini <strong>tetap tersimpan</strong> dan bisa dilihat di halaman Journal.</p>
+          <div class="modal-actions">
+            <button class="modal-btn-cancel" onclick="closePlanDeleteModal()">Batal</button>
+            <form method="POST" action="/plan/{{.Plan.ID}}/delete" style="display:contents">
+              <button type="submit" class="modal-btn-delete">Hapus Plan</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="plan-title-row">
+        <h1 id="plan-title" class="plan-title-editable" title="Klik untuk ubah nama">{{.Plan.Name}}</h1>
+        <button type="button" id="plan-title-edit-btn" class="plan-title-edit-btn" aria-label="Ubah nama plan" title="Ubah nama">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+        </button>
+      </div>
+      <input type="text" id="plan-title-input" class="plan-title-input" value="{{.Plan.Name}}" maxlength="60" style="display:none" />
+      <div id="plan-title-err" class="plan-title-err" style="display:none"></div>
+
+      <div class="entry-meta-row">
+        <p class="page-sub plan-meta">
+          {{if .Plan.Location}}<span class="plan-meta-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="12" height="12" style="vertical-align:-2px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+            {{.Plan.Location}}
+          </span> · {{end}}Dibuat {{idDate .Plan.CreatedAt}} · {{.Plan.CreatedAt.Format "15:04"}}
+          · <span id="plan-status-badge">{{if eq .Plan.Status "completed"}}<span class="badge-done">Selesai ✓</span>{{else}}<span class="badge-active">Aktif</span>{{end}}</span>
+        </p>
+        <button type="button" class="btn-icon-trash" onclick="openPlanDeleteModal()" title="Hapus plan">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+            <path d="M9 3v1H4v2h1v13a2 2 0 002 2h10a2 2 0 002-2V6h1V4h-5V3H9zm0 5h2v9H9V8zm4 0h2v9h-2V8z"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="plan-progress">
+      <div class="plan-progress-text">Hari {{.DoneCount}} dari {{.Plan.Duration}} selesai</div>
+      <div class="plan-progress-row">
+        <div class="plan-progress-bar">
+          <div class="plan-progress-fill" style="width:{{if .Plan.Duration}}{{percent .DoneCount .Plan.Duration}}{{else}}0{{end}}%"></div>
+        </div>
+        <div class="plan-dots" id="planDots" aria-hidden="true">
+          <span class="plan-dot" data-idx="0"></span>
+          {{range $i, $_ := .Days}}<span class="plan-dot" data-idx="{{add $i 1}}"></span>{{end}}
+          {{if .AllDone}}<span class="plan-dot" data-idx="{{add (len .Days) 1}}"></span>{{end}}
+          {{if .Plan.ShareSummary}}<span class="plan-dot" data-idx="{{add (len .Days) 2}}"></span>{{end}}
+        </div>
+      </div>
+    </div>
+
+    <div class="plan-slider-wrap">
+      <button class="plan-nav-btn plan-nav-prev" id="planPrev" aria-label="Sebelumnya">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <button class="plan-nav-btn plan-nav-next" id="planNext" aria-label="Berikutnya">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+      <div class="plan-slider" id="planSlider">
+        <!-- Slide 0: cover / pengantar plan -->
+        <article class="plan-slide plan-slide-cover" data-slide="cover">
+          <div class="plan-day-label">Pengantar</div>
+          <h2 class="cover-slide-title">{{.Plan.Name}}</h2>
+          {{if .Plan.CoverText}}<p class="cover-slide-text">{{.Plan.CoverText}}</p>{{end}}
+          <div class="cover-slide-meta">Plan {{.Plan.Duration}} hari · swipe untuk melihat hari pertama →</div>
+        </article>
+
+        {{range .Days}}
+          <article class="plan-slide{{if eq .Status "completed"}} plan-slide-done{{end}}" data-day="{{.DayNumber}}">
+            <div class="plan-day-header">
+              <div class="plan-day-badge">
+                <span class="plan-day-badge-label">Hari</span>
+                <span class="plan-day-badge-num">{{.DayNumber}}</span>
+              </div>
+              {{if eq .Status "completed"}}
+                <div class="plan-day-mark plan-day-mark-done" title="Sudah direnungkan">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                </div>
+              {{else}}
+                <div class="plan-day-mark plan-day-mark-pending" title="Belum direnungkan">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="9"/></svg>
+                </div>
+              {{end}}
+            </div>
+
+            {{if eq .Status "completed"}}
+              <div class="plan-day-ref-prominent">{{.VerseRef}}</div>
+              {{if .ShareSummary}}
+                <div class="plan-done-block">
+                  <div class="plan-done-label">Rangkuman</div>
+                  <blockquote class="plan-done-summary">{{.ShareSummary}}</blockquote>
+                </div>
+              {{end}}
+              {{if .Reflection}}
+                <div class="plan-done-block">
+                  <div class="plan-done-label">Refleksimu</div>
+                  <p class="plan-done-reflection">{{.Reflection}}</p>
+                </div>
+              {{end}}
+              {{if .EntryID}}
+                <a href="/journal/{{.EntryID}}" class="plan-link-journal">Lihat journal lengkap →</a>
+              {{end}}
+            {{else}}
+              <p class="plan-intro-lead" data-intro-day="{{.DayNumber}}">{{.IntroText}}</p>
+              <div class="plan-ref-teaser">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16" class="plan-ref-teaser-icon"><path d="M18 2H6c-1.1 0-2 .9-2 2v18l8-3 8 3V4c0-1.1-.9-2-2-2z"/></svg>
+                <span class="plan-ref-teaser-ref">{{.VerseRef}}</span>
+              </div>
+              <a href="/journal/new?plan_id={{$.Plan.ID}}&day={{.DayNumber}}" class="btn-primary plan-btn-reflect">Renungkan Hari Ini</a>
+            {{end}}
+          </article>
+        {{end}}
+
+        {{if .AllDone}}
+          <article class="plan-slide plan-slide-celebration" data-slide="celebration">
+            <div class="celebration-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="56" height="56" fill="none" stroke="var(--gold)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="24" cy="13" r="6" fill="rgba(197,149,69,0.12)"/>
+                <line x1="24" y1="19" x2="24" y2="40"/>
+                <path d="M12 30c0 6 5 10 12 10s12-4 12-10"/>
+                <line x1="16" y1="40" x2="32" y2="40"/>
+              </svg>
+            </div>
+            <h2 class="celebration-title">Semua hari sudah kamu renungkan</h2>
+            <p class="celebration-sub">Rencana "<span class="celebration-plan-name">{{.Plan.Name}}</span>" selesai dalam {{.Plan.Duration}} hari.</p>
+
+            {{if .Plan.FinalReflection}}
+              <div class="plan-final-preview-wrap">
+                <div id="plan-final-preview" class="plan-final-preview">{{.Plan.FinalReflection}}</div>
+                <div class="plan-final-preview-fade"></div>
+              </div>
+            {{else}}
+              <div id="plan-final-pending" class="plan-final-pending-row" data-plan-id="{{.Plan.ID}}">
+                <span class="typing-dots" style="color:var(--gold)"><span></span><span></span><span></span></span>
+                <span class="plan-final-pending-text">Teman Selah sedang menyusun refleksi…</span>
+              </div>
+              <div id="plan-final-preview-wrap" class="plan-final-preview-wrap" style="display:none">
+                <div id="plan-final-preview" class="plan-final-preview"></div>
+                <div class="plan-final-preview-fade"></div>
+              </div>
+            {{end}}
+
+            <div class="plan-celeb-action-row">
+              <button id="plan-final-btn" class="plan-final-text-btn"
+                style="{{if not .Plan.FinalReflection}}visibility:hidden{{end}}"
+                onclick="document.getElementById('planFinalModal').style.display='flex'">
+                Baca Selengkapnya →
+              </button>
+              {{if .Plan.ShareSummary}}
+              <button class="plan-share-icon-btn" onclick="scrollToShareSlide()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                Bagikan
+              </button>
+              {{end}}
+            </div>
+
+            <div class="celebration-actions">
+              <a href="/plan/new" class="btn-primary">Buat Plan Baru</a>
+            </div>
+          </article>
+
+          {{if .Plan.ShareSummary}}
+          <article class="plan-slide plan-slide-share" data-slide="share">
+            <div class="plan-share-slide-label">Bagikan pencapaian ini</div>
+            <div id="plan-share-section"
+              data-plan-id="{{.Plan.ID}}"
+              data-plan-name="{{.Plan.Name}}"
+              data-duration="{{.Plan.Duration}}"
+              data-completed="{{if .Plan.CompletedAt}}{{idDatePtr .Plan.CompletedAt}}{{end}}"
+              data-final-reflection="{{.Plan.ShareSummary}}"
+              data-username="{{.UserName}}">
+              <canvas id="plan-share-canvas" style="width:100%;height:auto;border-radius:12px;display:block"></canvas>
+            </div>
+            <div class="plan-share-actions">
+              <button id="downloadPlanBtn" class="btn-ghost plan-share-btn" onclick="downloadCard()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Simpan
+              </button>
+              <button id="sharePlanBtn" class="btn-primary plan-share-btn" onclick="shareCard()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                Bagikan
+              </button>
+            </div>
+          </article>
+          {{end}}
+        {{end}}
+      </div>
+
+    </div>
+
+    <div style="height:60px"></div>
+  </main>
+
+  <!-- Final reflection modal -->
+  <div id="planFinalModal" class="plan-final-modal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+    <div class="plan-final-modal-box">
+      <div class="plan-final-modal-handle"></div>
+      <div class="plan-final-modal-header">
+        <span class="plan-final-label">Refleksi dari Teman Selah</span>
+        <button class="plan-final-modal-close" onclick="document.getElementById('planFinalModal').style.display='none'" aria-label="Tutup">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div id="plan-final-body" class="plan-final-body">{{if .Plan.FinalReflection}}{{.Plan.FinalReflection}}{{end}}</div>
+    </div>
+  </div>
+
+
+  {{template "nav" .}}
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    function openPlanDeleteModal() {
+      document.getElementById('plan-delete-modal').style.display = 'flex';
+    }
+    function closePlanDeleteModal() {
+      document.getElementById('plan-delete-modal').style.display = 'none';
+    }
+
+    // Share card (Canvas 2D — mirrors Momen Selah) --------------------------
+    var planShareSection = document.getElementById('plan-share-section');
+    var planShareCanvas  = document.getElementById('plan-share-canvas');
+    var planCardDrawn    = false;
+    var planCardIsDark   = document.documentElement.dataset.theme !== 'dark';
+
+    function wrapPlanText(ctx, text, maxWidth) {
+      var words = text.split(' '), lines = [], cur = '';
+      words.forEach(function(w) {
+        var test = cur ? cur + ' ' + w : w;
+        if (ctx.measureText(test).width > maxWidth && cur) { lines.push(cur); cur = w; }
+        else { cur = test; }
+      });
+      if (cur) lines.push(cur);
+      return lines;
+    }
+    function seededRandPlan(seed) {
+      var s = (Math.abs(parseInt(seed) || 1) * 9301 + 49297) % 233280;
+      return function() { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+    }
+    function addPlanTexture(ctx, W, H, isDark, seed) {
+      var rand = seededRandPlan(seed);
+      var cx = W * (0.5 + (rand() - 0.5) * 0.10), cy = H * (0.44 + (rand() - 0.5) * 0.08);
+      var vg = ctx.createRadialGradient(cx, cy, H * 0.14, cx, cy, H * 0.86);
+      vg.addColorStop(0, 'rgba(0,0,0,0)');
+      vg.addColorStop(1, isDark ? 'rgba(0,0,0,0.22)' : 'rgba(0,0,0,0.08)');
+      ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+      var scale = 5 + Math.floor(rand() * 2), opacity = 0.05 + rand() * 0.04;
+      var gW = Math.ceil(W / scale), gH = Math.ceil(H / scale);
+      var gc = document.createElement('canvas'); gc.width = gW; gc.height = gH;
+      var gx = gc.getContext('2d'), gd = gx.createImageData(gW, gH);
+      for (var i = 0; i < gd.data.length; i += 4) {
+        var v = Math.floor(Math.random() * 255);
+        gd.data[i] = gd.data[i+1] = gd.data[i+2] = v;
+        gd.data[i+3] = Math.floor(Math.random() * 180 + 30);
+      }
+      gx.putImageData(gd, 0, 0);
+      ctx.save(); ctx.imageSmoothingEnabled = false;
+      ctx.globalCompositeOperation = 'soft-light'; ctx.globalAlpha = opacity;
+      ctx.drawImage(gc, 0, 0, W, H); ctx.restore();
+    }
+
+    function drawPlanCard() {
+      if (!planShareCanvas || !planShareSection) return;
+      var d = planShareSection.dataset;
+      var ctx = planShareCanvas.getContext('2d');
+      var W = 1080, H = 1440, pad = 80;
+      planShareCanvas.width = W; planShareCanvas.height = H;
+      var gold = '#F0A93B';
+      var themeColors = { default:[44,68,104], sakura:[176,85,128], rose:[160,48,64], lavender:[110,92,168], sage:[61,122,88], mono:[64,64,64] };
+      var themeKey = localStorage.getItem('selah-color') || 'default';
+      var tc = themeColors[themeKey] || themeColors.default;
+      function tRgba(a) { return 'rgba('+tc[0]+','+tc[1]+','+tc[2]+','+a+')'; }
+      function tHex() { return '#'+tc.map(function(v){ return ('0'+v.toString(16)).slice(-2); }).join(''); }
+
+      var bg, wordmark, dateTxt, refColor, nameTxt, divColor, durTxt, coverTxt, wm;
+      if (planCardIsDark) {
+        bg = '#2C4468'; wordmark = gold; dateTxt = 'rgba(255,255,255,0.45)';
+        refColor = gold; nameTxt = '#FFFFFF'; divColor = gold;
+        durTxt = 'rgba(255,255,255,0.80)'; coverTxt = 'rgba(255,255,255,0.65)'; wm = 'rgba(255,255,255,0.22)';
+      } else {
+        bg = '#F7F3EC'; wordmark = tHex(); dateTxt = tRgba(0.5);
+        refColor = tHex(); nameTxt = tRgba(0.9); divColor = tHex();
+        durTxt = tRgba(0.75); coverTxt = tRgba(0.65); wm = tRgba(0.25);
+      }
+
+      ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+      addPlanTexture(ctx, W, H, planCardIsDark, d.planId);
+
+      // Wordmark
+      ctx.fillStyle = wordmark; ctx.font = '700 52px "Plus Jakarta Sans", sans-serif';
+      ctx.textAlign = 'left'; ctx.fillText('selah,', pad, pad + 52);
+
+      // Completion date top-right
+      var completedDate = d.completed || '';
+      if (completedDate) {
+        var dp = completedDate.split(' ');
+        var monthAbbr = {Januari:'Jan',Februari:'Feb',Maret:'Mar',April:'Apr',Mei:'Mei',Juni:'Jun',Juli:'Jul',Agustus:'Agt',September:'Sep',Oktober:'Okt',November:'Nov',Desember:'Des'};
+        var monthNums = {Januari:0,Februari:1,Maret:2,April:3,Mei:4,Juni:5,Juli:6,Agustus:7,September:8,Oktober:9,November:10,Desember:11};
+        var idDayNames = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+        var dateObj = new Date(parseInt(dp[2]), monthNums[dp[1]] || 0, parseInt(dp[0]));
+        var dayName = idDayNames[dateObj.getDay()] || '';
+        var monthYear = (monthAbbr[dp[1]] || dp[1]) + ' \'' + dp[2].slice(-2);
+        ctx.fillStyle = dateTxt; ctx.textAlign = 'right';
+        ctx.font = '400 26px "Plus Jakarta Sans", sans-serif'; ctx.fillText(dayName, W - pad, pad + 32);
+        ctx.font = '700 68px "Plus Jakarta Sans", sans-serif'; ctx.fillText(dp[0], W - pad, pad + 104);
+        ctx.font = '400 26px "Plus Jakarta Sans", sans-serif'; ctx.fillText(monthYear, W - pad, pad + 136);
+      }
+
+      // Measure plan name (Playfair Display, auto-shrink)
+      var textW = W - pad * 2 - 60;
+      var nameFontSize = 66, nameLH = 88;
+      ctx.font = '700 ' + nameFontSize + 'px "Playfair Display", serif';
+      var nameLines = wrapPlanText(ctx, d.planName, textW);
+      if (nameLines.length > 3) { nameFontSize = 52; nameLH = 70; ctx.font = '700 52px "Playfair Display", serif'; nameLines = wrapPlanText(ctx, d.planName, textW); }
+      if (nameLines.length > 4) { nameFontSize = 42; nameLH = 58; ctx.font = '700 42px "Playfair Display", serif'; nameLines = wrapPlanText(ctx, d.planName, textW); }
+
+      // Final reflection — show full text, no line cap
+      var reflection = d.finalReflection ? d.finalReflection.trim().replace(/\n+/g, ' ') : '';
+      var coverLines = [];
+      if (reflection) {
+        ctx.font = '400 36px "Plus Jakarta Sans", sans-serif';
+        coverLines = wrapPlanText(ctx, reflection, textW);
+      }
+
+      // Layout heights
+      var labelH = 36, labelGap = 30;
+      var nameBlockH = nameLines.length * nameLH;
+      var divGapTop = 64, divGapBot = 52, durH = 50;
+      var coverLH = 54, coverGap = coverLines.length > 0 ? 56 : 0;
+      var coverBlockH = coverLines.length * coverLH;
+      var totalH = labelH + labelGap + nameBlockH + divGapTop + divGapBot + durH + coverGap + coverBlockH;
+
+      var topY = 200, botY = 1340;
+      var y = topY + Math.max(20, ((botY - topY) - totalH) / 3);
+
+      // Label "RENCANA SELESAI"
+      ctx.fillStyle = refColor; ctx.font = '700 26px "Plus Jakarta Sans", sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('PLAN SELESAI', W / 2, y + labelH);
+      y += labelH + labelGap;
+
+      // Plan name
+      ctx.fillStyle = nameTxt; ctx.font = '700 ' + nameFontSize + 'px "Playfair Display", serif';
+      nameLines.forEach(function(l, i) { ctx.fillText(l, W / 2, y + (i + 1) * nameLH); });
+      y += nameBlockH;
+
+      // Divider
+      y += divGapTop;
+      ctx.save(); ctx.strokeStyle = divColor; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.3;
+      ctx.beginPath(); ctx.moveTo(pad + 80, y); ctx.lineTo(W - pad - 80, y); ctx.stroke(); ctx.restore();
+      y += divGapBot;
+
+      // Duration
+      ctx.fillStyle = durTxt; ctx.font = 'italic 400 40px Lora, serif'; ctx.textAlign = 'center';
+      ctx.fillText(d.duration + ' hari renungan', W / 2, y + durH);
+      y += durH;
+
+      // Cover text
+      if (coverLines.length > 0) {
+        y += coverGap;
+        ctx.fillStyle = coverTxt; ctx.font = '400 36px "Plus Jakarta Sans", sans-serif';
+        coverLines.forEach(function(l, i) { ctx.fillText(l, W / 2, y + (i + 1) * coverLH); });
+      }
+
+      // Watermark — username + domain (same as Momen Selah)
+      ctx.fillStyle = wm; ctx.textAlign = 'center';
+      var username = d.username || '';
+      if (username) {
+        ctx.font = '600 30px "Plus Jakarta Sans", sans-serif';
+        ctx.fillText('— ' + username, W / 2, H - 88);
+        ctx.font = '400 26px "Plus Jakarta Sans", sans-serif';
+        ctx.fillText('selah-app.my.id', W / 2, H - 50);
+      } else {
+        ctx.font = '400 28px "Plus Jakarta Sans", sans-serif';
+        ctx.fillText('selah-app.my.id', W / 2, H - 54);
+      }
+
+      planCardDrawn = true;
+    }
+
+    function scrollToShareSlide() {
+      var slider = document.getElementById('planSlider');
+      var shareSlide = slider ? slider.querySelector('[data-slide="share"]') : null;
+      if (shareSlide) {
+        slider.scrollTo({ left: shareSlide.offsetLeft - slider.offsetLeft, behavior: 'smooth' });
+      }
+    }
+
+    // Draw card on page load if share slide exists
+    if (document.getElementById('plan-share-canvas')) {
+      document.fonts.ready.then(function() { drawPlanCard(); });
+    }
+    function setBtnLoading(id, text) {
+      var btn = document.getElementById(id);
+      btn.disabled = true; btn.dataset.orig = btn.innerHTML; btn.textContent = text;
+    }
+    function resetBtn(id) {
+      var btn = document.getElementById(id);
+      btn.disabled = false; btn.innerHTML = btn.dataset.orig;
+    }
+    function triggerDownload(dataUrl) {
+      var a = document.createElement('a');
+      a.href = dataUrl; a.download = 'selah-plan-selesai.png';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }
+    function shareCard() {
+      if (!planCardDrawn) return;
+      setBtnLoading('sharePlanBtn', 'Menyiapkan…');
+      planShareCanvas.toBlob(function(blob) {
+        resetBtn('sharePlanBtn');
+        var file = new File([blob], 'selah-plan-selesai.png', { type: 'image/png' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          navigator.share({ files: [file], title: 'Plan Selah Selesai' }).catch(function() {});
+        } else if (navigator.share) {
+          navigator.share({ title: 'Plan Selah Selesai', text: 'Aku baru saja menyelesaikan rencana renungan “' + (planShareSection.dataset.planName || '') + '” di Selah!\nhttps://selah-app.my.id' }).catch(function() {});
+        } else {
+          triggerDownload(planShareCanvas.toDataURL('image/png'));
+        }
+      }, 'image/png');
+    }
+    function downloadCard() {
+      if (!planCardDrawn) return;
+      triggerDownload(planShareCanvas.toDataURL('image/png'));
+    }
+
+    // Inline rename ------------------------------------------------------
+    (function() {
+      var title = document.getElementById('plan-title');
+      var btn = document.getElementById('plan-title-edit-btn');
+      var input = document.getElementById('plan-title-input');
+      var errBox = document.getElementById('plan-title-err');
+      var original = title.textContent;
+
+      function openEdit() {
+        original = title.textContent;
+        input.value = original;
+        title.style.display = 'none';
+        btn.style.display = 'none';
+        errBox.style.display = 'none';
+        input.style.display = 'block';
+        input.focus();
+        input.select();
+      }
+      function closeEdit() {
+        input.style.display = 'none';
+        errBox.style.display = 'none';
+        title.style.display = '';
+        btn.style.display = '';
+      }
+      async function save() {
+        var name = input.value.trim();
+        if (!name) { errBox.textContent = 'Nama tidak boleh kosong.'; errBox.style.display = 'block'; return; }
+        if (name === original) { closeEdit(); return; }
+        try {
+          var fd = new FormData();
+          fd.append('name', name);
+          var res = await fetch('/plan/{{.Plan.ID}}/rename', { method: 'POST', body: fd });
+          if (!res.ok) {
+            var msg = await res.text();
+            errBox.textContent = msg || 'Gagal menyimpan.';
+            errBox.style.display = 'block';
+            return;
+          }
+          var data = await res.json();
+          title.textContent = data.name;
+          document.title = data.name + ' · selah,';
+          var planNameSpans = document.querySelectorAll('.celebration-plan-name, .cover-slide-title');
+          planNameSpans.forEach(function(el){ el.textContent = data.name; });
+          closeEdit();
+        } catch (e) {
+          errBox.textContent = 'Jaringan bermasalah. Coba lagi.';
+          errBox.style.display = 'block';
+        }
+      }
+
+      title.addEventListener('click', openEdit);
+      btn.addEventListener('click', openEdit);
+      input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); save(); }
+        else if (e.key === 'Escape') { e.preventDefault(); closeEdit(); }
+      });
+      input.addEventListener('blur', save);
+    })();
+
+    // Final reflection polling (celebration slide) ----------------------
+    var _planFinalPollActive = false;
+
+    function startFinalReflectionPoll(planId) {
+      var body    = document.getElementById('plan-final-body');
+      var pending = document.getElementById('plan-final-pending');
+      var btn     = document.getElementById('plan-final-btn');
+      var tries = 0, maxTries = 60;
+      _planFinalPollActive = true;
+
+      function tick() {
+        tries++;
+        fetch('/plan/' + planId + '/final-status', { headers: { 'Cache-Control': 'no-cache' } })
+          .then(function(r) { return r.ok ? r.json() : null; })
+          .then(function(data) {
+            if (data && data.reflection && data.reflection.trim() !== '') {
+              var rendered = window.marked ? marked.parse(data.reflection) : data.reflection;
+              if (body) body.innerHTML = rendered;
+              var preview = document.getElementById('plan-final-preview');
+              if (preview) preview.innerHTML = rendered;
+              var previewWrap = document.getElementById('plan-final-preview-wrap');
+              if (previewWrap) previewWrap.style.display = '';
+              if (pending) pending.style.display = 'none';
+              if (btn) btn.style.visibility = 'visible';
+              _planFinalPollActive = false;
+              return;
+            }
+            if (tries >= maxTries) {
+              if (pending) pending.innerHTML = '<span class="plan-final-pending-text" style="color:var(--text-muted)">Refleksi akhir belum siap — coba buka halaman ini lagi sebentar lagi.</span>';
+              _planFinalPollActive = false;
+              return;
+            }
+            setTimeout(tick, 3000);
+          })
+          .catch(function() {
+            if (tries < maxTries) setTimeout(tick, 5000);
+            else _planFinalPollActive = false;
+          });
+      }
+      setTimeout(tick, 2000);
+    }
+
+    function regenerateFinalReflection() {
+      if (_planFinalPollActive) return;
+      var btn     = document.getElementById('plan-final-btn');
+      var body    = document.getElementById('plan-final-body');
+      var preview = document.getElementById('plan-final-preview');
+
+      var src = document.getElementById('plan-share-section') || document.getElementById('plan-final-pending');
+      var planId = src ? (src.dataset.planId || src.dataset.plan) : null;
+      if (!planId) {
+        var m = window.location.pathname.match(/\/plan\/(\d+)/);
+        planId = m ? m[1] : null;
+      }
+      if (!planId) return;
+
+      if (btn) btn.style.visibility = 'hidden';
+      if (body) body.innerHTML = '';
+      if (preview) preview.innerHTML = '';
+
+      // show pending row
+      var pendingRow = document.getElementById('plan-final-pending');
+      if (!pendingRow) {
+        pendingRow = document.createElement('div');
+        pendingRow.id = 'plan-final-pending';
+        pendingRow.className = 'plan-final-pending-row';
+        pendingRow.innerHTML = '<span class="typing-dots" style="color:var(--gold)"><span></span><span></span><span></span></span><span class="plan-final-pending-text">Teman Selah sedang menyusun refleksi…</span>';
+        var previewWrap = document.getElementById('plan-final-preview-wrap') || document.querySelector('.plan-final-preview-wrap');
+        if (previewWrap) previewWrap.before(pendingRow);
+      } else {
+        pendingRow.style.display = '';
+        pendingRow.innerHTML = '<span class="typing-dots" style="color:var(--gold)"><span></span><span></span><span></span></span><span class="plan-final-pending-text">Teman Selah sedang menyusun refleksi…</span>';
+      }
+
+      fetch('/plan/' + planId + '/regenerate-final', { method: 'POST' })
+        .then(function(r) { return r.ok ? r.json() : null; })
+        .then(function(data) {
+          if (data && data.ok) startFinalReflectionPoll(planId);
+        })
+        .catch(function() {});
+    }
+
+    (function() {
+      var body = document.getElementById('plan-final-body');
+      var pending = document.getElementById('plan-final-pending');
+      var btn = document.getElementById('plan-final-btn');
+
+      if (!pending) {
+        // Already have reflection — render markdown in modal + preview.
+        if (body && window.marked && body.textContent.trim()) {
+          body.innerHTML = marked.parse(body.textContent);
+          var preview = document.getElementById('plan-final-preview');
+          if (preview) preview.innerHTML = body.innerHTML;
+        }
+        return;
+      }
+
+      var planId = pending.dataset.planId;
+      startFinalReflectionPoll(planId);
+    })();
+
+    (function() {
+      var slider = document.getElementById('planSlider');
+      var dots = document.querySelectorAll('#planDots .plan-dot');
+      var slides = slider.querySelectorAll('.plan-slide');
+      var startIdx = {{.StartIdx}};
+
+      var dotsContainer = document.getElementById('planDots');
+      function setActiveDot(idx) {
+        dots.forEach(function(d, i) { d.classList.toggle('active', i === idx); });
+        // scroll dots container so active dot is centered
+        if (dotsContainer && dots[idx]) {
+          var dot = dots[idx];
+          var offset = dot.offsetLeft - dotsContainer.offsetWidth / 2 + dot.offsetWidth / 2;
+          dotsContainer.scrollTo({ left: offset, behavior: 'smooth' });
+        }
+      }
+
+      // Scroll to startIdx on load (first pending day, or celebration if all done)
+      if (startIdx >= 0 && startIdx < slides.length) {
+        var target = slides[startIdx];
+        requestAnimationFrame(function() {
+          slider.scrollTo({ left: target.offsetLeft - slider.offsetLeft, behavior: 'auto' });
+          setActiveDot(startIdx);
+        });
+      } else {
+        setActiveDot(0);
+      }
+
+      // Prev/next arrow buttons (desktop)
+      var prevBtn = document.getElementById('planPrev');
+      var nextBtn = document.getElementById('planNext');
+      var currentIdx = startIdx >= 0 ? startIdx : 0;
+      function updateNavBtns() {
+        if (prevBtn) prevBtn.disabled = currentIdx === 0;
+        if (nextBtn) nextBtn.disabled = currentIdx === slides.length - 1;
+      }
+      updateNavBtns();
+
+      // Sync dot indicator + nav buttons on scroll
+      var scrollTimer;
+      slider.addEventListener('scroll', function() {
+        clearTimeout(scrollTimer);
+        scrollTimer = setTimeout(function() {
+          var mid = slider.scrollLeft + slider.offsetWidth / 2;
+          var best = 0, bestDist = Infinity;
+          slides.forEach(function(s, i) {
+            var c = s.offsetLeft + s.offsetWidth / 2 - slider.offsetLeft;
+            var d = Math.abs(c - mid);
+            if (d < bestDist) { bestDist = d; best = i; }
+          });
+          currentIdx = best;
+          setActiveDot(best);
+          updateNavBtns();
+        }, 80);
+      });
+
+      // Allow tapping dots to jump
+      dots.forEach(function(d, i) {
+        d.addEventListener('click', function() {
+          var t = slides[i];
+          if (!t) return;
+          slider.scrollTo({ left: t.offsetLeft - slider.offsetLeft, behavior: 'smooth' });
+        });
+      });
+
+      if (prevBtn) prevBtn.addEventListener('click', function() {
+        var t = slides[Math.max(0, currentIdx - 1)];
+        if (t) slider.scrollTo({ left: t.offsetLeft - slider.offsetLeft, behavior: 'smooth' });
+      });
+      if (nextBtn) nextBtn.addEventListener('click', function() {
+        var t = slides[Math.min(slides.length - 1, currentIdx + 1)];
+        if (t) slider.scrollTo({ left: t.offsetLeft - slider.offsetLeft, behavior: 'smooth' });
+      });
+    })();
+  </script>
+</body>
+</html>
+{{end}}

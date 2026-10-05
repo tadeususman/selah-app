@@ -636,7 +636,7 @@ PANDUAN ISI:
 - Pilih SATU ayat saja per referensi (maksimal 2 ayat berdekatan kalau memang perlu, contoh "Roma 8:28-29"). JANGAN pilih rentang panjang atau satu perikop penuh (contoh buruk: "Mazmur 103:1-22", "Yohanes 15:1-17") — pilih satu ayat kunci dari dalamnya saja.
 - intro_text: 2-3 kalimat hangat yang mengajak pengguna masuk ke ayat hari itu — bukan khotbah, bukan ringkasan ayat. Gunakan "kita" — JANGAN pakai "aku", "saya", atau "kamu" (ini pengantar, bukan pesan personal dari Teman Selah). Jangan buka dengan "Hari ini...". Jangan ulang isi ayat.
 - name: judul plan singkat & personal (3-6 kata). Hindari "Renungan tentang...", "Panduan...", atau "Perjalanan..."
-- cover_text: 1-2 kalimat yang terasa seperti undangan — bukan deskripsi akademis. Pakai "kamu".
+- cover_text: 1-2 kalimat yang terasa seperti undangan — bukan deskripsi akademis. Pakai "kamu". WAJIB tetap pakai istilah persis dari tema pengguna (misal "perumpamaan") — jangan diganti jadi kata yang lebih umum/santai seperti "cerita" demi gaya undangan.
 - duration: tentukan sendiri 3, 4, atau 5 sesuai kedalaman tema (3 untuk tema mendesak/fokus, 5 untuk tema yang perlu dicerna perlahan).
 - Pakai ULANG istilah teologis PERSIS seperti yang ditulis pengguna — JANGAN ganti dengan sinonim apapun, termasuk yang terdengar mirip. Contoh: kalau pengguna sebut "perumpamaan", tetap tulis "perumpamaan" (JANGAN jadi "cerita", "kisah", "dongeng", atau sinonim lain); "mukjizat" tetap "mukjizat" (jangan "keajaiban"); "nubuat" tetap "nubuat" (jangan "ramalan"). Istilah ini berlaku di name, cover_text, dan intro_text.
 

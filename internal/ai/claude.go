@@ -638,7 +638,7 @@ PANDUAN ISI:
 - name: judul plan singkat & personal (3-6 kata). Hindari "Renungan tentang...", "Panduan...", atau "Perjalanan..."
 - cover_text: 1-2 kalimat yang terasa seperti undangan — bukan deskripsi akademis. Pakai "kamu".
 - duration: tentukan sendiri 3, 4, atau 5 sesuai kedalaman tema (3 untuk tema mendesak/fokus, 5 untuk tema yang perlu dicerna perlahan).
-- Pakai istilah teologis yang presisi sesuai tema yang ditulis pengguna — JANGAN digenerikkan. Contoh: kalau pengguna sebut "perumpamaan", jangan diganti jadi "cerita"; "mukjizat" jangan jadi "keajaiban"; "nubuat" jangan jadi "ramalan". Istilah ini berlaku di name, cover_text, dan intro_text.
+- Pakai ULANG istilah teologis PERSIS seperti yang ditulis pengguna — JANGAN ganti dengan sinonim apapun, termasuk yang terdengar mirip. Contoh: kalau pengguna sebut "perumpamaan", tetap tulis "perumpamaan" (JANGAN jadi "cerita", "kisah", "dongeng", atau sinonim lain); "mukjizat" tetap "mukjizat" (jangan "keajaiban"); "nubuat" tetap "nubuat" (jangan "ramalan"). Istilah ini berlaku di name, cover_text, dan intro_text.
 
 GAYA BAHASA (penting — intro_text sering jatuh ke puitis-tapi-kabur):
 - Baca ulang setiap kalimat seperti kamu mengucapkannya ke teman. Kalau kedengaran seperti kutipan buku rohani, tulis ulang lebih sederhana.

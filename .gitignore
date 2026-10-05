@@ -1,5 +1,7 @@
 .env
 *.log
+*.bak
+*.sql
 /journalflow
 /tmp/
 __pycache__/

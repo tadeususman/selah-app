@@ -18,6 +18,14 @@ import (
 
 const maxRetries = 2
 
+// effortCtxKey carries an optional bridge "effort" override (e.g. "low") for
+// structured/short-output calls that don't need deep extended thinking.
+type effortCtxKey struct{}
+
+func withEffort(ctx context.Context, level string) context.Context {
+	return context.WithValue(ctx, effortCtxKey{}, level)
+}
+
 const (
 	ProviderBridge = "bridge"
 	ProviderQwen   = "qwen"
@@ -103,6 +111,7 @@ type bridgeRequest struct {
 	Prompt   string `json:"prompt"`
 	App      string `json:"app"`
 	Provider string `json:"provider,omitempty"`
+	Effort   string `json:"effort,omitempty"`
 }
 
 type bridgeResponse struct {
@@ -154,7 +163,8 @@ func (c *Client) sendBridge(ctx context.Context, system string, history []ChatMe
 		sb.WriteString("\n\n")
 	}
 
-	body, err := json.Marshal(bridgeRequest{Prompt: strings.TrimSpace(sb.String()), App: "selah"})
+	effort, _ := ctx.Value(effortCtxKey{}).(string)
+	body, err := json.Marshal(bridgeRequest{Prompt: strings.TrimSpace(sb.String()), App: "selah", Effort: effort})
 	if err != nil {
 		return "", err
 	}
@@ -363,6 +373,7 @@ Jawab singkat dan langsung. Satu poin yang dalam lebih baik dari tiga poin yang 
 Kristus adalah pusat dari seluruh Alkitab. Kalau ada pertanyaan tentang tradisi Yahudi, perayaan Perjanjian Lama (Paskah, Rosh Hashanah, Yom Kippur, Sukkot, dll), atau tema teologi besar — selalu kaitkan ke penggenapannya dalam Yesus Kristus dan karya keselamatan-Nya. Bukan sekadar info historis, tapi tunjukkan bagaimana Yesus adalah jawaban dan penggenapnya.
 Soal pertanyaan balik: jangan tanya balik di setiap respons. Sesekali boleh — paling banyak 1-2 kali per sesi — kalau memang mengalir natural dan tulus. Bukan template.
 Hanya bahas topik yang berkaitan dengan Alkitab, iman Kristen, atau ayat yang sedang direnungkan. Kalau ada yang di luar itu: "Hmm, itu di luar yang bisa aku bantu di sini. Yuk balik ke ayatnya."
+Kalau percakapan sudah beberapa balasan menjauh dari ayat yang direnungkan (user banyak curhat soal hal lain di luar ayat), jangan cuma ikut memvalidasi terus-menerus. Akui dulu apa yang dia rasakan — jangan menolak atau mengabaikan curhatnya — lalu ajak balik dengan lembut ke ayat hari ini, hubungkan apa yang dia ceritakan dengan ayat itu. Jangan ganti topik secara kasar.
 JANGAN PERNAH:
 - Buka dengan memuji atau mengakui pesan user: "wah", "menarik", "tepat", "bagus", "iya betul", "pertanyaan bagus"
 - Ulang lagi apa yang user baru bilang sebelum menjawab
@@ -380,6 +391,7 @@ Di bawah 200 kata kecuali diminta lebih dalam.
 Kristus adalah pusat dari seluruh Alkitab. Kalau ada pertanyaan tentang tradisi Yahudi, perayaan Perjanjian Lama (Paskah, Rosh Hashanah, Yom Kippur, Sukkot, dll), atau tema teologi besar — selalu kaitkan ke penggenapannya dalam Yesus Kristus dan karya keselamatan-Nya. Bukan sekadar info historis, tapi tunjukkan bagaimana Yesus adalah jawaban dan penggenapnya.
 Soal pertanyaan balik: jangan tanya balik di setiap respons. Sesekali boleh — paling banyak 1-2 kali per sesi — kalau memang mengalir natural. Bukan template.
 Hanya bahas topik Alkitab, teologi, iman Kristen, atau ayat yang sedang direnungkan. Kalau ada yang di luar itu: "Hmm, itu di luar yang bisa aku bantu di sini. Yuk balik ke ayatnya."
+Kalau percakapan sudah beberapa balasan menjauh dari ayat yang direnungkan (user banyak curhat soal hal lain di luar ayat), jangan cuma ikut memvalidasi terus-menerus. Akui dulu apa yang dia rasakan — jangan menolak atau mengabaikan curhatnya — lalu ajak balik dengan lembut ke ayat hari ini, hubungkan apa yang dia ceritakan dengan ayat itu. Jangan ganti topik secara kasar.
 JANGAN PERNAH:
 - Buka dengan memuji atau mengakui pesan user: "wah", "menarik", "tepat", "bagus", "iya betul"
 - Ulang lagi apa yang user baru bilang sebelum menjawab
@@ -614,16 +626,19 @@ func (c *Client) GenerateShareSummary(ctx context.Context, verseRef, verseText, 
 
 const generatePlanSystemPrompt = `Kamu adalah "Teman Selah" — sahabat rohani yang membantu pengguna menyusun rencana renungan singkat (3-5 hari) berdasarkan situasi, tema, atau pergumulan yang mereka ceritakan.
 
+PENTING: Jika yang ditulis pengguna tidak ada kaitannya dengan kehidupan, perasaan, atau pergumulan manusia yang bisa dihubungkan dengan Firman Tuhan — misalnya resep masakan, menu makanan, cuaca, harga saham, berita, atau pertanyaan teknis acak — jawab HANYA dengan satu kata: TIDAK_RELEVAN
+
 PANDUAN ISI:
 - Pilih ayat yang membentuk ALUR yang bermakna — bukan daftar acak. Setiap hari membangun dari hari sebelumnya (misalnya: mengakui situasi → melihat karakter Tuhan → janji / penghiburan → langkah iman → syukur).
 - Variasikan sumber ayat: Mazmur, kitab Nabi, Injil, surat-surat Paulus, surat-surat umum. Jangan semua dari satu kitab.
 - Setiap referensi harus BERBEDA. Tidak boleh ada pengulangan.
 - Format referensi: standar Indonesia (contoh: "Mazmur 23:1", "Matius 6:25-27", "Roma 8:28"). Gunakan nama kitab lengkap Bahasa Indonesia (bukan singkatan).
-- Pilih ayat yang pendek-sedang (1-3 ayat per referensi) supaya mudah direnungkan.
-- intro_text: 2-3 kalimat hangat yang mengajak pengguna masuk ke ayat hari itu — bukan khotbah, bukan ringkasan ayat. Pakai "aku" dan "kamu". Jangan buka dengan "Hari ini...". Jangan ulang isi ayat.
+- Pilih SATU ayat saja per referensi (maksimal 2 ayat berdekatan kalau memang perlu, contoh "Roma 8:28-29"). JANGAN pilih rentang panjang atau satu perikop penuh (contoh buruk: "Mazmur 103:1-22", "Yohanes 15:1-17") — pilih satu ayat kunci dari dalamnya saja.
+- intro_text: 2-3 kalimat hangat yang mengajak pengguna masuk ke ayat hari itu — bukan khotbah, bukan ringkasan ayat. Gunakan "kita" — JANGAN pakai "aku", "saya", atau "kamu" (ini pengantar, bukan pesan personal dari Teman Selah). Jangan buka dengan "Hari ini...". Jangan ulang isi ayat.
 - name: judul plan singkat & personal (3-6 kata). Hindari "Renungan tentang...", "Panduan...", atau "Perjalanan..."
-- cover_text: 1-2 kalimat yang terasa seperti undangan — bukan deskripsi akademis. Pakai "kamu".
+- cover_text: 1-2 kalimat yang terasa seperti undangan — bukan deskripsi akademis. Pakai "kamu". WAJIB tetap pakai istilah persis dari tema pengguna (misal "perumpamaan") — jangan diganti jadi kata yang lebih umum/santai seperti "cerita" demi gaya undangan.
 - duration: tentukan sendiri 3, 4, atau 5 sesuai kedalaman tema (3 untuk tema mendesak/fokus, 5 untuk tema yang perlu dicerna perlahan).
+- Pakai ULANG istilah teologis PERSIS seperti yang ditulis pengguna — JANGAN ganti dengan sinonim apapun, termasuk yang terdengar mirip. Contoh: kalau pengguna sebut "perumpamaan", tetap tulis "perumpamaan" (JANGAN jadi "cerita", "kisah", "dongeng", atau sinonim lain); "mukjizat" tetap "mukjizat" (jangan "keajaiban"); "nubuat" tetap "nubuat" (jangan "ramalan"). Istilah ini berlaku di name, cover_text, dan intro_text.
 
 GAYA BAHASA (penting — intro_text sering jatuh ke puitis-tapi-kabur):
 - Baca ulang setiap kalimat seperti kamu mengucapkannya ke teman. Kalau kedengaran seperti kutipan buku rohani, tulis ulang lebih sederhana.
@@ -664,9 +679,12 @@ func (c *Client) GeneratePlan(ctx context.Context, situation, langStyle string) 
 		sys = formalizePrompt(sys)
 	}
 	prompt := fmt.Sprintf("Situasi atau tema yang sedang dipikirkan pengguna:\n%s\n\nSusun rencana renungan 3-5 hari.", situation)
-	raw, err := c.send(ctx, sys, []ChatMessage{{Role: "user", Content: prompt}})
+	raw, err := c.send(withEffort(ctx, "low"), sys, []ChatMessage{{Role: "user", Content: prompt}})
 	if err != nil {
 		return nil, err
+	}
+	if strings.Contains(raw, "TIDAK_RELEVAN") {
+		return nil, ErrNotRelevant
 	}
 
 	jsonStr := extractJSONObject(raw)
@@ -836,7 +854,7 @@ Tugasmu: tulis intro_text yang lebih natural untuk hari yang diminta, dengan tet
 
 PANDUAN ISI:
 - 2-3 kalimat hangat yang mengajak pengguna masuk ke ayat hari itu — bukan khotbah, bukan ringkasan ayat.
-- Pakai "aku" dan "kamu". Jangan buka dengan "Hari ini...". Jangan ulang isi ayat.
+- Gunakan "kita" — JANGAN pakai "aku", "saya", atau "kamu" (ini pengantar, bukan pesan personal dari Teman Selah). Jangan buka dengan "Hari ini...". Jangan ulang isi ayat.
 - Perhatikan hari sebelumnya & sesudahnya supaya alur rencana tetap mengalir.
 
 GAYA BAHASA (penting — jangan jatuh ke puitis-tapi-kabur):
@@ -903,7 +921,7 @@ func (c *Client) RegeneratePlanDayIntro(ctx context.Context, planName, coverText
 	if langStyle == "formal" {
 		sys = formalizePrompt(sys)
 	}
-	result, err := c.send(ctx, sys, []ChatMessage{{Role: "user", Content: sb.String()}})
+	result, err := c.send(withEffort(ctx, "low"), sys, []ChatMessage{{Role: "user", Content: sb.String()}})
 	if err != nil {
 		return "", err
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -129,6 +130,13 @@ func (a *App) PlanCreate(w http.ResponseWriter, r *http.Request) {
 
 	draft, err := a.AI.GeneratePlan(r.Context(), situation, langStyle)
 	if err != nil {
+		if errors.Is(err, ai.ErrNotRelevant) {
+			a.render(w, "plan_new.html", planNewData{
+				Error:     "Teman Selah hanya bisa membantu menyusun rencana renungan dari situasi atau pergumulan hidupmu. Coba ceritakan apa yang sedang kamu rasakan atau pikirkan.",
+				Situation: situation,
+			})
+			return
+		}
 		log.Printf("[plan/create] GeneratePlan error: %v", err)
 		a.render(w, "plan_new.html", planNewData{
 			Error:     "Teman Selah sedang tidak bisa menyusun rencana. Coba lagi sebentar.",
@@ -147,6 +155,14 @@ func (a *App) PlanCreate(w http.ResponseWriter, r *http.Request) {
 			log.Printf("[plan/create] verse fetch failed for %q: %v", d.VerseRef, err)
 			a.render(w, "plan_new.html", planNewData{
 				Error:     "Beberapa ayat tidak bisa diambil. Coba buat rencana lagi dengan tema serupa.",
+				Situation: situation,
+			})
+			return
+		}
+		if utf8.RuneCountInString(text) > 500 {
+			log.Printf("[plan/create] verse text too long for %q (%d chars), aborting plan", d.VerseRef, utf8.RuneCountInString(text))
+			a.render(w, "plan_new.html", planNewData{
+				Error:     "Beberapa ayat yang dipilih terlalu panjang. Coba buat rencana lagi dengan tema serupa.",
 				Situation: situation,
 			})
 			return

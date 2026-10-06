@@ -9,8 +9,10 @@
   <main class="page">
     <header class="page-header">
       <p class="brand-wordmark brand-dash">{{template "wordmark-svg"}}</p>
-      <p class="greeting-time">{{.Greeting}},</p>
-      <h1 class="greeting">{{.UserName}} 👋</h1>
+      <div class="greeting-row">
+        <p class="greeting-time">{{.Greeting}},</p>
+        <h1 class="greeting">{{.UserName}} 👋</h1>
+      </div>
       {{if .WelcomeMsg}}<p class="welcome-msg">{{.WelcomeMsg}}</p>{{end}}
     </header>
 

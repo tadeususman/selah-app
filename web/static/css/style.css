@@ -436,11 +436,17 @@ input:focus, textarea:focus {
 }
 .modal-btn-delete:hover { opacity: 0.9; }
 
+.greeting-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+}
 .greeting-time {
   font-size: 13px;
   font-weight: 600;
   color: var(--text-muted);
-  margin: 8px 0 2px;
+  margin: 8px 0 4px;
 }
 .greeting {
   font-size: 22px;

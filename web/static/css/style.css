@@ -2922,3 +2922,35 @@ input:focus, textarea:focus {
   color: rgba(255,255,255,0.3);
   letter-spacing: 0.04em;
 }
+
+/* =====================================================================
+   Smooth interactions: press feedback on buttons/nav/menu + entrance
+   animation for modals. Disabled for reduced motion.
+   ===================================================================== */
+html { -webkit-tap-highlight-color: transparent; }
+
+button, .btn-primary, .btn-secondary, .btn-danger, .btn-gold, .btn-ghost, .btn-tiny,
+.btn-icon-trash, .btn-fetch-verse, .btn-search-verse, .nav-item, .nav-item-btn,
+.theme-swatch, .fab, .modal-btn-cancel, .modal-btn-delete {
+  transition: background-color .15s ease, color .15s ease, border-color .15s ease,
+    box-shadow .15s ease, transform .12s ease, opacity .15s ease;
+}
+
+button:active:not(:disabled), .btn-primary:active, .btn-secondary:active, .btn-danger:active,
+.btn-gold:active, .btn-ghost:active, .btn-tiny:active, .btn-icon-trash:active,
+.btn-fetch-verse:active, .btn-search-verse:active, .nav-item:active, .nav-item-btn:active,
+.theme-swatch:active, .modal-btn-cancel:active, .modal-btn-delete:active { transform: scale(.96); }
+.fab:active { transform: scale(.95); }
+
+@keyframes selah-pop-in {
+  from { opacity: 0; transform: scale(.96) translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+.modal-card { animation: selah-pop-in .18s ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* no hard rectangular focus box after mouse/touch; keep a rounded ring for keyboard users */
+:focus:not(:focus-visible) { outline: none; }

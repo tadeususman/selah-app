@@ -601,7 +601,7 @@ input:focus, textarea:focus {
   transition: background 0.2s;
 }
 
-.entry-card-title { font-weight: 700; color: var(--navy-dark); font-size: 15px; }
+.entry-card-title { font-weight: 700; color: var(--navy-dark); font-size: 26px; line-height: 1; }
 .entry-card-day { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
 .entry-card-snippet { font-size: 13px; color: var(--text-muted); margin: 4px 0 0; }
 
@@ -1458,7 +1458,7 @@ input:focus, textarea:focus {
 }
 .list-card-left {
   flex-shrink: 0;
-  min-width: 36px;
+  min-width: 40px;
   text-align: left;
   padding-top: 2px;
 }

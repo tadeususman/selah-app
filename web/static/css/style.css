@@ -100,6 +100,13 @@ body {
   color: var(--navy-dark);
 }
 
+.brand-dash {
+  font-size: 30px;
+  text-align: left;
+  margin: 0 0 4px;
+  color: var(--navy-dark);
+}
+
 .brand-hero {
   font-size: 52px;
   text-align: center;

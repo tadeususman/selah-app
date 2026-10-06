@@ -37,6 +37,13 @@ services:
       - "8082:8080"
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    networks:
+      - default
+      - proxy
 
 volumes:
   journalflow_pgdata:
+
+networks:
+  proxy:
+    external: true

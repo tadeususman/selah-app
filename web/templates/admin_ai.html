@@ -9,7 +9,7 @@
   <main class="page">
     <header class="page-header">
       <a href="/admin" class="back-link">← Admin</a>
-      <p class="brand-wordmark brand-small">selah<span class="dot">,</span></p>
+      <p class="brand-wordmark brand-small">{{template "wordmark-svg"}}</p>
       <h1>Pemakaian AI</h1>
       {{if eq .Provider "qwen"}}<p style="font-size:12px;color:var(--text-muted);margin-top:4px">Qwen (Fireworks) · <a href="https://app.fireworks.ai/billing" target="_blank" style="color:var(--text-muted)">Cek billing →</a></p>{{end}}
     </header>

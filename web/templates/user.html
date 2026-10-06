@@ -8,7 +8,7 @@
 <body>
   <main class="page">
     <header class="page-header">
-      <p class="brand-wordmark brand-small">selah<span class="dot">,</span></p>
+      <p class="brand-wordmark brand-small">{{template "wordmark-svg"}}</p>
       <h1>Pengaturan</h1>
       <p class="page-sub">{{.Email}}</p>
     </header>
@@ -402,7 +402,7 @@
       <div class="about-icon">
         <img id="about-icon-img" src="/static/apple-touch-icon.png" alt="selah, icon" width="64" height="64">
       </div>
-      <div class="about-wordmark brand-wordmark brand-hero">selah<span class="dot">,</span></div>
+      <div class="about-wordmark brand-wordmark brand-hero">{{template "wordmark-svg"}}</div>
       <div class="about-tagline">ruang jeda untuk merenung.</div>
       <div class="about-meta">
         <button class="about-version" style="background:var(--gold);border:none;cursor:pointer" onclick="document.getElementById('cl-all').style.display='flex'">v{{.Version}}</button>

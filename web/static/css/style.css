@@ -1,17 +1,63 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
 
-#page-progress {
+/* ---------- Page loader: animated "selah," wordmark ---------- */
+.page-loader {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 0%;
-  height: 3px;
-  background: var(--gold);
+  inset: 0;
   z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--cream) 96%, transparent);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+  color: var(--navy-dark);
   opacity: 0;
-  border-radius: 0 2px 2px 0;
-  box-shadow: 0 0 10px var(--gold);
+  visibility: hidden;
   pointer-events: none;
+  transition: opacity 0.2s ease, visibility 0.2s;
+}
+.page-loader.show { opacity: 1; visibility: visible; pointer-events: auto; }
+.page-loader svg { height: 34px; width: auto; overflow: visible; }
+.page-loader .wl {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: wl-in 2.2s ease-in-out infinite;
+}
+.page-loader .wl-comma { fill: var(--gold); transform-origin: top center; }
+.page-loader .wl2 { animation-delay: 0.1s; }
+.page-loader .wl3 { animation-delay: 0.2s; }
+.page-loader .wl4 { animation-delay: 0.3s; }
+.page-loader .wl5 { animation-delay: 0.4s; }
+.page-loader .wl6 { animation-delay: 0.7s; }
+/* splash (first open of a session): one pass, letters stay */
+.page-loader.splash {
+  opacity: 1; visibility: visible; pointer-events: auto;
+  background: #182033;   /* same navy as the app icon / Android splash, so there is no colour flash */
+  color: #F2F4F8;
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+  z-index: 10000;
+  transition: opacity 0.4s ease;
+}
+.page-loader.splash svg { height: 44px; }
+.page-loader.splash .wl { animation: wl-once 0.5s ease-out both; }
+.page-loader.splash .wl2 { animation-delay: 0.1s; }
+.page-loader.splash .wl3 { animation-delay: 0.2s; }
+.page-loader.splash .wl4 { animation-delay: 0.3s; }
+.page-loader.splash .wl5 { animation-delay: 0.4s; }
+.page-loader.splash .wl6 { animation-delay: 0.75s; }
+.page-loader.splash-out { opacity: 0; pointer-events: none; }
+html.splash-pending::after { content: ""; position: fixed; inset: 0; background: #182033; z-index: 9998; }
+@keyframes wl-once {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes wl-in {
+  0%   { opacity: 0; transform: translateY(8px); }
+  14%  { opacity: 1; transform: none; }
+  72%  { opacity: 1; transform: none; }
+  90%, 100% { opacity: 0; transform: none; }
 }
 
 /* ---------- Light theme (default) ---------- */
@@ -2895,6 +2941,8 @@ button:active:not(:disabled), .btn-primary:active, .btn-secondary:active, .btn-d
   .typing-dots span:nth-child(2) { animation-delay: 0.18s !important; }
   .typing-dots span:nth-child(3) { animation-delay: 0.36s !important; }
   .location-spinner, .loading-spinner { animation: spin 0.9s linear infinite !important; }
+  .page-loader .wl { animation: wl-in 2.2s ease-in-out infinite !important; }
+  .page-loader.splash .wl { animation: wl-once 0.5s ease-out both !important; }
 }
 
 /* no hard rectangular focus box after mouse/touch; keep a rounded ring for keyboard users */

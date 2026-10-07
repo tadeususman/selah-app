@@ -4,6 +4,7 @@
 <head>
   <title>{{idDate .Entry.EntryDate}} · selah,</title>
   {{template "head" .}}
+  {{template "wordmark-canvas-js"}}
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@1,400&family=Playfair+Display:wght@700&display=swap">
 </head>
 <body>
@@ -498,10 +499,7 @@
       addTexture(ctx, W, H, cardIsDark, d.day);
 
       // Wordmark top-left
-      ctx.fillStyle = wordmark;
-      ctx.font = '700 52px “Plus Jakarta Sans”, sans-serif';
-      ctx.textAlign = 'left';
-      ctx.fillText('selah,', pad, pad + 52);
+      drawSelahWordmark(ctx, pad, pad + 52, 40, wordmark);
 
       // Date top-right: weekday (small) / day number (large) / month+year (small)
       var monthAbbr = {

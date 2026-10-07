@@ -4,6 +4,7 @@
 <head>
   <title>Dashboard · selah,</title>
   {{template "head" .}}
+  {{template "wordmark-canvas-js"}}
 </head>
 <body>
   <main class="page">
@@ -393,8 +394,8 @@
       ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
       addTexture(ctx, W, H, cardIsDark, d.day);
 
-      ctx.fillStyle = wordmark; ctx.font = '700 52px "Plus Jakarta Sans", sans-serif';
-      ctx.textAlign = 'left'; ctx.fillText('selah,', pad, pad + 52);
+      ctx.textAlign = 'left';
+      drawSelahWordmark(ctx, pad, pad + 52, 40, wordmark);
 
       var monthAbbr = {'Januari':'Jan','Februari':'Feb','Maret':'Mar','April':'Apr','Mei':'Mei','Juni':'Jun','Juli':'Jul','Agustus':'Agt','September':'Sep','Oktober':'Okt','November':'Nov','Desember':'Des'};
       var dp = d.date.split(' ');

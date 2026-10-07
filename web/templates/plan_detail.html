@@ -4,6 +4,7 @@
 <head>
   <title>{{.Plan.Name}} · selah,</title>
   {{template "head" .}}
+  {{template "wordmark-canvas-js"}}
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@1,400&family=Playfair+Display:wght@700&display=swap">
 </head>
 <body>
@@ -303,8 +304,8 @@
       addPlanTexture(ctx, W, H, planCardIsDark, d.planId);
 
       // Wordmark
-      ctx.fillStyle = wordmark; ctx.font = '700 52px "Plus Jakarta Sans", sans-serif';
-      ctx.textAlign = 'left'; ctx.fillText('selah,', pad, pad + 52);
+      ctx.textAlign = 'left';
+      drawSelahWordmark(ctx, pad, pad + 52, 40, wordmark);
 
       // Completion date top-right
       var completedDate = d.completed || '';

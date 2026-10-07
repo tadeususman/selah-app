@@ -33,7 +33,7 @@
       <div class="entry-meta-row">
         <p class="page-sub">
           {{idDay .Entry.EntryDate}} · {{.Entry.EntryTime.Format "15:04"}}{{if .Entry.Location}} · {{.Entry.Location}}{{end}}
-          {{if eq .Entry.Status "completed"}} · <span class="badge-done">Selesai ✓</span>{{end}}
+          {{if eq .Entry.Status "completed"}}<svg class="list-status list-status-done meta-check" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-label="Selesai"><polyline points="20 6 9 17 4 12"/></svg>{{end}}
         </p>
         <button type="button" class="btn-icon-trash" onclick="openDeleteModal()" title="Hapus journal">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
@@ -47,28 +47,29 @@
       {{if .Entry.VerseRef}}<div class="verse-ref">{{.Entry.VerseRef}}</div>{{end}}
       <p class="verse-text" id="verse-text-pin">{{.Entry.VerseText}}</p>
       <button type="button" class="verse-expand-btn" id="verse-expand-btn" onclick="toggleVerseExpand()" style="display:none">Selengkapnya</button>
-      {{if and (lt .CompletedCount 3) (ne .Entry.Status "completed")}}
-      <div class="progress-stepper verse-stepper">
-        <div class="stepper-step done">
-          <div class="stepper-circle">✓</div>
-          <div class="stepper-label">Baca Ayat</div>
-        </div>
-        <div class="stepper-step {{if .Entry.Reflection}}done{{else}}active{{end}}">
-          <div class="stepper-circle">{{if .Entry.Reflection}}✓{{else}}2{{end}}</div>
-          <div class="stepper-label">Tulis Refleksi</div>
-        </div>
-        <div class="stepper-step {{if .Entry.Reflection}}active{{else}}pending{{end}}">
-          <div class="stepper-circle">3</div>
-          <div class="stepper-label">Langkah Praktis</div>
-        </div>
-      </div>
-      {{end}}
     </section>
+
+    {{if and (lt .CompletedCount 3) (ne .Entry.Status "completed")}}
+    <div class="progress-stepper journal-stepper">
+      <div class="stepper-step done">
+        <div class="stepper-circle">✓</div>
+        <div class="stepper-label">Baca Ayat</div>
+      </div>
+      <div class="stepper-step {{if .Entry.Reflection}}done{{else}}active{{end}}">
+        <div class="stepper-circle">{{if .Entry.Reflection}}✓{{else}}2{{end}}</div>
+        <div class="stepper-label">Tulis Refleksi</div>
+      </div>
+      <div class="stepper-step {{if .Entry.Reflection}}active{{else}}pending{{end}}">
+        <div class="stepper-circle">3</div>
+        <div class="stepper-label">Langkah Praktis</div>
+      </div>
+    </div>
+    {{end}}
 
     {{if .Messages}}
     <section class="thread">
       {{range .Messages}}
-        <div class="bubble {{if eq .Role "ai"}}bubble-ai{{else}}bubble-user{{end}}">
+        <div class="bubble {{if eq .Role "ai"}}bubble-ai{{else}}bubble-user{{end}}" data-role="{{.Role}}">
           <div class="bubble-label">{{if eq .Role "ai"}}Teman Selah{{else if eq .Role "reflection"}}Renunganku{{else}}{{if eq $.LanguageStyle "formal"}}Anda{{else}}Kamu{{end}}{{end}}</div>
           <div class="bubble-content">{{.Content}}</div>
           <div class="bubble-time">{{msgTime .CreatedAt}}</div>
@@ -207,6 +208,95 @@
       el.innerHTML = marked.parse(el.textContent);
     });
 
+    // Chat style: split each Teman Selah answer into one bubble per paragraph (user setting, default "chat").
+    (function() {
+      var mode = 'chat';
+      try { mode = localStorage.getItem('selah-chatstyle') || 'chat'; } catch (e) {}
+      if (mode === 'block') return;
+      var MAX = 4;
+      var revealKey = 'selah-reveal-{{.Entry.ID}}';
+      var shouldReveal = false;
+      try {
+        var t0 = parseInt(sessionStorage.getItem(revealKey) || '0', 10);
+        shouldReveal = mode === 'type' && t0 && (Date.now() - t0) < 180000;
+        sessionStorage.removeItem(revealKey);
+      } catch (e) {}
+
+      // show the bubbles of a fresh reply one by one, with a short typing indicator in between
+      function revealGroup(wrap) {
+        var bs = Array.prototype.slice.call(wrap.querySelectorAll('.bubble'));
+        bs.slice(1).forEach(function(x) { x.style.display = 'none'; });
+        var i = 1;
+        function next() {
+          if (i >= bs.length) return;
+          var dots = document.createElement('div');
+          dots.className = 'bubble bubble-ai bubble-split bubble-typing';
+          dots.innerHTML = '<div class="bubble-content typing-dots"><span></span><span></span><span></span></div>';
+          wrap.appendChild(dots);
+          dots.scrollIntoView({ behavior: 'smooth', block: 'end' });
+          var delay = Math.min(1800, 500 + bs[i].textContent.length * 18);
+          setTimeout(function() {
+            dots.remove();
+            bs[i].style.display = '';
+            bs[i].classList.add('bubble-reveal');
+            bs[i].scrollIntoView({ behavior: 'smooth', block: 'end' });
+            i++;
+            next();
+          }, delay);
+        }
+        next();
+      }
+      function isHeading(el) { return /^H[1-6]$/.test(el.tagName); }
+      function endsColon(el) { return el.tagName === 'P' && /[:：]\s*$/.test(el.textContent); }
+      document.querySelectorAll('.bubble-ai').forEach(function(b) {
+        var content = b.querySelector('.bubble-content');
+        if (!content || content.classList.contains('typing-dots')) return;
+        // only replies to the user's own questions; the opening reflection / closing stay one block
+        var prevBubble = b.previousElementSibling;
+        if (!prevBubble || prevBubble.dataset.role !== 'user') return;
+        var blocks = Array.prototype.slice.call(content.children);
+        if (blocks.length < 2) return;
+        var groups = [];
+        blocks.forEach(function(el) {
+          var prev = groups[groups.length - 1];
+          if (prev && prev.glue) {
+            prev.html += el.outerHTML; prev.len += el.textContent.length;
+            prev.glue = isHeading(el) || endsColon(el);
+          } else {
+            groups.push({ html: el.outerHTML, len: el.textContent.length, glue: isHeading(el) || endsColon(el) });
+          }
+        });
+        while (groups.length > MAX) {
+          var best = 0, bestLen = Infinity;
+          for (var i = 0; i < groups.length - 1; i++) {
+            var l = groups[i].len + groups[i + 1].len;
+            if (l < bestLen) { bestLen = l; best = i; }
+          }
+          groups[best].html += groups[best + 1].html;
+          groups[best].len += groups[best + 1].len;
+          groups.splice(best + 1, 1);
+        }
+        if (groups.length < 2) return;
+        var label = b.querySelector('.bubble-label'), time = b.querySelector('.bubble-time');
+        var wrap = document.createElement('div');
+        wrap.className = 'bubble-group';
+        groups.forEach(function(g, i) {
+          var nb = document.createElement('div');
+          nb.className = 'bubble bubble-ai bubble-split';
+          if (i === 0 && label) nb.appendChild(label);
+          var c = document.createElement('div');
+          c.className = 'bubble-content';
+          c.innerHTML = g.html;
+          nb.appendChild(c);
+          if (i === groups.length - 1 && time) nb.appendChild(time);
+          wrap.appendChild(nb);
+        });
+        var isLast = !b.nextElementSibling;
+        b.parentNode.replaceChild(wrap, b);
+        if (shouldReveal && isLast) revealGroup(wrap);
+      });
+    })();
+
     // Scroll to last bubble on load
     var bubbles = document.querySelectorAll('.bubble');
     if (bubbles.length) bubbles[bubbles.length - 1].scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -239,6 +329,7 @@
         var textarea = this.querySelector('textarea[name="message"]');
         var message = textarea.value.trim();
         if (!message) return;
+        try { sessionStorage.setItem('selah-reveal-{{.Entry.ID}}', String(Date.now())); } catch (e) {}
 
         // Find or create thread section
         var thread = document.querySelector('.thread');
@@ -262,9 +353,10 @@
         // Append AI typing bubble
         var typingBubble = document.createElement('div');
         typingBubble.className = 'bubble bubble-ai';
-        typingBubble.innerHTML = '<div class="bubble-label">Teman Selah</div><div class="bubble-content typing-dots"><span></span><span></span><span></span></div>';
+        typingBubble.innerHTML = '<div class="bubble-label">Teman Selah</div><div class="bubble-content typing-dots"><span></span><span></span><span></span></div><div class="bubble-waiting-msg" id="discuss-waiting-msg"></div>';
         thread.appendChild(typingBubble);
         typingBubble.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        document.getElementById('discuss-waiting-msg').textContent = WAITING_TEXT;
 
         var actionBtns = document.getElementById('action-btns');
         if (actionBtns) actionBtns.style.display = 'none';
@@ -286,13 +378,7 @@
       });
     }
 
-    var closingWaitingMessages = [
-      'Baik, tunggu sebentar ya...',
-      'Teman Selah sedang menyiapkan penutup...',
-      'Sebentar lagi...',
-      'Sedang merenungkan perjalanan hari ini...',
-      'Hampir selesai...',
-    ];
+    var WAITING_TEXT = 'sedang mengetik…';
 
     function showClosingBubble(userText, anchorEl) {
       var actionBtns = document.getElementById('action-btns');
@@ -322,17 +408,7 @@
       typingBubble.innerHTML = '<div class="bubble-label">Teman Selah</div><div class="bubble-content typing-dots"><span></span><span></span><span></span></div><div class="bubble-waiting-msg" id="closing-waiting-msg"></div>';
       thread.appendChild(typingBubble);
       typingBubble.scrollIntoView({ behavior: 'smooth', block: 'end' });
-      var msgEl = document.getElementById('closing-waiting-msg');
-      var idx = 0;
-      msgEl.textContent = closingWaitingMessages[0];
-      setInterval(function() {
-        idx = (idx + 1) % closingWaitingMessages.length;
-        msgEl.style.opacity = '0';
-        setTimeout(function() {
-          msgEl.textContent = closingWaitingMessages[idx];
-          msgEl.style.opacity = '1';
-        }, 300);
-      }, 6000);
+      document.getElementById('closing-waiting-msg').textContent = WAITING_TEXT;
     }
 
     var completeForm = document.getElementById('complete-form');

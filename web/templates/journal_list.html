@@ -7,6 +7,7 @@
 </head>
 <body>
   <main class="page">
+    <div class="sticky-top">
     <header class="page-header">
       <h1>Daily Journal</h1>
     </header>
@@ -17,6 +18,7 @@
       <button id="date-filter-btn" class="date-filter-btn" aria-label="Filter tanggal" title="Filter tanggal">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><path d="M19 4h-1V2h-2v2H8V2H6v2H5C3.89 4 3 4.9 3 6v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zm0-13H5V6h14v1zM7 11h5v5H7z"/></svg>
       </button>
+    </div>
     </div>
 
     <div class="date-filter-panel" id="date-filter-panel" style="display:none">
@@ -45,18 +47,20 @@
            data-id="{{.ID}}"
            data-search="{{.VerseRef}} {{.VerseText}}"
            data-date="{{.EntryDate.Format "2006-01-02"}}">
-          <div class="list-card-left">
-            <div class="list-card-month">{{idMonthShort .EntryDate}}</div>
-            <div class="entry-card-title">{{.EntryDate.Day}}</div>
-            <div class="entry-card-day">{{idDay .EntryDate}}</div>
-          </div>
-          <div class="list-card-right">
-            {{if .PlanID}}<div class="list-plan-badge">Plan: {{.PlanName}} · Hari {{.PlanDay}}/{{.PlanDuration}}</div>{{end}}
-            {{if .VerseRef}}<div class="list-verse-ref">{{.VerseRef}}</div>{{end}}
-            <div class="list-verse-text">{{.VerseText}}</div>
-            <div class="list-card-meta">
-              {{.EntryTime.Format "15:04"}}{{if .Location}} · {{.Location}}{{end}} · {{if eq .Status "completed"}}<span class="meta-done">Selesai ✓</span>{{else}}<span class="meta-draft">Lanjutkan →</span>{{end}}
+          <div class="list-card-main">
+            <div class="list-card-top">
+              <span class="list-card-ref-wrap">
+                <span class="list-verse-ref">{{.VerseRef}}</span>
+                {{if .PlanID}}<span class="list-plan-chip" title="Plan: {{.PlanName}}" aria-label="Plan: {{.PlanName}} · Hari {{.PlanDay}}/{{.PlanDuration}}"><svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" aria-hidden="true"><path d="M18 2H6c-1.1 0-2 .9-2 2v18l8-3 8 3V4c0-1.1-.9-2-2-2z"/></svg>{{.PlanDay}}/{{.PlanDuration}}</span>{{end}}
+              </span>
+              {{if eq .Status "completed"}}<svg class="list-status list-status-done" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-label="Selesai"><polyline points="20 6 9 17 4 12"/></svg>{{else}}<svg class="list-status list-status-draft" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-label="Belum selesai"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>{{end}}
             </div>
+            <div class="list-verse-text">{{.VerseText}}</div>
+          </div>
+          <div class="list-card-date">
+            <span class="list-card-month">{{idMonthShort .EntryDate}}</span>
+            <span class="list-card-day">{{.EntryDate.Day}}</span>
+            <span class="list-card-weekday">{{idDay .EntryDate}}</span>
           </div>
         </a>
       {{end}}
@@ -65,7 +69,7 @@
     <div id="scroll-sentinel" style="height:1px;margin-bottom:80px"></div>
 
     <a href="/journal/new" class="fab" aria-label="Tambah journal baru">
-      <span class="fab-plus">+</span>
+      <svg class="fab-plus" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       <span class="fab-label">Tambah Daily Journal</span>
     </a>
   </main>
@@ -136,27 +140,19 @@
     }
 
     function renderCard(e) {
-      var status = e.status === 'completed'
-        ? '<span class="meta-done">Selesai ✓</span>'
-        : '<span class="meta-draft">Lanjutkan →</span>';
-      var meta = e.entry_time + (e.location ? ' · ' + e.location : '') + ' · ' + status;
-      var verseRef = e.verse_ref ? '<div class="list-verse-ref">' + e.verse_ref + '</div>' : '';
-      var planBadge = e.plan_id ? '<div class="list-plan-badge">Plan: ' + e.plan_name + ' · Hari ' + e.plan_day + '/' + e.plan_duration + '</div>' : '';
+      var icon = e.status === 'completed' ? '<svg class="list-status list-status-done" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-label="Selesai"><polyline points="20 6 9 17 4 12"/></svg>' : '<svg class="list-status list-status-draft" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-label="Belum selesai"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>';
+      var planTitle = e.plan_id ? ('Plan: ' + e.plan_name + ' · Hari ' + e.plan_day + '/' + e.plan_duration).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;') : '';
+      var planIcon = e.plan_id ? '<span class="list-plan-chip" title="' + planTitle + '" aria-label="' + planTitle + '"><svg viewBox="0 0 24 24" width="11" height="11" fill="currentColor" aria-hidden="true"><path d="M18 2H6c-1.1 0-2 .9-2 2v18l8-3 8 3V4c0-1.1-.9-2-2-2z"/></svg>' + e.plan_day + '/' + e.plan_duration + '</span>' : '';
+      var top = '<div class="list-card-top"><span class="list-card-ref-wrap"><span class="list-verse-ref">' + (e.verse_ref || '') + '</span>' + planIcon + '</span>' + icon + '</div>';
       return '<a href="/journal/' + e.id + '" class="entry-card entry-card-list"'
         + ' data-id="' + e.id + '"'
         + ' data-search="' + e.verse_ref + ' ' + e.verse_text + '"'
         + ' data-date="' + e.entry_date + '">'
-        + '<div class="list-card-left">'
-        + '<div class="list-card-month">' + e.month_short + '</div>'
-        + '<div class="entry-card-title">' + e.day + '</div>'
-        + '<div class="entry-card-day">' + e.weekday + '</div>'
-        + '</div>'
-        + '<div class="list-card-right">'
-        + planBadge
-        + verseRef
-        + '<div class="list-verse-text">' + e.verse_text + '</div>'
-        + '<div class="list-card-meta">' + meta + '</div>'
-        + '</div>'
+        + '<div class="list-card-main">' + top
+        + '<div class="list-verse-text">' + e.verse_text + '</div></div>'
+        + '<div class="list-card-date"><span class="list-card-month">' + e.month_short + '</span>'
+        + '<span class="list-card-day">' + e.day + '</span>'
+        + '<span class="list-card-weekday">' + e.weekday + '</span></div>'
         + '</a>';
     }
 

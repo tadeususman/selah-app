@@ -79,7 +79,6 @@
             <div class="plan-card-body">
               <div class="plan-card-header">
                 <h3 class="plan-card-title">{{.Name}}</h3>
-                <span class="plan-card-status plan-card-status-active">Aktif</span>
               </div>
               {{if .CoverText}}<p class="plan-card-cover">{{.CoverText}}</p>{{end}}
               <div class="plan-card-foot-row">
@@ -101,7 +100,7 @@
             <div class="plan-card-body">
               <div class="plan-card-header">
                 <h3 class="plan-card-title">{{.Name}}</h3>
-                <span class="plan-card-status plan-card-status-done">Selesai ✓</span>
+                <svg class="list-status list-status-done" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-label="Selesai"><polyline points="20 6 9 17 4 12"/></svg>
               </div>
               {{if .CoverText}}<p class="plan-card-cover">{{.CoverText}}</p>{{end}}
               <div class="plan-card-foot-row">
@@ -119,7 +118,7 @@
     <div style="height:80px"></div>
 
     <a href="/plan/new" class="fab" aria-label="Buat plan baru">
-      <span class="fab-plus">+</span>
+      <svg class="fab-plus" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       <span class="fab-label">Buat Plan</span>
     </a>
   </main>

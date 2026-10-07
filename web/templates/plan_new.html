@@ -15,7 +15,7 @@
 
     {{if .Error}}<p class="form-error" style="margin-bottom:12px">{{.Error}}</p>{{end}}
 
-    <form method="POST" action="/plan" class="stacked-form" id="plan-form">
+    <form method="POST" action="/plan" class="stacked-form journal-form" id="plan-form">
       <input type="hidden" name="lat" id="lat-input">
       <input type="hidden" name="lon" id="lon-input">
 
@@ -29,7 +29,8 @@
             <path d="M12 3a9 9 0 019 9" stroke-linecap="round"/>
           </svg>
         </button>
-        <input type="text" id="location-input" name="location" class="location-input" placeholder="Ketuk pin disamping atau ketik lokasi (opsional)" maxlength="200">
+        <input type="text" id="location-input" name="location" class="location-input" placeholder="Lokasi (opsional)" maxlength="200">
+        <button type="button" class="location-auto-btn" onclick="document.getElementById('loc-btn').click()">Deteksi otomatis</button>
       </div>
 
       <label for="situation">Ceritamu</label>

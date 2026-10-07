@@ -1,4 +1,4 @@
-const CACHE = 'selah-v1';
+const CACHE = 'selah-v2';
 const STATIC_ASSETS = [
   '/static/css/style.css?v=35',
   '/static/manifest.json',

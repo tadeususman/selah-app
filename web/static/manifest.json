@@ -5,7 +5,7 @@
   "start_url": "/dashboard",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#F7F3EC",
+  "background_color": "#FBF9F5",
   "theme_color": "#2C4468",
   "id": "https://selah-app.my.id",
   "dir": "ltr",

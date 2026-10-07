@@ -8,18 +8,14 @@
 </head>
 <body>
   <main class="page">
-    <header class="page-header">
+    <header class="page-header sticky-top">
       <p class="brand-wordmark brand-dash">{{template "wordmark-svg"}}</p>
-      <div class="greeting-row">
-        <p class="greeting-time">{{.Greeting}},</p>
-        <h1 class="greeting">{{.UserName}} 👋</h1>
-      </div>
-      {{if .WelcomeMsg}}<p class="welcome-msg">{{.WelcomeMsg}}</p>{{end}}
+      <h1 class="greeting">{{.Greeting}}, {{.UserName}}</h1>
+      {{if and .WelcomeMsg (not .Entries)}}<p class="welcome-msg">{{.WelcomeMsg}}</p>{{end}}
     </header>
 
     <div class="section-title-row">
       <h2>Terakhir</h2>
-      <a href="/journal" class="section-link">Semua →</a>
     </div>
 
     <div class="entry-list">
@@ -28,13 +24,17 @@
       {{end}}
       {{range .Entries}}
       <a href="/journal/{{.ID}}" class="entry-card entry-card-list">
-        <div class="list-card-left">
-          <div class="entry-card-title">{{.EntryDate.Day}}</div>
-          <div class="entry-card-day">{{idDay .EntryDate}}</div>
-        </div>
-        <div class="list-card-right">
-          {{if .VerseRef}}<div class="list-verse-ref">{{.VerseRef}}</div>{{end}}
+        <div class="list-card-main">
+          <div class="list-card-top">
+            <span class="list-verse-ref">{{.VerseRef}}</span>
+            {{if eq .Status "completed"}}<svg class="list-status list-status-done" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-label="Selesai"><polyline points="20 6 9 17 4 12"/></svg>{{else}}<svg class="list-status list-status-draft" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-label="Belum selesai"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>{{end}}
+          </div>
           <div class="list-verse-text">{{.VerseText}}</div>
+        </div>
+        <div class="list-card-date">
+          <span class="list-card-month">{{idMonthShort .EntryDate}}</span>
+          <span class="list-card-day">{{.EntryDate.Day}}</span>
+          <span class="list-card-weekday">{{idDay .EntryDate}}</span>
         </div>
       </a>
       {{end}}
@@ -86,7 +86,7 @@
     {{end}}
 
     <a href="/journal/new" class="fab" aria-label="Tambah journal baru">
-      <span class="fab-plus">+</span>
+      <svg class="fab-plus" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
       <span class="fab-label">Tambah Daily Journal</span>
     </a>
   </main>

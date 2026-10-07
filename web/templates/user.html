@@ -8,79 +8,134 @@
 <body>
   <main class="page">
     <header class="page-header">
-      <p class="brand-wordmark brand-small">{{template "wordmark-svg"}}</p>
       <h1>Pengaturan</h1>
-      <p class="page-sub">{{.Email}}</p>
     </header>
 
     {{if .FlashOK}}<div class="flash-ok">{{.FlashOK}}</div>{{end}}
     {{if .FlashErr}}<div class="flash-err">{{.FlashErr}}</div>{{end}}
 
-    <section class="admin-section">
-      <h3>Email Login</h3>
-      <form method="POST" action="/user/email" class="stacked-form">
-        <label for="email">Email</label>
-        <input id="email" name="email" type="email" value="{{.Email}}" required autocomplete="email">
-        <button type="submit" class="btn-secondary">Simpan Email</button>
-      </form>
+    <!-- Profil -->
+    <section class="set-profile">
+      <div class="set-avatar" id="set-avatar" aria-hidden="true" data-src="{{if .Name}}{{.Name}}{{else}}{{.Email}}{{end}}"></div>
+      <div class="set-who">
+        <div class="set-name">{{if .Name}}{{.Name}}{{else}}Pengguna{{end}}</div>
+        <div class="set-mail">{{if .Email}}{{.Email}}{{else}}Belum ada email{{end}}</div>
+      </div>
     </section>
 
-    <section class="admin-section">
-      <h3>Nama Tampilan</h3>
-      <form method="POST" action="/user/name" class="stacked-form">
-        <label for="name">Nama</label>
-        <input id="name" name="name" type="text" value="{{.Name}}" required>
-        <button type="submit" class="btn-primary">Simpan Nama</button>
-      </form>
+    <!-- Akun -->
+    <section class="set-section">
+      <h2 class="set-title">Akun</h2>
+      <div class="set-group">
+        {{if .IsAdmin}}
+        <a href="/admin" class="set-row">
+          <span class="set-label">Panel Admin</span>
+          <span class="set-value"></span>
+          <svg class="set-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+        {{end}}
+
+        <details class="set-item">
+          <summary class="set-row">
+            <span class="set-label">Nama</span>
+            <span class="set-value">{{.Name}}</span>
+            <svg class="set-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </summary>
+          <form method="POST" action="/user/name" class="set-form">
+            <input id="name" name="name" type="text" value="{{.Name}}" required aria-label="Nama tampilan">
+            <button type="submit" class="btn-primary set-btn">Simpan</button>
+          </form>
+        </details>
+
+        <details class="set-item">
+          <summary class="set-row">
+            <span class="set-label">Email</span>
+            <span class="set-value {{if not .Email}}muted{{end}}">{{if .Email}}{{.Email}}{{else}}Belum diisi{{end}}</span>
+            <svg class="set-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </summary>
+          <form method="POST" action="/user/email" class="set-form">
+            <input id="email" name="email" type="email" value="{{.Email}}" required autocomplete="email" aria-label="Email login">
+            <button type="submit" class="btn-primary set-btn">Simpan</button>
+          </form>
+        </details>
+
+        <details class="set-item">
+          <summary class="set-row">
+            <span class="set-label">Password</span>
+            <span class="set-value muted">••••••••</span>
+            <svg class="set-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </summary>
+          <form method="POST" action="/user/password" class="set-form set-form-stack">
+            <input id="old_password" name="old_password" type="password" placeholder="Password sekarang" required autocomplete="current-password">
+            <input id="new_password" name="new_password" type="password" placeholder="Password baru (min. 8 karakter)" required autocomplete="new-password" minlength="8">
+            <input id="new_password2" name="new_password2" type="password" placeholder="Ulangi password baru" required autocomplete="new-password" minlength="8">
+            <button type="submit" class="btn-primary set-btn">Ganti password</button>
+          </form>
+        </details>
+      </div>
     </section>
 
-    <section class="admin-section">
-      <h3>Ganti Password</h3>
-      <form method="POST" action="/user/password" class="stacked-form">
-        <label for="old_password">Password Sekarang</label>
-        <input id="old_password" name="old_password" type="password" required autocomplete="current-password">
-        <label for="new_password">Password Baru</label>
-        <input id="new_password" name="new_password" type="password" required autocomplete="new-password" minlength="8">
-        <label for="new_password2">Konfirmasi Password Baru</label>
-        <input id="new_password2" name="new_password2" type="password" required autocomplete="new-password" minlength="8">
-        <button type="submit" class="btn-secondary">Ganti Password</button>
-      </form>
-    </section>
-
-    {{if .IsAdmin}}
-    <section class="admin-section">
-      <h3>Admin</h3>
-      <a href="/admin" class="btn-secondary" style="display:inline-block;padding:9px 18px;border-radius:10px;font-size:13px;font-weight:600;text-decoration:none">Panel Admin →</a>
-    </section>
-    {{end}}
-
-    <section class="admin-section">
-      <h3>Preferensi Diskusi</h3>
-      <form method="POST" action="/user/prefs" id="prefs-form">
-        <label class="toggle-row">
+    <!-- Teman Selah -->
+    <section class="set-section">
+      <h2 class="set-title">Teman Selah</h2>
+      <form method="POST" action="/user/prefs" id="prefs-form" class="set-group">
+        <label class="toggle-row set-row">
           <span class="toggle-label">
             <span class="toggle-label-title">Diskusi dengan bahasa asli</span>
-            <span class="toggle-label-desc">Teman Selah akan menyertakan analisis kata Ibrani/Yunani saat berdiskusi ayat</span>
+            <span class="toggle-label-desc">Sertakan analisis kata Ibrani/Yunani saat berdiskusi ayat</span>
           </span>
           <input type="checkbox" name="discuss_original_lang" class="toggle-checkbox" {{if .DiscussOriginalLang}}checked{{end}} onchange="this.form.submit()">
           <span class="toggle-switch"></span>
         </label>
-        <label class="toggle-row" style="margin-top:12px">
+        <label class="toggle-row set-row">
           <span class="toggle-label">
             <span class="toggle-label-title">Generate kartu berbagi</span>
-            <span class="toggle-label-desc">Teman Selah akan membuat kartu gambar untuk dibagikan setelah jurnal selesai</span>
+            <span class="toggle-label-desc">Buat kartu gambar untuk dibagikan setelah jurnal selesai</span>
           </span>
           <input type="checkbox" name="generate_share_card" class="toggle-checkbox" {{if .GenerateShareCard}}checked{{end}} onchange="this.form.submit()">
           <span class="toggle-switch"></span>
         </label>
       </form>
+      <form method="POST" action="/user/language" class="set-group set-group-gap">
+        <div class="set-row set-row-static">
+          <span class="set-label">Gaya bahasa</span>
+          <span class="set-seg">
+            <label>
+              <input type="radio" name="language_style" value="casual" {{if ne .LanguageStyle "formal"}}checked{{end}} onchange="onLangChange(this)">
+              <span>Santai</span>
+            </label>
+            <label>
+              <input type="radio" name="language_style" value="formal" {{if eq .LanguageStyle "formal"}}checked{{end}} onchange="onLangChange(this)">
+              <span>Formal</span>
+            </label>
+          </span>
+        </div>
+      </form>
+      <p class="set-note">Santai: aku &amp; kamu. Formal: saya &amp; Anda.</p>
     </section>
 
-    <section class="admin-section">
-      <h3>Tema Warna</h3>
-      <form id="theme-form" method="POST" action="/user/theme">
-        <input type="hidden" name="theme" id="theme-input" value="{{.Theme}}">
-        <div class="theme-swatch-grid">
+    <!-- Tampilan -->
+    <section class="set-section">
+      <h2 class="set-title">Tampilan</h2>
+      <div class="set-group">
+        <div class="set-row set-row-static">
+          <span class="set-label">Mode</span>
+          <span class="set-seg" id="theme-mode-picker">
+            <button type="button" class="set-seg-btn" data-mode="auto" onclick="setThemeMode('auto')">Ikut sistem</button>
+            <button type="button" class="set-seg-btn" data-mode="dark" onclick="setThemeMode('dark')">Gelap</button>
+            <button type="button" class="set-seg-btn" data-mode="light" onclick="setThemeMode('light')">Terang</button>
+          </span>
+        </div>
+
+        <details class="set-item">
+          <summary class="set-row">
+            <span class="set-label">Tema warna</span>
+            <span class="set-value">{{if eq .Theme "sakura"}}Sakura{{else if eq .Theme "rose"}}Rose{{else if eq .Theme "lavender"}}Lavender{{else if eq .Theme "sage"}}Sage{{else if eq .Theme "mono"}}Mono{{else}}Biru Laut{{end}}</span>
+            <svg class="set-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </summary>
+          <form id="theme-form" method="POST" action="/user/theme" class="set-swatches">
+            <input type="hidden" name="theme" id="theme-input" value="{{.Theme}}">
+            <div class="theme-swatch-grid">
           <button type="button" class="theme-swatch{{if eq .Theme "default"}} active{{end}}" data-theme-value="default" onclick="pickTheme('default')" title="Biru Laut">
             <span class="swatch-dot" style="background:#2C4468"></span>
             <span class="swatch-accent" style="background:#F0A93B"></span>
@@ -111,45 +166,36 @@
             <span class="swatch-accent" style="background:#909090"></span>
             <span class="swatch-label">Mono</span>
           </button>
-        </div>
-      </form>
-    </section>
+            </div>
+          </form>
+        </details>
 
-    <section class="admin-section">
-      <h3>Ukuran Teks</h3>
-      <div class="font-size-picker" id="font-size-picker">
-        <button type="button" class="font-size-opt" data-size="small" onclick="setFontSize('small')">
-          <span style="font-size:12px">A</span> Kecil
-        </button>
-        <button type="button" class="font-size-opt" data-size="normal" onclick="setFontSize('normal')">
-          <span style="font-size:15px">A</span> Normal
-        </button>
-        <button type="button" class="font-size-opt" data-size="large" onclick="setFontSize('large')">
-          <span style="font-size:19px">A</span> Besar
-        </button>
+        <div class="set-row set-row-static">
+          <span class="set-label">Ukuran teks</span>
+          <span class="set-seg" id="font-size-picker">
+            <button type="button" class="set-seg-btn" data-size="small" onclick="setFontSize('small')">Kecil</button>
+            <button type="button" class="set-seg-btn" data-size="normal" onclick="setFontSize('normal')">Normal</button>
+            <button type="button" class="set-seg-btn" data-size="large" onclick="setFontSize('large')">Besar</button>
+          </span>
+        </div>
+
+        <div class="set-row set-row-static">
+          <span class="set-label">Gaya jawaban</span>
+          <span class="set-seg" id="chat-style-picker">
+            <button type="button" class="set-seg-btn" data-chat="block" onclick="setChatStyle('block')">Blok</button>
+            <button type="button" class="set-seg-btn" data-chat="chat" onclick="setChatStyle('chat')">Chat</button>
+            <button type="button" class="set-seg-btn" data-chat="type" onclick="setChatStyle('type')">Ketik</button>
+          </span>
+        </div>
       </div>
+      <p class="set-note">Blok: satu gelembung utuh. Chat: balasan atas pertanyaanmu dipecah per paragraf. Ketik: seperti Chat, tapi muncul satu per satu seperti sedang mengetik. Renungan awal selalu satu gelembung.</p>
     </section>
 
-    <section class="admin-section">
-      <h3>Gaya Bahasa</h3>
-      <form method="POST" action="/user/language">
-        <div class="radio-group">
-          <label class="radio-option">
-            <input type="radio" name="language_style" value="casual" {{if ne .LanguageStyle "formal"}}checked{{end}} onchange="onLangChange(this)">
-            <span class="radio-option-text">Santai <span class="radio-option-desc">— Teman Selah pakai aku &amp; kamu</span></span>
-          </label>
-          <label class="radio-option">
-            <input type="radio" name="language_style" value="formal" {{if eq .LanguageStyle "formal"}}checked{{end}} onchange="onLangChange(this)">
-            <span class="radio-option-text">Formal <span class="radio-option-desc">— Teman Selah pakai saya &amp; Anda</span></span>
-          </label>
-        </div>
-      </form>
-    </section>
-
-    <section class="admin-section">
-      <h3>Logout</h3>
-      <p class="danger-desc">Keluar dari sesi ini. Data journal kamu tetap aman.</p>
-      <button type="button" class="btn-secondary" onclick="document.getElementById('logout-modal').style.display='flex'">Logout</button>
+    <!-- Keluar -->
+    <section class="set-section">
+      <div class="set-group">
+        <button type="button" class="set-row set-logout" onclick="document.getElementById('logout-modal').style.display='flex'">Logout</button>
+      </div>
     </section>
 
     <div id="logout-modal" class="modal-backdrop" style="display:none" onclick="if(event.target===this)this.style.display='none'">
@@ -164,10 +210,11 @@
     </div>
     <form id="logout-form" action="/logout" method="POST" style="display:none"></form>
 
-    <section class="admin-section danger-section">
-      <h3>Hapus Akun</h3>
-      <p class="danger-desc">Semua data journal dan riwayat diskusi akan dihapus permanen dan tidak bisa dipulihkan.</p>
-      <button type="button" class="btn-danger" onclick="document.getElementById('delete-account-modal').style.display='flex'">Hapus Akun Saya</button>
+    <section class="set-section">
+      <div class="set-group">
+        <button type="button" class="set-row set-logout" onclick="document.getElementById('delete-account-modal').style.display='flex'">Hapus akun</button>
+      </div>
+      <p class="set-note">Semua data journal dan riwayat diskusi dihapus permanen dan tidak bisa dipulihkan.</p>
     </section>
 
     <div id="delete-account-modal" class="modal-backdrop" style="display:none" onclick="if(event.target===this)this.style.display='none'">
@@ -426,6 +473,12 @@
     })();
   </script>
   <script>
+    (function() {
+      var av = document.getElementById('set-avatar');
+      if (av) av.textContent = (Array.from((av.dataset.src || '').trim())[0] || '?').toUpperCase();
+    })();
+  </script>
+  <script>
   function pickTheme(val) {
     document.getElementById('theme-input').value = val;
     localStorage.setItem('selah-color', val);
@@ -452,13 +505,51 @@
     } else {
       document.documentElement.dataset.fontsize = size;
     }
-    document.querySelectorAll('.font-size-opt').forEach(function(b) {
+    document.querySelectorAll('#font-size-picker .set-seg-btn').forEach(function(b) {
       b.classList.toggle('active', b.dataset.size === size);
     });
   }
+  // Light/dark mode: "auto" follows the phone (no saved choice), otherwise the saved choice wins
+  function setThemeMode(m) {
+    var t = m;
+    try {
+      if (m === 'auto') {
+        localStorage.removeItem('selah-theme');
+        t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      } else {
+        localStorage.setItem('selah-theme', m);
+      }
+    } catch (e) {}
+    if (typeof applyTheme === 'function') applyTheme(t);
+    document.querySelectorAll('#theme-mode-picker .set-seg-btn').forEach(function(b) {
+      b.classList.toggle('active', b.dataset.mode === m);
+    });
+  }
+  (function() {
+    var saved = null;
+    try { saved = localStorage.getItem('selah-theme'); } catch (e) {}
+    var cur = saved === 'light' || saved === 'dark' ? saved : 'auto';
+    document.querySelectorAll('#theme-mode-picker .set-seg-btn').forEach(function(b) {
+      b.classList.toggle('active', b.dataset.mode === cur);
+    });
+  })();
+  // Answer display style (localStorage only): "chat" splits answers into one bubble per paragraph
+  function setChatStyle(v) {
+    try { localStorage.setItem('selah-chatstyle', v); } catch (e) {}
+    document.querySelectorAll('#chat-style-picker .set-seg-btn').forEach(function(b) {
+      b.classList.toggle('active', b.dataset.chat === v);
+    });
+  }
+  (function() {
+    var cur = 'chat';
+    try { cur = localStorage.getItem('selah-chatstyle') || 'chat'; } catch (e) {}
+    document.querySelectorAll('#chat-style-picker .set-seg-btn').forEach(function(b) {
+      b.classList.toggle('active', b.dataset.chat === cur);
+    });
+  })();
   (function() {
     var cur = localStorage.getItem('selah-fontsize') || 'normal';
-    document.querySelectorAll('.font-size-opt').forEach(function(b) {
+    document.querySelectorAll('#font-size-picker .set-seg-btn').forEach(function(b) {
       b.classList.toggle('active', b.dataset.size === cur);
     });
   })();

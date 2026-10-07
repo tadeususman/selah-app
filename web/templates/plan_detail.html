@@ -41,7 +41,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="12" height="12" style="vertical-align:-2px"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
             {{.Plan.Location}}
           </span> · {{end}}Dibuat {{idDate .Plan.CreatedAt}} · {{.Plan.CreatedAt.Format "15:04"}}
-          · <span id="plan-status-badge">{{if eq .Plan.Status "completed"}}<span class="badge-done">Selesai ✓</span>{{else}}<span class="badge-active">Aktif</span>{{end}}</span>
+          · <span id="plan-status-badge">{{if eq .Plan.Status "completed"}}<svg class="list-status list-status-done meta-check" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-label="Selesai"><polyline points="20 6 9 17 4 12"/></svg>{{else}}<span class="badge-active">Aktif</span>{{end}}</span>
         </p>
         <button type="button" class="btn-icon-trash" onclick="openPlanDeleteModal()" title="Hapus plan">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16">

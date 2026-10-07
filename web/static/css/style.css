@@ -1668,6 +1668,7 @@ input:focus, textarea:focus {
   background: var(--card);
   border-top: 1px solid var(--border);
   display: flex;
+  z-index: 300;
   padding: 10px 0 max(10px, env(safe-area-inset-bottom));
   transition: background 0.2s, border-color 0.2s;
 }

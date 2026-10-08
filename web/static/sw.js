@@ -1,7 +1,6 @@
-const CACHE = 'selah-v4';
+const CACHE = 'selah-v5';
 const STATIC_ASSETS = [
   '/static/css/style.css?v=35',
-  '/static/manifest.json',
   '/static/app-icon-192-dark.png',
   '/static/apple-touch-icon.png',
 ];
@@ -20,6 +19,11 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  // Manifest: always network (icons / colours must never be served stale, installs read it)
+  if (e.request.url.includes('/static/manifest.json')) {
+    e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+    return;
+  }
   // Static assets: cache-first
   if (e.request.url.includes('/static/')) {
     e.respondWith(

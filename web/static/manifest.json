@@ -28,25 +28,25 @@
       "purpose": "any"
     },
     {
-      "src": "/static/app-icon-192-dark.png",
+      "src": "/static/app-icon-192-flat.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/static/app-icon-512-dark.png",
+      "src": "/static/app-icon-512-flat.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/static/app-icon-192-maskable.png",
+      "src": "/static/app-icon-192-maskable-navy.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/static/app-icon-512-maskable.png",
+      "src": "/static/app-icon-512-maskable-navy.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

@@ -13,7 +13,8 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
 <link rel="manifest" href="/static/manifest.json">
 {{template "page-loader-tpl"}}
-<link rel="stylesheet" href="/static/css/style.css?v=131">
+<link rel="preload" as="image" href="/static/logo-animated-dark.svg?v=2">
+<link rel="stylesheet" href="/static/css/style.css?v=133">
 <script>
   (function() {
     var saved = localStorage.getItem('selah-theme');
@@ -52,6 +53,13 @@
         var sp = tpl.content.firstElementChild.cloneNode(true);
         sp.id = 'page-splash';
         sp.classList.add('splash');
+        var svg = sp.querySelector('svg');
+        if (svg) {
+          var img = new Image();
+          img.src = '/static/logo-animated-dark.svg?v=2';
+          img.alt = '';
+          svg.replaceWith(img);
+        }
         document.body.appendChild(sp);
         document.documentElement.classList.remove('splash-pending');
         setTimeout(function() {

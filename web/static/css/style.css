@@ -40,19 +40,9 @@
   z-index: 10000;
   transition: opacity 0.4s ease;
 }
-.page-loader.splash svg { height: 44px; }
-.page-loader.splash .wl { animation: wl-once 0.5s ease-out both; }
-.page-loader.splash .wl2 { animation-delay: 0.1s; }
-.page-loader.splash .wl3 { animation-delay: 0.2s; }
-.page-loader.splash .wl4 { animation-delay: 0.3s; }
-.page-loader.splash .wl5 { animation-delay: 0.4s; }
-.page-loader.splash .wl6 { animation-delay: 0.75s; }
+.page-loader.splash img { height: 44px; width: auto; }
 .page-loader.splash-out { opacity: 0; pointer-events: none; }
 html.splash-pending::after { content: ""; position: fixed; inset: 0; background: #182033; z-index: 9998; }
-@keyframes wl-once {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: none; }
-}
 @keyframes wl-in {
   0%   { opacity: 0; transform: translateY(8px); }
   14%  { opacity: 1; transform: none; }
@@ -2942,7 +2932,7 @@ button:active:not(:disabled), .btn-primary:active, .btn-secondary:active, .btn-d
   .typing-dots span:nth-child(3) { animation-delay: 0.36s !important; }
   .location-spinner, .loading-spinner { animation: spin 0.9s linear infinite !important; }
   .page-loader .wl { animation: wl-in 2.2s ease-in-out infinite !important; }
-  .page-loader.splash .wl { animation: wl-once 0.5s ease-out both !important; }
+  .page-loader.splash { transition: opacity 0.4s ease !important; }
 }
 
 /* no hard rectangular focus box after mouse/touch; keep a rounded ring for keyboard users */

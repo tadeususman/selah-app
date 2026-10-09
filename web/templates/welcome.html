@@ -19,6 +19,15 @@
     <form method="POST" action="/welcome" class="auth-form-new">
 
       <div class="auth-field">
+        <label>Mode Tampilan</label>
+        <span class="set-seg" id="welcome-mode-picker" style="display:flex;margin:6px 0 0">
+          <button type="button" class="set-seg-btn" style="flex:1" data-mode="auto" onclick="pickWelcomeMode('auto')">Ikut sistem</button>
+          <button type="button" class="set-seg-btn" style="flex:1" data-mode="light" onclick="pickWelcomeMode('light')">Terang</button>
+          <button type="button" class="set-seg-btn" style="flex:1" data-mode="dark" onclick="pickWelcomeMode('dark')">Gelap</button>
+        </span>
+      </div>
+
+      <div class="auth-field">
         <label>Tema Warna</label>
         <p style="font-size:11px;color:var(--text-muted);margin:2px 0 10px;line-height:1.4">Ketuk untuk langsung preview — halaman ini akan berubah warna.</p>
         <input type="hidden" name="theme" id="welcome-theme-input" value="default">
@@ -75,10 +84,38 @@
   </div>
 
   <script>
+    // Terang/gelap disimpan di perangkat (sama seperti Pengaturan → Tampilan → Mode).
+    var welcomeModeChosen = false;
+    function showWelcomeMode(m) {
+      document.querySelectorAll('#welcome-mode-picker .set-seg-btn').forEach(function(b) {
+        b.classList.toggle('active', b.dataset.mode === m);
+      });
+    }
+    function pickWelcomeMode(m) {
+      welcomeModeChosen = true;
+      var t = m;
+      try {
+        if (m === 'auto') {
+          localStorage.removeItem('selah-theme');
+          t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        } else {
+          localStorage.setItem('selah-theme', m);
+        }
+      } catch (e) {}
+      document.documentElement.dataset.theme = t;
+      showWelcomeMode(m);
+    }
+    (function() {
+      var saved = null;
+      try { saved = localStorage.getItem('selah-theme'); } catch (e) {}
+      showWelcomeMode(saved === 'light' || saved === 'dark' ? saved : 'auto');
+    })();
     function onWelcomeLangChange(radio) {
-      if (radio.value === 'formal') {
+      // Gaya formal memakai tampilan terang, kecuali user sudah memilih mode sendiri di halaman ini.
+      if (radio.value === 'formal' && !welcomeModeChosen) {
         localStorage.setItem('selah-theme', 'light');
         document.documentElement.dataset.theme = 'light';
+        showWelcomeMode('light');
       }
     }
     function pickWelcomeTheme(val) {

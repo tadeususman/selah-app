@@ -3014,7 +3014,8 @@ button:active:not(:disabled), .btn-primary:active, .btn-secondary:active, .btn-d
 
 /* logout / delete */
 .set-logout { justify-content: center; color: var(--danger); font-weight: 600; }
-.set-signout .set-label { color: var(--text); }
+.set-signout { justify-content: center; }
+.set-signout .set-label { color: var(--text); font-weight: 600; }
 .set-danger-zone { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--border); }
 .set-danger-zone .set-title { color: var(--danger); }
 
@@ -3277,3 +3278,5 @@ input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:foc
 [data-theme="dark"] .modal-link-btn { color: var(--text); }
 .location-pin-btn.is-off { cursor: default; opacity: .55; }
 .location-pin-btn.is-off:active { transform: none; }
+.auth-legal { margin: 12px 0 0; font-size: 12px; line-height: 1.5; text-align: center; color: var(--text-muted); }
+.auth-legal a { color: inherit; text-decoration: underline; }

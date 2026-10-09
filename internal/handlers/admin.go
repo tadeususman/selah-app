@@ -23,6 +23,26 @@ type adminUser struct {
 	Journals   int
 }
 
+type adminGuest struct {
+	ID         int64
+	CreatedAt  time.Time
+	IP         string
+	Journals   int
+	LastActive *time.Time
+	ExpiresAt  time.Time
+}
+
+// Seen is the last journal activity, or the start time if none yet.
+func (g adminGuest) Seen() *time.Time {
+	if g.LastActive != nil {
+		return g.LastActive
+	}
+	return &g.CreatedAt
+}
+
+func (g adminGuest) Started() *time.Time { return &g.CreatedAt }
+func (g adminGuest) Expires() *time.Time { return &g.ExpiresAt }
+
 type resetRequest struct {
 	UserID    int64
 	Name      string
@@ -31,6 +51,9 @@ type resetRequest struct {
 }
 
 type adminPageData struct {
+	Tab        string // "terdaftar" (default) atau "tamu"
+	GuestCount int
+	Guests     []adminGuest
 	Users      []adminUser
 	Requests   []resetRequest
 	FlashOK    string
@@ -101,7 +124,28 @@ func (a *App) AdminUsersPage(w http.ResponseWriter, r *http.Request) {
 		users = append(users, u)
 	}
 
-	data := adminPageData{Users: users}
+	data := adminPageData{Users: users, Tab: "terdaftar"}
+	_ = a.DB.QueryRowContext(r.Context(), `SELECT COUNT(*) FROM users WHERE is_guest`).Scan(&data.GuestCount)
+	if r.URL.Query().Get("tab") == "tamu" {
+		data.Tab = "tamu"
+		if gr, err := a.DB.QueryContext(r.Context(), `
+			SELECT u.id, u.created_at, COALESCE(u.guest_ip, ''), COUNT(j.id), MAX(j.created_at)
+			FROM users u LEFT JOIN journal_entries j ON j.user_id = u.id
+			WHERE u.is_guest GROUP BY u.id ORDER BY u.created_at DESC`); err == nil {
+			for gr.Next() {
+				var g adminGuest
+				if gr.Scan(&g.ID, &g.CreatedAt, &g.IP, &g.Journals, &g.LastActive) == nil {
+					// sama dengan GuestCleanupLoop: tanpa jurnal 1 hari, berjurnal 7 hari
+					g.ExpiresAt = g.CreatedAt.Add(guestIdleRetention)
+					if g.Journals > 0 {
+						g.ExpiresAt = g.CreatedAt.Add(guestRetention)
+					}
+					data.Guests = append(data.Guests, g)
+				}
+			}
+			gr.Close()
+		}
+	}
 	if rr, err := a.DB.QueryContext(r.Context(), `
 		SELECT u.id, u.name, COALESCE(u.email, u.phone, ''), MIN(p.created_at)
 		FROM password_reset_requests p JOIN users u ON u.id = p.user_id
@@ -188,6 +232,10 @@ func (a *App) AdminDeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	_, _ = a.DB.ExecContext(r.Context(), `DELETE FROM users WHERE id = $1`, targetID)
+	if r.FormValue("tab") == "tamu" {
+		http.Redirect(w, r, "/admin/users?tab=tamu&ok=deleted", http.StatusSeeOther)
+		return
+	}
 	http.Redirect(w, r, "/admin/users?ok=deleted", http.StatusSeeOther)
 }
 

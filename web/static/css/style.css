@@ -3226,3 +3226,8 @@ a.set-row { text-decoration: none; }
 .adm-reset-pw { padding: 14px 16px; }
 .adm-reset-pw .pw { margin: 8px 0; padding: 12px; border-radius: 12px; background: var(--btn-secondary-bg); text-align: center; font: 600 20px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .08em; user-select: all; color: var(--navy-dark); }
 label.set-row { font-weight: 400; font-size: 15px; }
+
+/* tab Terdaftar | Tamu di halaman Pengguna */
+.adm-tabs { display: flex; margin: 0 0 20px; }
+.adm-tabs > a { flex: 1; display: block; padding: 8px 12px; border-radius: 8px; text-align: center; text-decoration: none; font-size: 14px; color: var(--text-muted); }
+.adm-tabs > a.active { background: var(--navy); color: #fff; font-weight: 600; }

@@ -10,12 +10,48 @@
     <header class="adm-head">
       <a href="/admin" class="adm-back"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>Admin</a>
       <h1>Pengguna</h1>
-      <p class="adm-sub">{{len .Users}} terdaftar</p>
     </header>
+
+    <span class="set-seg adm-tabs" role="tablist">
+      <a href="/admin/users" role="tab" {{if eq .Tab "terdaftar"}}class="active" aria-selected="true"{{end}}>Terdaftar · {{len .Users}}</a>
+      <a href="/admin/users?tab=tamu" role="tab" {{if eq .Tab "tamu"}}class="active" aria-selected="true"{{end}}>Tamu · {{.GuestCount}}</a>
+    </span>
 
     {{if .FlashOK}}<div class="flash-ok">{{.FlashOK}}</div>{{end}}
     {{if .FlashErr}}<div class="flash-err">{{.FlashErr}}</div>{{end}}
 
+    {{if eq .Tab "tamu"}}
+    <section class="set-section">
+      <p class="set-note" style="margin:0 4px 12px">Akun sementara dari tombol Coba dulu. Tanpa email atau password. Dihapus otomatis: 1 hari jika belum menulis jurnal, 7 hari jika sudah. Mendaftar mengubahnya jadi pengguna terdaftar.</p>
+      <div class="set-group">
+        {{range .Guests}}
+        <details class="set-item">
+          <summary class="set-row">
+            <span class="set-stack">
+              <span class="set-label">Tamu #{{.ID}}</span>
+              <span class="set-sub">{{wibDateTime .Seen}}</span>
+            </span>
+            {{if .Journals}}<span class="set-pill green">{{.Journals}} jurnal</span>{{else}}<span class="set-pill">melihat-lihat</span>{{end}}
+            <svg class="set-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </summary>
+          <div class="adm-detail">
+            <span>Mulai {{wibDateTime .Started}}{{if .IP}} · IP {{.IP}}{{end}}</span>
+            <span>Dihapus otomatis {{wibDateTime .Expires}}</span>
+          </div>
+          <div class="adm-actions">
+            <form method="POST" action="/admin/users/delete" onsubmit="return confirm('Hapus tamu #{{.ID}} beserta jurnalnya?')">
+              <input type="hidden" name="user_id" value="{{.ID}}">
+              <input type="hidden" name="tab" value="tamu">
+              <button type="submit" class="adm-btn danger">Hapus</button>
+            </form>
+          </div>
+        </details>
+        {{else}}
+        <p class="adm-empty">Belum ada tamu yang mencoba.</p>
+        {{end}}
+      </div>
+    </section>
+    {{else}}
     {{if .ResetPW}}
     <section class="set-section">
       <h2 class="set-title">Password baru</h2>
@@ -107,12 +143,15 @@
       </div>
       <p id="no-user-results" class="adm-empty" style="display:none">Tidak ada pengguna yang cocok.</p>
     </section>
+    {{end}}
+
   </main>
 
   {{template "nav" .}}
 
   <script>
-    document.getElementById('user-search').addEventListener('input', function() {
+    var us = document.getElementById('user-search');
+    if (us) us.addEventListener('input', function() {
       var q = this.value.toLowerCase().trim();
       var any = false;
       document.querySelectorAll('.adm-user').forEach(function(c) {

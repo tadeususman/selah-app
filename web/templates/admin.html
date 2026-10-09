@@ -23,6 +23,15 @@
           </span>
           <svg class="set-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
         </a>
+        <a href="/admin/reports" class="set-row">
+          <svg class="set-ico" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V4"/><path d="M4 4h13l-2.5 4.5L17 13H4"/></svg>
+          <span class="set-stack">
+            <span class="set-label">Laporan AI</span>
+            <span class="set-sub">Jawaban Teman Selah yang dilaporkan</span>
+          </span>
+          {{if .OpenReports}}<span class="set-pill gold">{{.OpenReports}} baru</span>{{end}}
+          <svg class="set-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
         <a href="/admin/ai-stats" class="set-row">
           <svg class="set-ico" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
           <span class="set-stack">

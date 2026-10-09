@@ -1,0 +1,77 @@
+{{define "admin_reports.html"}}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <title>Laporan AI · Admin · selah,</title>
+  {{template "head" .}}
+</head>
+<body>
+  <main class="page">
+    <header class="adm-head">
+      <a href="/admin" class="adm-back"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>Admin</a>
+      <h1>Laporan AI</h1>
+      <p class="adm-sub">Jawaban Teman Selah yang dilaporkan pengguna.</p>
+    </header>
+
+    {{if .Flash}}<div class="flash-ok">{{.Flash}}</div>{{end}}
+
+    <section class="set-section">
+      <h2 class="set-title">Belum ditinjau · {{len .Open}}</h2>
+      <div class="set-group">
+        {{range .Open}}
+        <details class="set-item">
+          <summary class="set-row">
+            <span class="set-stack">
+              <span class="set-label">{{.Reason}}</span>
+              <span class="set-sub">{{.Reporter}} · {{wibDateTime .CreatedAt}}</span>
+            </span>
+            <svg class="set-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </summary>
+          <div class="adm-detail">
+            {{if .Note}}<div class="adm-quote-label">Catatan pelapor</div><p class="adm-quote">{{.Note}}</p>{{end}}
+            {{if .UserText}}<div class="adm-quote-label">Pertanyaan sebelumnya</div><p class="adm-quote">{{.UserText}}</p>{{end}}
+            <div class="adm-quote-label">Jawaban Teman Selah</div><p class="adm-quote">{{.AIText}}</p>
+          </div>
+          <div class="adm-actions">
+            <form method="POST" action="/admin/reports/resolve">
+              <input type="hidden" name="id" value="{{.ID}}">
+              <button type="submit" class="adm-btn">Tandai selesai</button>
+            </form>
+          </div>
+        </details>
+        {{else}}
+        <p class="adm-empty">Tidak ada laporan yang menunggu.</p>
+        {{end}}
+      </div>
+    </section>
+
+    {{if .Resolved}}
+    <section class="set-section">
+      <h2 class="set-title">Sudah ditinjau · 20 terakhir</h2>
+      <div class="set-group">
+        {{range .Resolved}}
+        <details class="set-item">
+          <summary class="set-row">
+            <span class="set-stack">
+              <span class="set-label">{{.Reason}}</span>
+              <span class="set-sub">{{.Reporter}} · {{wibDateTime .CreatedAt}}</span>
+            </span>
+            <span class="set-pill green">selesai</span>
+            <svg class="set-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </summary>
+          <div class="adm-detail">
+            {{if .Note}}<div class="adm-quote-label">Catatan pelapor</div><p class="adm-quote">{{.Note}}</p>{{end}}
+            {{if .UserText}}<div class="adm-quote-label">Pertanyaan sebelumnya</div><p class="adm-quote">{{.UserText}}</p>{{end}}
+            <div class="adm-quote-label">Jawaban Teman Selah</div><p class="adm-quote">{{.AIText}}</p>
+          </div>
+        </details>
+        {{end}}
+      </div>
+    </section>
+    {{end}}
+  </main>
+
+  {{template "nav" .}}
+</body>
+</html>
+{{end}}

@@ -72,10 +72,31 @@
         <div class="bubble {{if eq .Role "ai"}}bubble-ai{{else}}bubble-user{{end}}" data-role="{{.Role}}">
           <div class="bubble-label">{{if eq .Role "ai"}}Teman Selah{{else if eq .Role "reflection"}}Renunganku{{else}}{{if eq $.LanguageStyle "formal"}}Anda{{else}}Kamu{{end}}{{end}}</div>
           <div class="bubble-content">{{.Content}}</div>
-          <div class="bubble-time">{{msgTime .CreatedAt}}</div>
+          <div class="bubble-time">{{msgTime .CreatedAt}}{{if eq .Role "ai"}}<button type="button" class="bubble-report" data-mid="{{.ID}}" aria-label="Laporkan jawaban ini" title="Laporkan jawaban ini"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V4"/><path d="M4 4h12l-2 4 2 4H4"/></svg></button>{{end}}</div>
         </div>
       {{end}}
     </section>
+
+    <!-- Laporkan jawaban AI -->
+    <div id="report-modal" class="modal-backdrop" style="display:none" role="dialog" aria-modal="true" aria-labelledby="report-title">
+      <form id="report-form" class="modal-card report-card" novalidate>
+        <h3 id="report-title" class="modal-title">Laporkan jawaban ini</h3>
+        <p class="modal-desc" style="margin-bottom:12px">Apa yang kurang tepat dari jawaban Teman Selah?</p>
+        <input type="hidden" name="message_id" id="report-mid">
+        <div class="report-options">
+          <label><input type="radio" name="reason" value="tidak_pantas"> <span>Tidak pantas atau menyinggung</span></label>
+          <label><input type="radio" name="reason" value="keliru"> <span>Keliru (ayat, ajaran, atau fakta)</span></label>
+          <label><input type="radio" name="reason" value="tidak_nyambung"> <span>Tidak nyambung dengan pertanyaanku</span></label>
+          <label><input type="radio" name="reason" value="lainnya"> <span>Lainnya</span></label>
+        </div>
+        <textarea name="note" rows="3" maxlength="300" placeholder="Catatan (opsional)" class="report-note"></textarea>
+        <p id="report-msg" class="report-msg" role="status"></p>
+        <div class="modal-actions">
+          <button type="button" class="modal-btn-cancel" id="report-cancel">Batal</button>
+          <button type="submit" class="modal-btn-primary" id="report-send" style="border:0;cursor:pointer">Kirim laporan</button>
+        </div>
+      </form>
+    </div>
     {{end}}
 
     {{if .ShowShareCard}}
@@ -294,6 +315,42 @@
         var isLast = !b.nextElementSibling;
         b.parentNode.replaceChild(wrap, b);
         if (shouldReveal && isLast) revealGroup(wrap);
+      });
+    })();
+
+
+    // Laporkan jawaban AI
+    (function() {
+      var modal = document.getElementById('report-modal');
+      if (!modal) return;
+      var form = document.getElementById('report-form');
+      var msg = document.getElementById('report-msg');
+      var send = document.getElementById('report-send');
+      function close() { modal.style.display = 'none'; }
+      document.addEventListener('click', function(e) {
+        var btn = e.target.closest && e.target.closest('.bubble-report');
+        if (!btn) return;
+        form.reset(); msg.textContent = ''; msg.className = 'report-msg'; send.disabled = false;
+        document.getElementById('report-mid').value = btn.dataset.mid;
+        modal.style.display = 'flex';
+      });
+      form.addEventListener('change', function() { if (msg.classList.contains('err')) { msg.textContent = ''; msg.className = 'report-msg'; } });
+      document.getElementById('report-cancel').addEventListener('click', close);
+      modal.addEventListener('click', function(e) { if (e.target === modal) close(); });
+      document.addEventListener('keydown', function(e) { if (e.key === 'Escape') close(); });
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (!form.querySelector('input[name=reason]:checked')) { msg.textContent = 'Pilih salah satu alasan.'; msg.className = 'report-msg err'; return; }
+        send.disabled = true;
+        fetch('/journal/report', { method: 'POST', body: new URLSearchParams(new FormData(form)), headers: { 'Content-Type': 'application/x-www-form-urlencoded' } })
+          .then(function(r) { return r.json().then(function(j) { return { ok: r.ok, j: j }; }); })
+          .then(function(x) {
+            if (x.ok) {
+              msg.textContent = 'Terima kasih, laporanmu kami terima.'; msg.className = 'report-msg ok';
+              setTimeout(close, 1400);
+            } else { msg.textContent = (x.j && x.j.error) || 'Laporan belum bisa dikirim.'; msg.className = 'report-msg err'; send.disabled = false; }
+          })
+          .catch(function() { msg.textContent = 'Koneksi bermasalah. Coba lagi.'; msg.className = 'report-msg err'; send.disabled = false; });
       });
     })();
 

@@ -3239,3 +3239,19 @@ label.set-row { font-weight: 400; font-size: 15px; }
 .sonade-dark { display: none; }
 [data-theme="dark"] .sonade-light { display: none; }
 [data-theme="dark"] .sonade-dark { display: inline; }
+
+/* ---------- Laporkan jawaban AI ---------- */
+.bubble-report { display: inline-flex; align-items: center; vertical-align: middle; margin: -6px -6px -6px 6px; padding: 6px; border: 0; background: none; color: inherit; cursor: pointer; border-radius: 6px; }
+.bubble-report:hover, .bubble-report:focus-visible { opacity: 1; color: var(--navy); background: var(--btn-secondary-bg); }
+.report-card { max-width: 340px; text-align: left; }
+.report-card .modal-title, .report-card .modal-desc { text-align: left; }
+.report-options { display: flex; flex-direction: column; gap: 2px; margin-bottom: 12px; }
+.report-options label { display: flex; align-items: center; gap: 10px; margin: 0; padding: 10px 12px; border-radius: 10px; font-size: 14px; font-weight: 500; color: var(--text); cursor: pointer; }
+.report-options label:hover { background: var(--btn-secondary-bg); }
+.report-options input { margin: 0; accent-color: var(--navy); }
+.report-note { width: 100%; margin: 0 0 8px; padding: 12px 14px; border: none; border-radius: 12px; background: var(--btn-secondary-bg); color: var(--text); font: inherit; font-size: 14px; resize: none; }
+.report-note:focus { outline: none; box-shadow: 0 0 0 2px var(--navy); }
+.report-msg { min-height: 18px; margin: 0 0 12px; font-size: 13px; }
+.report-msg.err { color: var(--danger); } .report-msg.ok { color: #3E8E5A; font-weight: 600; }
+.adm-quote { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--btn-secondary-bg); font-size: 13px; line-height: 1.55; color: var(--text); white-space: pre-wrap; word-break: break-word; max-height: 220px; overflow: auto; }
+.adm-quote-label { margin: 10px 0 4px; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); }

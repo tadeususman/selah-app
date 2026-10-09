@@ -120,6 +120,7 @@ func main() {
 		r.Post("/journal/{id}/complete", app.JournalComplete)
 		r.Get("/journal/{id}/share-status", app.JournalShareStatus)
 		r.Post("/journal/{id}/delete", app.JournalDelete)
+		r.Post("/journal/report", app.AIReportCreate)
 
 		r.Get("/api/verse", app.VerseFetch)
 		r.With(app.BlockGuests).Get("/api/verse/search", app.VerseSearch)
@@ -157,6 +158,8 @@ func main() {
 		r.Post("/admin/users/delete", app.AdminDeleteUser)
 		r.Post("/admin/users/toggle-admin", app.AdminToggleAdmin)
 		r.Post("/admin/users/reset-password", app.AdminResetPassword)
+		r.Get("/admin/reports", app.AdminReportsPage)
+		r.Post("/admin/reports/resolve", app.AdminReportResolve)
 		r.Get("/admin/ai-stats", app.AdminAIStats)
 		r.Get("/admin/settings", app.AdminSettings)
 		r.Post("/admin/settings/test", app.AdminSettingsTest)

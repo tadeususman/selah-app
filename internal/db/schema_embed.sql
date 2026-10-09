@@ -159,3 +159,21 @@ CREATE TABLE IF NOT EXISTS app_settings (
     value      TEXT NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Laporan user atas jawaban AI (syarat kebijakan Play Store untuk konten buatan AI).
+-- Ikut terhapus bersama jurnal/akun agar data user benar-benar hilang.
+CREATE TABLE IF NOT EXISTS ai_reports (
+    id          BIGSERIAL PRIMARY KEY,
+    user_id     BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    entry_id    BIGINT NOT NULL REFERENCES journal_entries(id) ON DELETE CASCADE,
+    message_id  BIGINT NOT NULL REFERENCES journal_messages(id) ON DELETE CASCADE,
+    reason      TEXT NOT NULL,
+    note        TEXT NOT NULL DEFAULT '',
+    ai_text     TEXT NOT NULL,
+    user_text   TEXT NOT NULL DEFAULT '',
+    status      TEXT NOT NULL DEFAULT 'open',
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    reviewed_at TIMESTAMPTZ,
+    UNIQUE (user_id, message_id)
+);
+CREATE INDEX IF NOT EXISTS idx_ai_reports_status ON ai_reports (status, created_at DESC);

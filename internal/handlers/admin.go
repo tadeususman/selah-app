@@ -79,6 +79,7 @@ type adminHubData struct {
 	NewThisWeek  int
 	PendingReset int
 	GuestCount   int
+	OpenReports  int
 }
 
 func (a *App) AdminPage(w http.ResponseWriter, r *http.Request) {
@@ -90,6 +91,7 @@ func (a *App) AdminPage(w http.ResponseWriter, r *http.Request) {
 	_ = a.DB.QueryRowContext(r.Context(),
 		`SELECT COUNT(*) FROM users WHERE NOT is_guest AND created_at >= NOW() - INTERVAL '7 days'`).Scan(&data.NewThisWeek)
 	_ = a.DB.QueryRowContext(r.Context(), `SELECT COUNT(*) FROM users WHERE is_guest`).Scan(&data.GuestCount)
+	_ = a.DB.QueryRowContext(r.Context(), `SELECT COUNT(*) FROM ai_reports WHERE status = 'open'`).Scan(&data.OpenReports)
 	_ = a.DB.QueryRowContext(r.Context(),
 		`SELECT COUNT(DISTINCT user_id) FROM password_reset_requests WHERE resolved_at IS NULL`).Scan(&data.PendingReset)
 	a.render(w, "admin.html", data)

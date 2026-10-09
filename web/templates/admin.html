@@ -19,7 +19,7 @@
         </div>
         <div class="admin-hub-label">Pengguna</div>
         <div class="admin-hub-desc">
-          {{.UserCount}} pengguna terdaftar{{if .NewThisWeek}} · <span class="admin-hub-new">+{{.NewThisWeek}} minggu ini</span>{{end}}
+          {{.UserCount}} pengguna terdaftar{{if .PendingReset}} · <span class="admin-hub-new">{{.PendingReset}} minta reset password</span>{{end}}{{if .NewThisWeek}} · <span class="admin-hub-new">+{{.NewThisWeek}} minggu ini</span>{{end}}
         </div>
       </a>
       <a href="/admin/ai-stats" class="admin-hub-card">

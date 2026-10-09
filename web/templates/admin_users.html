@@ -23,6 +23,27 @@
     </div>
     {{end}}
 
+    {{if .Requests}}
+    <section class="admin-section">
+      <h3>Permintaan Reset Password ({{len .Requests}})</h3>
+      {{range .Requests}}
+      <div class="admin-user-card">
+        <div class="admin-user-info">
+          <span class="admin-user-name">{{if .Name}}{{.Name}}{{else}}<em>—</em>{{end}}</span>
+          <span class="admin-user-email">{{.Contact}}</span>
+          <span class="admin-user-meta">Diminta {{wibDateTime .CreatedAt}}</span>
+        </div>
+        <div class="admin-user-actions">
+          <form method="POST" action="/admin/users/reset-password" style="display:inline" onsubmit="return confirm('Reset password {{.Contact}}?')">
+            <input type="hidden" name="user_id" value="{{.UserID}}">
+            <button type="submit" class="btn-tiny btn-warning">Reset PW</button>
+          </form>
+        </div>
+      </div>
+      {{end}}
+    </section>
+    {{end}}
+
     <section class="admin-section">
       <h3>Tambah Pengguna</h3>
       <form method="POST" action="/admin/users/create" class="stacked-form">

@@ -23,8 +23,16 @@ type adminUser struct {
 	Journals   int
 }
 
+type resetRequest struct {
+	UserID    int64
+	Name      string
+	Contact   string
+	CreatedAt *time.Time
+}
+
 type adminPageData struct {
 	Users      []adminUser
+	Requests   []resetRequest
 	FlashOK    string
 	FlashErr   string
 	ResetEmail string
@@ -46,6 +54,7 @@ func (a *App) requireAdmin(w http.ResponseWriter, r *http.Request) bool {
 type adminHubData struct {
 	UserCount    int
 	NewThisWeek  int
+	PendingReset int
 }
 
 func (a *App) AdminPage(w http.ResponseWriter, r *http.Request) {
@@ -56,6 +65,8 @@ func (a *App) AdminPage(w http.ResponseWriter, r *http.Request) {
 	_ = a.DB.QueryRowContext(r.Context(), `SELECT COUNT(*) FROM users`).Scan(&data.UserCount)
 	_ = a.DB.QueryRowContext(r.Context(),
 		`SELECT COUNT(*) FROM users WHERE created_at >= NOW() - INTERVAL '7 days'`).Scan(&data.NewThisWeek)
+	_ = a.DB.QueryRowContext(r.Context(),
+		`SELECT COUNT(DISTINCT user_id) FROM password_reset_requests WHERE resolved_at IS NULL`).Scan(&data.PendingReset)
 	a.render(w, "admin.html", data)
 }
 
@@ -65,7 +76,7 @@ func (a *App) AdminUsersPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rows, err := a.DB.QueryContext(r.Context(), `
-		SELECT u.id, u.email, u.name, u.is_admin, u.created_at,
+		SELECT u.id, COALESCE(u.email, u.phone, ''), u.name, u.is_admin, u.created_at,
 		       COUNT(j.id) AS journals,
 		       MAX(j.created_at) AS last_active
 		FROM users u
@@ -88,6 +99,19 @@ func (a *App) AdminUsersPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := adminPageData{Users: users}
+	if rr, err := a.DB.QueryContext(r.Context(), `
+		SELECT u.id, u.name, COALESCE(u.email, u.phone, ''), MIN(p.created_at)
+		FROM password_reset_requests p JOIN users u ON u.id = p.user_id
+		WHERE p.resolved_at IS NULL
+		GROUP BY u.id ORDER BY MIN(p.created_at) ASC`); err == nil {
+		for rr.Next() {
+			var q resetRequest
+			if rr.Scan(&q.UserID, &q.Name, &q.Contact, &q.CreatedAt) == nil {
+				data.Requests = append(data.Requests, q)
+			}
+		}
+		rr.Close()
+	}
 	switch r.URL.Query().Get("ok") {
 	case "created":
 		data.FlashOK = "User berhasil ditambahkan."
@@ -179,7 +203,7 @@ func (a *App) AdminResetPassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var email string
-	_ = a.DB.QueryRowContext(r.Context(), `SELECT email FROM users WHERE id = $1`, targetID).Scan(&email)
+	_ = a.DB.QueryRowContext(r.Context(), `SELECT COALESCE(email, phone, '') FROM users WHERE id = $1`, targetID).Scan(&email)
 
 	newPw, err := generateTempPassword()
 	if err != nil {
@@ -199,6 +223,9 @@ func (a *App) AdminResetPassword(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not reset password", http.StatusInternalServerError)
 		return
 	}
+
+	_, _ = a.DB.ExecContext(r.Context(),
+		`UPDATE password_reset_requests SET resolved_at = NOW() WHERE user_id = $1 AND resolved_at IS NULL`, targetID)
 
 	http.Redirect(w, r,
 		"/admin/users?ok=reset&email="+url.QueryEscape(email)+"&newpw="+url.QueryEscape(newPw),

@@ -90,6 +90,8 @@ func main() {
 	r.Post("/login", app.LoginSubmit)
 	r.Get("/register", app.RegisterPage)
 	r.Post("/register", app.RegisterSubmit)
+	r.Get("/forgot-password", app.ForgotPage)
+	r.Post("/forgot-password", app.ForgotSubmit)
 	r.Post("/logout", app.Logout)
 
 	// authenticated routes

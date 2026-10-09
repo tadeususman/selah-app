@@ -154,3 +154,37 @@ func normalizePhone(s string) string {
 	}
 	return p
 }
+
+type forgotPageData struct {
+	Sent bool
+}
+
+func (a *App) ForgotPage(w http.ResponseWriter, r *http.Request) {
+	a.render(w, "forgot.html", forgotPageData{})
+}
+
+// ForgotSubmit records a reset request for admin to process. The response is
+// identical whether or not the account exists, so it can't be used to probe
+// which emails/phones are registered.
+func (a *App) ForgotSubmit(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "bad form", http.StatusBadRequest)
+		return
+	}
+	identifier := strings.TrimSpace(r.FormValue("identifier"))
+
+	var userID int64
+	var err error
+	if strings.Contains(identifier, "@") {
+		err = a.DB.QueryRowContext(r.Context(), `SELECT id FROM users WHERE email = $1`, identifier).Scan(&userID)
+	} else {
+		err = a.DB.QueryRowContext(r.Context(), `SELECT id FROM users WHERE phone = $1`, normalizePhone(identifier)).Scan(&userID)
+	}
+	if err == nil {
+		_, _ = a.DB.ExecContext(r.Context(), `
+			INSERT INTO password_reset_requests (user_id)
+			SELECT $1 WHERE NOT EXISTS (
+				SELECT 1 FROM password_reset_requests WHERE user_id = $1 AND resolved_at IS NULL)`, userID)
+	}
+	a.render(w, "forgot.html", forgotPageData{Sent: true})
+}

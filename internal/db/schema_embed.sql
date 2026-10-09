@@ -138,3 +138,12 @@ ALTER TABLE plans ADD COLUMN IF NOT EXISTS location     TEXT;
 ALTER TABLE plans ADD COLUMN IF NOT EXISTS latitude     DOUBLE PRECISION;
 ALTER TABLE plans ADD COLUMN IF NOT EXISTS longitude    DOUBLE PRECISION;
 ALTER TABLE plans ADD COLUMN IF NOT EXISTS share_summary TEXT;
+
+-- Permintaan reset password dari user ("Lupa password"); diproses manual oleh admin.
+CREATE TABLE IF NOT EXISTS password_reset_requests (
+    id          BIGSERIAL PRIMARY KEY,
+    user_id     BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    resolved_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_pw_reset_pending ON password_reset_requests (user_id) WHERE resolved_at IS NULL;

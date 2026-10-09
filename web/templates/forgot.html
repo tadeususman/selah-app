@@ -1,0 +1,35 @@
+{{define "forgot.html"}}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <title>selah, — Lupa Password</title>
+  {{template "head" .}}
+</head>
+<body class="auth-body">
+
+  <div class="auth-top">
+    <h1 class="auth-wordmark">{{template "wordmark-svg"}}</h1>
+    <p class="auth-tagline">ruang jeda untuk merenung.</p>
+  </div>
+
+  <div class="auth-sheet">
+    <h2 class="auth-sheet-title">Lupa Password</h2>
+
+    {{if .Sent}}
+    <p class="form-info">Permintaan terkirim. Jika akun ditemukan, admin akan menghubungi kamu dan memberikan password sementara.</p>
+    <p class="auth-switch"><a href="/login">Kembali ke Masuk</a></p>
+    {{else}}
+    <form method="POST" action="/forgot-password" class="auth-form-new">
+      <div class="auth-field">
+        <label for="identifier">Email atau Nomor HP</label>
+        <input id="identifier" type="text" name="identifier" required autofocus autocomplete="username" placeholder="cth: nama@email.com atau 081234567890" inputmode="text">
+        <span class="auth-field-hint">Admin akan menerima permintaanmu lalu mengirimkan password sementara.</span>
+      </div>
+      <button type="submit" class="auth-btn">Minta Reset Password</button>
+    </form>
+    <p class="auth-switch"><a href="/login">Kembali ke Masuk</a></p>
+    {{end}}
+  </div>
+</body>
+</html>
+{{end}}

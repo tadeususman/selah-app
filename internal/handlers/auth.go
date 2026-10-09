@@ -59,6 +59,7 @@ func (a *App) LoginSubmit(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not start session", http.StatusInternalServerError)
 		return
 	}
+	clearGuestCookie(w) // sisa sesi "Coba dulu" jangan memunculkan banner di akun asli
 	if !onboarded {
 		http.Redirect(w, r, "/welcome", http.StatusSeeOther)
 		return
@@ -136,6 +137,7 @@ func (a *App) RegisterSubmit(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/login?registered=1", http.StatusSeeOther)
 		return
 	}
+	clearGuestCookie(w)
 	http.Redirect(w, r, "/welcome", http.StatusSeeOther)
 }
 

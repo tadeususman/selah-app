@@ -1,0 +1,45 @@
+{{define "simpan.html"}}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <title>selah, — Simpan Jurnalmu</title>
+  {{template "head" .}}
+</head>
+<body class="auth-body">
+
+  <div class="auth-top">
+    <h1 class="auth-wordmark">{{template "wordmark-svg"}}</h1>
+    <p class="auth-tagline">ruang jeda untuk merenung.</p>
+  </div>
+
+  <div class="auth-sheet">
+    <h2 class="auth-sheet-title">Simpan jurnalmu</h2>
+
+    {{if .Error}}<p class="form-error">{{.Error}}</p>{{end}}
+    {{if .Info}}<p class="form-info">{{.Info}}</p>{{else}}<p class="auth-lead">Buat akun gratis, tanpa biaya, supaya jurnal yang sudah kamu tulis tidak hilang dan bisa dibuka di perangkat lain.</p>{{end}}
+
+    <form method="POST" action="/simpan" class="auth-form-new">
+      <div class="auth-field">
+        <label for="name">Nama</label>
+        <input id="name" type="text" name="name" autocomplete="name" value="{{.Name}}">
+      </div>
+      <div class="auth-field">
+        <label for="identifier">Email atau Nomor HP</label>
+        <input id="identifier" type="text" name="identifier" required autocomplete="username" placeholder="cth: nama@email.com atau 081234567890" inputmode="text">
+      </div>
+      <div class="auth-field">
+        <label for="password">Password</label>
+        <input id="password" type="password" name="password" required autocomplete="new-password" minlength="8">
+        <span class="auth-field-hint">Minimal 8 karakter.</span>
+      </div>
+      <button type="submit" class="auth-btn">Simpan &amp; Buat Akun Gratis</button>
+    </form>
+
+    <p class="auth-switch"><a href="/dashboard">Kembali</a></p>
+    <form method="POST" action="/logout" class="auth-switch" onsubmit="return confirm('Keluar akan menghapus jurnal coba kamu. Lanjutkan?')">
+      <button type="submit" class="auth-link-btn">Keluar dan hapus data coba</button>
+    </form>
+  </div>
+</body>
+</html>
+{{end}}

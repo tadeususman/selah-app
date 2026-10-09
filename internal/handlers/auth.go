@@ -67,6 +67,11 @@ func (a *App) LoginSubmit(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) Logout(w http.ResponseWriter, r *http.Request) {
+	// Keluar dari akun tamu menghapus data cobanya (tidak ada cara masuk kembali).
+	if uid, ok := a.Sessions.UserID(r); ok && a.isGuest(r.Context(), uid) {
+		_, _ = a.DB.ExecContext(r.Context(), `DELETE FROM users WHERE id = $1 AND is_guest`, uid)
+	}
+	clearGuestCookie(w)
 	a.Sessions.Destroy(w, r)
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }

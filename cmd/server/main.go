@@ -92,6 +92,8 @@ func main() {
 	r.Post("/login", app.LoginSubmit)
 	r.Get("/register", app.RegisterPage)
 	r.Post("/register", app.RegisterSubmit)
+	r.Get("/coba", app.GuestPage)
+	r.Post("/coba", app.GuestStart)
 	r.Get("/forgot-password", app.ForgotPage)
 	r.Post("/forgot-password", app.ForgotSubmit)
 	r.Post("/logout", app.Logout)
@@ -102,6 +104,9 @@ func main() {
 
 		r.Get("/welcome", app.WelcomePage)
 		r.Post("/welcome", app.WelcomeSubmit)
+
+		r.Get("/simpan", app.GuestUpgradePage)
+		r.Post("/simpan", app.GuestUpgradeSubmit)
 
 		r.Get("/dashboard", app.Dashboard)
 
@@ -117,28 +122,34 @@ func main() {
 		r.Post("/journal/{id}/delete", app.JournalDelete)
 
 		r.Get("/api/verse", app.VerseFetch)
-		r.Get("/api/verse/search", app.VerseSearch)
+		r.With(app.BlockGuests).Get("/api/verse/search", app.VerseSearch)
 		r.Post("/api/verse/recommend", app.VerseRecommend)
 
-		r.Get("/plan", app.PlanList)
-		r.Get("/plan/new", app.PlanNew)
-		r.Post("/plan", app.PlanCreate)
-		r.Get("/plan/{id}", app.PlanDetail)
-		r.Get("/plan/{id}/final-status", app.PlanFinalStatus)
-		r.Post("/plan/{id}/regenerate-final", app.PlanRegenerateFinal)
-		r.Post("/plan/{id}/generate-share-summary", app.PlanGenerateShareSummary)
-		r.Post("/plan/{id}/rename", app.PlanRename)
-		r.Post("/plan/{id}/day/{day}/regenerate-intro", app.PlanRegenerateIntro)
-		r.Post("/plan/{id}/delete", app.PlanDelete)
+		r.Group(func(r chi.Router) {
+			r.Use(app.BlockGuests)
+			r.Get("/plan", app.PlanList)
+			r.Get("/plan/new", app.PlanNew)
+			r.Post("/plan", app.PlanCreate)
+			r.Get("/plan/{id}", app.PlanDetail)
+			r.Get("/plan/{id}/final-status", app.PlanFinalStatus)
+			r.Post("/plan/{id}/regenerate-final", app.PlanRegenerateFinal)
+			r.Post("/plan/{id}/generate-share-summary", app.PlanGenerateShareSummary)
+			r.Post("/plan/{id}/rename", app.PlanRename)
+			r.Post("/plan/{id}/day/{day}/regenerate-intro", app.PlanRegenerateIntro)
+			r.Post("/plan/{id}/delete", app.PlanDelete)
+		})
 
-		r.Get("/user", app.UserPage)
-		r.Post("/user/email", app.UserUpdateEmail)
-		r.Post("/user/name", app.UserUpdateName)
-		r.Post("/user/password", app.UserUpdatePassword)
-		r.Post("/user/prefs", app.UserUpdatePrefs)
-		r.Post("/user/language", app.UserUpdateLanguage)
-		r.Post("/user/theme", app.UserUpdateTheme)
-		r.Post("/user/delete", app.UserDeleteAccount)
+		r.Group(func(r chi.Router) {
+			r.Use(app.BlockGuests)
+			r.Get("/user", app.UserPage)
+			r.Post("/user/email", app.UserUpdateEmail)
+			r.Post("/user/name", app.UserUpdateName)
+			r.Post("/user/password", app.UserUpdatePassword)
+			r.Post("/user/prefs", app.UserUpdatePrefs)
+			r.Post("/user/language", app.UserUpdateLanguage)
+			r.Post("/user/theme", app.UserUpdateTheme)
+			r.Post("/user/delete", app.UserDeleteAccount)
+		})
 
 		r.Get("/admin", app.AdminPage)
 		r.Get("/admin/users", app.AdminUsersPage)
@@ -151,6 +162,8 @@ func main() {
 		r.Post("/admin/settings/test", app.AdminSettingsTest)
 		r.Get("/admin/server", app.AdminServerStatus)
 	})
+
+	go app.GuestCleanupLoop()
 
 	log.Printf("JournalFlow listening on :%s", cfg.AppPort)
 	if err := http.ListenAndServe(":"+cfg.AppPort, r); err != nil {

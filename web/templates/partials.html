@@ -14,7 +14,7 @@
 <link rel="manifest" href="/static/manifest.json">
 {{template "page-loader-tpl"}}
 <link rel="preload" as="image" href="/static/logo-animated-dark.svg?v=2">
-<link rel="stylesheet" href="/static/css/style.css?v=135">
+<link rel="stylesheet" href="/static/css/style.css?v=138">
 <script>
   (function() {
     var saved = localStorage.getItem('selah-theme');
@@ -154,6 +154,15 @@
 </nav>
 
 <script>
+  // Spanduk akun tamu ("Coba dulu"). Cookie jf_guest hanya petunjuk tampilan;
+  // pembatasan sebenarnya dicek di server.
+  if (/(?:^|; )jf_guest=1/.test(document.cookie)) {
+    var gb = document.createElement('a');
+    gb.className = 'guest-bar';
+    gb.href = '/simpan';
+    gb.textContent = 'Mode coba · Daftar gratis untuk menyimpan →';
+    document.body.insertBefore(gb, document.body.firstChild);
+  }
   document.querySelectorAll('.nav-item[data-path]').forEach(function(el) {
     if (window.location.pathname.startsWith(el.dataset.path)) {
       el.classList.add('active');

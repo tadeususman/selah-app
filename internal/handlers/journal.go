@@ -233,6 +233,15 @@ func (a *App) JournalCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if a.isGuest(r.Context(), userID) {
+		var total int
+		_ = a.DB.QueryRowContext(r.Context(), `SELECT COUNT(*) FROM journal_entries WHERE user_id = $1`, userID).Scan(&total)
+		if total >= guestMaxJournals {
+			http.Redirect(w, r, "/simpan?from=journal", http.StatusSeeOther)
+			return
+		}
+	}
+
 	verseRef := r.FormValue("verse_ref")
 	verseText := r.FormValue("verse_text")
 	location := r.FormValue("location")
@@ -464,6 +473,16 @@ func (a *App) JournalDiscuss(w http.ResponseWriter, r *http.Request) {
 	if question == "" {
 		http.Redirect(w, r, "/journal/"+strconv.FormatInt(entry.ID, 10), http.StatusSeeOther)
 		return
+	}
+	if a.isGuest(r.Context(), userID) {
+		var chats int
+		_ = a.DB.QueryRowContext(r.Context(), `
+			SELECT COUNT(*) FROM journal_messages m JOIN journal_entries e ON e.id = m.entry_id
+			WHERE e.user_id = $1 AND m.role = 'user'`, userID).Scan(&chats)
+		if chats >= guestMaxChats {
+			http.Redirect(w, r, "/simpan?from=chat", http.StatusSeeOther)
+			return
+		}
 	}
 	if utf8.RuneCountInString(question) > 500 {
 		http.Error(w, "Pesan terlalu panjang (maksimal 500 karakter)", http.StatusBadRequest)

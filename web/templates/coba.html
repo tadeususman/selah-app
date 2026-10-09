@@ -1,0 +1,36 @@
+{{define "coba.html"}}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <title>selah, — Coba dulu</title>
+  {{template "head" .}}
+</head>
+<body class="auth-body">
+
+  <div class="auth-top">
+    <h1 class="auth-wordmark">{{template "wordmark-svg"}}</h1>
+    <p class="auth-tagline">ruang jeda untuk merenung.</p>
+  </div>
+
+  <div class="auth-sheet">
+    <h2 class="auth-sheet-title">Coba dulu</h2>
+
+    {{if .Error}}<p class="form-error">{{.Error}}</p>{{end}}
+
+    <p class="auth-lead">Rasakan sendiri satu sesi teduh bersama Teman Selah, tanpa perlu mendaftar.</p>
+    <ul class="auth-points">
+      <li>Tulis satu jurnal lengkap dengan ayat pilihanmu</li>
+      <li>Berdiskusi dengan Teman Selah tentang ayatnya</li>
+      <li>Suka? Daftar kapan saja, <strong>gratis</strong>, dan jurnalmu ikut tersimpan</li>
+    </ul>
+
+    <form method="POST" action="/coba" class="auth-form-new">
+      <button type="submit" class="auth-btn">Mulai Mencoba</button>
+    </form>
+    <p class="auth-hint-note">Mencoba dan mendaftar sama-sama gratis, tanpa kartu kredit. Data coba otomatis dihapus setelah 7 hari jika tidak didaftarkan.</p>
+
+    <p class="auth-switch">Sudah punya akun? <a href="/login">Masuk</a> · <a href="/register">Daftar</a></p>
+  </div>
+</body>
+</html>
+{{end}}

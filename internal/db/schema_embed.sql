@@ -147,3 +147,8 @@ CREATE TABLE IF NOT EXISTS password_reset_requests (
     resolved_at TIMESTAMPTZ
 );
 CREATE INDEX IF NOT EXISTS idx_pw_reset_pending ON password_reset_requests (user_id) WHERE resolved_at IS NULL;
+
+-- Akun tamu ("Coba dulu"): tanpa email/password, dihapus otomatis setelah 7 hari kecuali didaftarkan.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_guest BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS guest_ip TEXT;
+CREATE INDEX IF NOT EXISTS idx_users_guest ON users (created_at) WHERE is_guest;

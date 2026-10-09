@@ -55,6 +55,7 @@ type adminHubData struct {
 	UserCount    int
 	NewThisWeek  int
 	PendingReset int
+	GuestCount   int
 }
 
 func (a *App) AdminPage(w http.ResponseWriter, r *http.Request) {
@@ -62,9 +63,10 @@ func (a *App) AdminPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var data adminHubData
-	_ = a.DB.QueryRowContext(r.Context(), `SELECT COUNT(*) FROM users`).Scan(&data.UserCount)
+	_ = a.DB.QueryRowContext(r.Context(), `SELECT COUNT(*) FROM users WHERE NOT is_guest`).Scan(&data.UserCount)
 	_ = a.DB.QueryRowContext(r.Context(),
-		`SELECT COUNT(*) FROM users WHERE created_at >= NOW() - INTERVAL '7 days'`).Scan(&data.NewThisWeek)
+		`SELECT COUNT(*) FROM users WHERE NOT is_guest AND created_at >= NOW() - INTERVAL '7 days'`).Scan(&data.NewThisWeek)
+	_ = a.DB.QueryRowContext(r.Context(), `SELECT COUNT(*) FROM users WHERE is_guest`).Scan(&data.GuestCount)
 	_ = a.DB.QueryRowContext(r.Context(),
 		`SELECT COUNT(DISTINCT user_id) FROM password_reset_requests WHERE resolved_at IS NULL`).Scan(&data.PendingReset)
 	a.render(w, "admin.html", data)
@@ -81,6 +83,7 @@ func (a *App) AdminUsersPage(w http.ResponseWriter, r *http.Request) {
 		       MAX(j.created_at) AS last_active
 		FROM users u
 		LEFT JOIN journal_entries j ON j.user_id = u.id
+		WHERE NOT u.is_guest
 		GROUP BY u.id
 		ORDER BY u.created_at ASC`)
 	if err != nil {

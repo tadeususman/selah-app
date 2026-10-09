@@ -3097,3 +3097,26 @@ button:active:not(:disabled), .btn-primary:active, .btn-secondary:active, .btn-d
   font-weight: 700;
   line-height: 1.4;
 }
+
+/* ---------- Akun tamu ("Coba dulu") ---------- */
+.guest-bar {
+  display: block;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  padding: 8px 16px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--navy-dark, #1E3050);
+  background: var(--gold-light, #FFF7E6);
+  border-bottom: 1px solid var(--border);
+}
+[data-theme="dark"] .guest-bar { color: var(--gold); background: #2A2418; }
+.auth-lead { font-size: 14px; line-height: 1.6; color: var(--text-muted); margin-bottom: 14px; }
+.auth-points { list-style: none; padding: 0; margin: 0 0 18px; }
+.auth-points li { position: relative; padding-left: 20px; margin-bottom: 8px; font-size: 14px; line-height: 1.5; }
+.auth-points li::before { content: ""; position: absolute; left: 4px; top: 8px; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
+.auth-hint-note { text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 10px; }
+.auth-link-btn { background: none; border: 0; padding: 0; font: inherit; font-size: 13px; color: var(--text-muted); text-decoration: underline; cursor: pointer; }

@@ -527,7 +527,7 @@
 
     document.getElementById('loc-btn').addEventListener('click', function() {
       if (!navigator.geolocation) {
-        document.getElementById('location-input').placeholder = 'Geolokasi tidak didukung';
+        var h0 = document.getElementById('loc-hint'); h0.textContent = 'Geolokasi tidak didukung di perangkat ini.'; h0.hidden = false;
         return;
       }
       var icon = document.getElementById('loc-icon');
@@ -558,7 +558,7 @@
               document.getElementById('location-input').value = name;
             })
             .catch(function() {
-              document.getElementById('location-input').placeholder = 'Gagal mendapatkan nama lokasi';
+              var h1 = document.getElementById('loc-hint'); h1.textContent = 'Gagal mendapatkan nama lokasi. Isi manual.'; h1.hidden = false;
             })
             .finally(function() {
               icon.style.display = 'block';
@@ -578,12 +578,11 @@
           document.getElementById('loc-btn').disabled = false;
           // 1 = izin ditolak, 2 = lokasi tidak tersedia (lokasi HP mati / penyedia lokasi gagal), 3 = kelamaan
           var code = err && err.code;
-          var short_ = code === 1 ? 'Izin lokasi ditolak [1]' : code === 3 ? 'Lokasi terlalu lama [3]' : 'Lokasi tidak tersedia [2]';
-          var hint = code === 1 ? 'Buka Pengaturan HP \u2192 Aplikasi \u2192 selah, \u2192 Izin \u2192 Lokasi. Pilih \u201cHanya saat aplikasi digunakan\u201d dan nyalakan \u201cGunakan lokasi tepat\u201d.'
-                   : code === 3 ? 'Coba lagi di tempat terbuka.'
-                   : 'Pastikan Lokasi HP menyala, lalu coba lagi.';
-          document.getElementById('location-input').placeholder = short_;
-          var lh = document.getElementById('loc-hint'); lh.textContent = hint; lh.hidden = false;
+          var short_ = code === 1 ? 'Izin ditolak [1]' : code === 3 ? 'Terlalu lama [3]' : 'Lokasi gagal [2]';
+          var hint = code === 1 ? 'Pengaturan HP \u2192 Aplikasi \u2192 Selah \u2192 Izin \u2192 Lokasi \u2192 Izinkan.'
+                   : code === 3 ? 'Coba di tempat terbuka.'
+                   : 'Nyalakan Lokasi HP, coba lagi.';
+          var lh = document.getElementById('loc-hint'); lh.textContent = short_ + '. ' + hint; lh.hidden = false;
       };
       navigator.geolocation.getCurrentPosition(onOk, onErr, { timeout: 15000, maximumAge: 60000 });
     });

@@ -572,7 +572,8 @@
           var msg = err && err.code === 1 ? 'Izin lokasi ditolak. Aktifkan di Pengaturan HP.'
                   : err && err.code === 3 ? 'Lokasi terlalu lama. Coba lagi.'
                   : 'Lokasi tidak tersedia. Pastikan lokasi HP aktif.';
-          document.getElementById('location-input').placeholder = msg;
+          // kode asli (1/2/3) ikut ditampilkan agar mudah dilaporkan saat ada masalah di HP tertentu
+          document.getElementById('location-input').placeholder = msg + (err && err.code ? ' [kode ' + err.code + ']' : '');
         },
         { timeout: 15000, maximumAge: 60000 }
       );

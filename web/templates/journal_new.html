@@ -535,8 +535,8 @@
       spinner.style.display = 'block';
       this.disabled = true;
 
-      navigator.geolocation.getCurrentPosition(
-        function(pos) {
+      var retried = false;
+      var onOk = function(pos) {
           var lat = pos.coords.latitude, lon = pos.coords.longitude;
           document.getElementById('lat-input').value = lat;
           document.getElementById('lon-input').value = lon;
@@ -563,8 +563,14 @@
               spinner.style.display = 'none';
               document.getElementById('loc-btn').disabled = false;
             });
-        },
-        function(err) {
+        };
+      var onErr = function(err) {
+          // Di TWA/Android jalur "seimbang" kadang gagal (kode 2/3); coba sekali lagi dengan GPS akurasi tinggi.
+          if (!retried && err && err.code !== 1) {
+            retried = true;
+            navigator.geolocation.getCurrentPosition(onOk, onErr, { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 });
+            return;
+          }
           icon.style.display = 'block';
           spinner.style.display = 'none';
           document.getElementById('loc-btn').disabled = false;
@@ -574,9 +580,8 @@
                   : 'Lokasi tidak tersedia. Pastikan lokasi HP aktif.';
           // kode asli (1/2/3) ikut ditampilkan agar mudah dilaporkan saat ada masalah di HP tertentu
           document.getElementById('location-input').placeholder = msg + (err && err.code ? ' [kode ' + err.code + ']' : '');
-        },
-        { timeout: 15000, maximumAge: 60000 }
-      );
+      };
+      navigator.geolocation.getCurrentPosition(onOk, onErr, { timeout: 15000, maximumAge: 60000 });
     });
   </script>
 </body>

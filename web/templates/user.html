@@ -22,6 +22,10 @@
         <div class="set-name">{{if .Name}}{{.Name}}{{else}}Pengguna{{end}}</div>
         <div class="set-mail">{{if .Email}}{{.Email}}{{else}}Belum ada email{{end}}</div>
       </div>
+      <button type="button" class="set-profile-logout" onclick="document.getElementById('logout-modal').style.display='flex'">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+        Logout
+      </button>
     </section>
 
     <!-- Akun -->
@@ -188,15 +192,16 @@
             <button type="button" class="set-seg-btn" data-chat="type" onclick="setChatStyle('type')">Ketik</button>
           </span>
         </div>
-      </div>
-      <p class="set-note">Blok: satu gelembung utuh. Chat: balasan atas pertanyaanmu dipecah per paragraf. Ketik: seperti Chat, tapi muncul satu per satu seperti sedang mengetik. Renungan awal selalu satu gelembung.</p>
-    </section>
 
-    <!-- Keluar -->
-    <section class="set-section">
-      <div class="set-group">
-        <button type="button" class="set-row set-logout" onclick="document.getElementById('logout-modal').style.display='flex'">Logout</button>
+        <div class="set-row set-row-static">
+          <span class="set-label">Deteksi lokasi otomatis</span>
+          <span class="set-seg" id="autoloc-picker">
+            <button type="button" class="set-seg-btn" data-autoloc="on" onclick="setAutoLoc('on')">Aktif</button>
+            <button type="button" class="set-seg-btn" data-autoloc="off" onclick="setAutoLoc('off')">Mati</button>
+          </span>
+        </div>
       </div>
+      <p class="set-note">Blok: satu gelembung utuh. Chat: balasan atas pertanyaanmu dipecah per paragraf. Ketik: seperti Chat, tapi muncul satu per satu seperti sedang mengetik. Renungan awal selalu satu gelembung. Deteksi lokasi otomatis berlaku di perangkat ini saja; kalau dimatikan, lokasi diisi manual.</p>
     </section>
 
     <div id="logout-modal" class="modal-backdrop" style="display:none" onclick="if(event.target===this)this.style.display='none'">
@@ -211,7 +216,8 @@
     </div>
     <form id="logout-form" action="/logout" method="POST" style="display:none"></form>
 
-    <section class="set-section">
+    <section class="set-section set-danger-zone">
+      <h2 class="set-title">Zona berbahaya</h2>
       <div class="set-group">
         <button type="button" class="set-row set-logout" onclick="document.getElementById('delete-account-modal').style.display='flex'">Hapus akun</button>
       </div>
@@ -554,6 +560,20 @@
     try { cur = localStorage.getItem('selah-chatstyle') || 'chat'; } catch (e) {}
     document.querySelectorAll('#chat-style-picker .set-seg-btn').forEach(function(b) {
       b.classList.toggle('active', b.dataset.chat === cur);
+    });
+  })();
+  // Deteksi lokasi otomatis (localStorage only, per perangkat)
+  function setAutoLoc(v) {
+    try { localStorage.setItem('selah-autoloc', v); } catch (e) {}
+    document.querySelectorAll('#autoloc-picker .set-seg-btn').forEach(function(b) {
+      b.classList.toggle('active', b.dataset.autoloc === v);
+    });
+  }
+  (function() {
+    var cur = 'on';
+    try { cur = localStorage.getItem('selah-autoloc') || 'on'; } catch (e) {}
+    document.querySelectorAll('#autoloc-picker .set-seg-btn').forEach(function(b) {
+      b.classList.toggle('active', b.dataset.autoloc === cur);
     });
   })();
   (function() {

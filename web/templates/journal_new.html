@@ -526,17 +526,25 @@
     {{end}}
 
     // Pesan kesalahan lokasi dalam popup (rapi di layar HP, tidak terpotong)
-    function showLocError(title, desc) {
+    function showLocError(title, desc, offer) {
       var m = document.createElement('div');
       m.className = 'modal-backdrop';
       m.innerHTML = '<div class="modal-card" role="alertdialog" aria-modal="true">' +
         '<h3 class="modal-title"></h3><p class="modal-desc"></p>' +
-        '<div class="modal-actions"><button type="button" class="modal-btn-primary">Mengerti</button></div></div>';
+        '<div class="modal-actions">' + (offer ? '<button type="button" class="modal-btn-cancel" data-off>Matikan deteksi</button>' : '') +
+        '<button type="button" class="modal-btn-primary" data-ok>Mengerti</button></div></div>';
       m.querySelector('.modal-title').textContent = title;
       m.querySelector('.modal-desc').textContent = desc;
       var close = function() { m.remove(); };
       m.addEventListener('click', function(e) { if (e.target === m) close(); });
-      m.querySelector('button').addEventListener('click', close);
+      m.querySelector('[data-ok]').addEventListener('click', close);
+      var offBtn = m.querySelector('[data-off]');
+      if (offBtn) offBtn.addEventListener('click', function() {
+        try { localStorage.setItem('selah-autoloc', 'off'); } catch (e) {}
+        document.getElementById('loc-btn').hidden = true;
+        var ab = document.querySelector('.location-auto-btn'); if (ab) ab.hidden = true;
+        close();
+      });
       document.body.appendChild(m);
     }
 
@@ -546,7 +554,9 @@
         document.getElementById('loc-btn').hidden = !on;
         var ab = document.querySelector('.location-auto-btn'); if (ab) ab.hidden = !on;
       };
-      if (!navigator.geolocation) { setAuto(false); return; }
+      var off = false;
+      try { off = localStorage.getItem('selah-autoloc') === 'off'; } catch (e) {}
+      if (off || !navigator.geolocation) { setAuto(false); return; }
       try {
         navigator.permissions.query({ name: 'geolocation' }).then(function(p) {
           setAuto(p.state !== 'denied');
@@ -609,7 +619,7 @@
           var code = err && err.code;
           if (code === 1) showLocError('Izin lokasi ditolak', 'Buka Pengaturan HP \u2192 Aplikasi \u2192 Selah \u2192 Izin \u2192 Lokasi \u2192 Izinkan. Jika sudah diizinkan tapi tetap gagal, jadikan Chrome sebagai browser default (Brave dan beberapa browser lain tidak mendukung).');
           else if (code === 3) showLocError('Lokasi terlalu lama', 'Lokasi belum didapat. Coba lagi di tempat terbuka.');
-          else showLocError('Lokasi tidak tersedia', 'Nyalakan Lokasi di HP, lalu coba lagi.');
+          else showLocError('Lokasi tidak tersedia', 'Nyalakan Lokasi di HP, lalu coba lagi. Kalau tetap gagal, kamu bisa mematikan deteksi otomatis dan mengetik lokasinya sendiri.', true);
       };
       navigator.geolocation.getCurrentPosition(onOk, onErr, { timeout: 15000, maximumAge: 60000 });
     });

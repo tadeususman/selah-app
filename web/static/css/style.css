@@ -2947,7 +2947,10 @@ button:active:not(:disabled), .btn-primary:active, .btn-secondary:active, .btn-d
    ===================================================================== */
 .set-profile { display: flex; align-items: center; gap: 14px; margin: 0 0 24px; }
 .set-avatar { width: 56px; height: 56px; flex-shrink: 0; border-radius: 50%; display: grid; place-items: center; background: var(--navy); color: #fff; font-size: 24px; font-weight: 700; }
-.set-who { min-width: 0; }
+.set-who { min-width: 0; flex: 1; }
+.set-profile-logout { flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; margin: 0; padding: 8px 12px; border: 1px solid var(--border); border-radius: 999px; background: none; font: inherit; font-size: 13px; font-weight: 600; color: var(--navy); cursor: pointer; }
+.set-profile-logout:active { opacity: .6; }
+[data-theme="dark"] .set-profile-logout { color: var(--text); }
 .set-name { font-size: 19px; font-weight: 700; letter-spacing: -0.02em; color: var(--navy-dark); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .set-mail { margin-top: 2px; font-size: 13px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -3014,6 +3017,8 @@ button:active:not(:disabled), .btn-primary:active, .btn-secondary:active, .btn-d
 
 /* logout / delete */
 .set-logout { justify-content: center; color: var(--danger); font-weight: 600; }
+.set-danger-zone { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--border); }
+.set-danger-zone .set-title { color: var(--danger); }
 
 /* ---------- Sticky header (dashboard, journal list) ---------- */
 .sticky-top {

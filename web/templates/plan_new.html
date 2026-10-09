@@ -32,6 +32,7 @@
         <input type="text" id="location-input" name="location" class="location-input" placeholder="Lokasi (opsional)" maxlength="200" autocomplete="off" autocapitalize="words">
         <button type="button" class="location-auto-btn" onclick="document.getElementById('loc-btn').click()">Deteksi otomatis</button>
       </div>
+      <p id="loc-hint" class="loc-hint" hidden></p>
 
       <label for="situation">Ceritamu</label>
       <textarea name="situation" id="situation" rows="7"
@@ -110,6 +111,7 @@
       this.disabled = true;
 
       var retried = false;
+      var locHint = document.getElementById('loc-hint'); locHint.hidden = true; locHint.textContent = '';
       var onOk = function(pos) {
           var lat = pos.coords.latitude, lon = pos.coords.longitude;
           document.getElementById('lat-input').value = lat;
@@ -148,12 +150,14 @@
           icon.style.display = 'block';
           spinner.style.display = 'none';
           document.getElementById('loc-btn').disabled = false;
-          // 1 = izin ditolak, 2 = lokasi tidak tersedia (GPS/lokasi HP mati), 3 = kelamaan
-          var msg = err && err.code === 1 ? 'Izin lokasi ditolak. Aktifkan di Pengaturan HP.'
-                  : err && err.code === 3 ? 'Lokasi terlalu lama. Coba lagi.'
-                  : 'Lokasi tidak tersedia. Pastikan lokasi HP aktif.';
-          // kode asli (1/2/3) ikut ditampilkan agar mudah dilaporkan saat ada masalah di HP tertentu
-          document.getElementById('location-input').placeholder = msg + (err && err.code ? ' [kode ' + err.code + ']' : '');
+          // 1 = izin ditolak, 2 = lokasi tidak tersedia (lokasi HP mati / penyedia lokasi gagal), 3 = kelamaan
+          var code = err && err.code;
+          var short_ = code === 1 ? 'Izin lokasi ditolak [1]' : code === 3 ? 'Lokasi terlalu lama [3]' : 'Lokasi tidak tersedia [2]';
+          var hint = code === 1 ? 'Buka Pengaturan HP \u2192 Aplikasi \u2192 selah, \u2192 Izin \u2192 Lokasi. Pilih \u201cHanya saat aplikasi digunakan\u201d dan nyalakan \u201cGunakan lokasi tepat\u201d.'
+                   : code === 3 ? 'Coba lagi di tempat terbuka.'
+                   : 'Pastikan Lokasi HP menyala, lalu coba lagi.';
+          document.getElementById('location-input').placeholder = short_;
+          var lh = document.getElementById('loc-hint'); lh.textContent = hint; lh.hidden = false;
       };
       navigator.geolocation.getCurrentPosition(onOk, onErr, { timeout: 15000, maximumAge: 60000 });
     });

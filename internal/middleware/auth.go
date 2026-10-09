@@ -21,6 +21,7 @@ func RequireAuth(sm *session.Manager) func(http.Handler) http.Handler {
 				http.Redirect(w, r, "/login", http.StatusSeeOther)
 				return
 			}
+			sm.Refresh(w, r)
 			ctx := context.WithValue(r.Context(), userIDKey, userID)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})

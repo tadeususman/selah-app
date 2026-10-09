@@ -17,8 +17,16 @@ import (
 
 const (
 	CookieName = "jf_session"
-	ttl        = 30 * 24 * time.Hour // 30 days — this is a personal app
+	ttl        = 90 * 24 * time.Hour  // idle lifetime; extended while the user stays active
+	maxAge     = 180 * 24 * time.Hour // hard cap from login, so a stolen cookie can't live forever
+	refreshGap = 24 * time.Hour       // extend at most once a day to avoid a DB write per request
 )
+
+// isSecure reports whether the client reached us over HTTPS, including when
+// TLS is terminated by a reverse proxy (nginx/Cloudflare) in front of the app.
+func isSecure(r *http.Request) bool {
+	return r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https"
+}
 
 type Manager struct {
 	db *sql.DB
@@ -48,11 +56,39 @@ func (m *Manager) Create(w http.ResponseWriter, r *http.Request, userID int64) e
 		Expires:  expires,
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
-		// Secure should be true once served over HTTPS (recommended:
-		// terminate TLS at a reverse proxy like Caddy in front of this).
-		Secure: r.TLS != nil,
+		Secure:   isSecure(r),
 	})
 	return nil
+}
+
+// Refresh slides the session forward while the user is active: if less than
+// ttl-refreshGap remains, expiry moves to now+ttl (never past created_at+maxAge)
+// and the cookie is re-issued. No-op for recently refreshed sessions.
+func (m *Manager) Refresh(w http.ResponseWriter, r *http.Request) {
+	c, err := r.Cookie(CookieName)
+	if err != nil || c.Value == "" {
+		return
+	}
+	var expires time.Time
+	err = m.db.QueryRowContext(r.Context(), `
+		UPDATE sessions
+		SET expires_at = LEAST(now() + make_interval(secs => $2), created_at + make_interval(secs => $3))
+		WHERE id = $1 AND expires_at > now()
+		  AND expires_at < LEAST(now() + make_interval(secs => $2), created_at + make_interval(secs => $3)) - make_interval(secs => $4)
+		RETURNING expires_at`,
+		c.Value, ttl.Seconds(), maxAge.Seconds(), refreshGap.Seconds()).Scan(&expires)
+	if err != nil {
+		return
+	}
+	http.SetCookie(w, &http.Cookie{
+		Name:     CookieName,
+		Value:    c.Value,
+		Path:     "/",
+		Expires:  expires,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+		Secure:   isSecure(r),
+	})
 }
 
 // UserID resolves the current request's session cookie to a user id.

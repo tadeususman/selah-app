@@ -177,3 +177,11 @@ CREATE TABLE IF NOT EXISTS ai_reports (
     UNIQUE (user_id, message_id)
 );
 CREATE INDEX IF NOT EXISTS idx_ai_reports_status ON ai_reports (status, created_at DESC);
+
+-- 0007: jurnal perikop (beberapa ayat)
+ALTER TABLE journal_entries ADD COLUMN IF NOT EXISTS verse_parts JSONB;
+ALTER TABLE journal_entries ADD COLUMN IF NOT EXISTS card_verse_ref  TEXT NOT NULL DEFAULT '';
+ALTER TABLE journal_entries ADD COLUMN IF NOT EXISTS card_verse_text TEXT NOT NULL DEFAULT '';
+
+-- 0008: plan day berupa perikop (beberapa ayat)
+ALTER TABLE plan_days ADD COLUMN IF NOT EXISTS verse_parts JSONB;

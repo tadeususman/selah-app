@@ -116,6 +116,7 @@ func main() {
 		r.Post("/journal", app.JournalCreate)
 		r.Get("/journal/{id}", app.JournalView)
 		r.Post("/journal/{id}/reflect", app.JournalReflect)
+		r.Post("/journal/{id}/card-verse", app.JournalCardVerse)
 		r.Post("/journal/{id}/discuss", app.JournalDiscuss)
 		r.Post("/journal/{id}/complete", app.JournalComplete)
 		r.Get("/journal/{id}/share-status", app.JournalShareStatus)

@@ -3,8 +3,10 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 	"unicode/utf8"
 
@@ -159,6 +161,7 @@ type planContextForJournal struct {
 	Duration  int
 	VerseRef  string
 	VerseText string
+	VerseParts string // raw JSON, "" if single verse
 	IntroText string
 }
 
@@ -194,12 +197,12 @@ func (a *App) JournalNewPage(w http.ResponseWriter, r *http.Request) {
 		}
 		var ctx planContextForJournal
 		err = a.DB.QueryRowContext(r.Context(), `
-			SELECT p.id, p.name, pd.day_number, p.duration, pd.verse_ref, pd.verse_text, pd.intro_text
+			SELECT p.id, p.name, pd.day_number, p.duration, pd.verse_ref, pd.verse_text, COALESCE(pd.verse_parts::text, ''), pd.intro_text
 			FROM plan_days pd
 			JOIN plans p ON p.id = pd.plan_id
 			WHERE pd.plan_id = $1 AND pd.day_number = $2 AND p.user_id = $3`,
 			planID, day, userID,
-		).Scan(&ctx.PlanID, &ctx.PlanName, &ctx.Day, &ctx.Duration, &ctx.VerseRef, &ctx.VerseText, &ctx.IntroText)
+		).Scan(&ctx.PlanID, &ctx.PlanName, &ctx.Day, &ctx.Duration, &ctx.VerseRef, &ctx.VerseText, &ctx.VerseParts, &ctx.IntroText)
 		if err == nil {
 			data.PlanCtx = &ctx
 		}
@@ -293,9 +296,32 @@ func (a *App) JournalCreate(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Teks ayat wajib diisi", http.StatusBadRequest)
 		return
 	}
-	if utf8.RuneCountInString(verseText) > 500 {
-		http.Error(w, "Teks ayat terlalu panjang. Untuk renungan, cukup 1–2 ayat saja (maksimal 500 karakter)", http.StatusBadRequest)
+	passage := models.IsPassageRef(verseRef)
+	maxVerse := 500
+	if passage {
+		maxVerse = 1500
+	}
+	if utf8.RuneCountInString(verseText) > maxVerse {
+		http.Error(w, "Teks ayat terlalu panjang (maksimal "+strconv.Itoa(maxVerse)+" karakter)", http.StatusBadRequest)
 		return
+	}
+
+	// Per-verse parts only matter when the text is too long for one card/pin
+	// (> 500 chars). They are only trusted if they still match the submitted
+	// text (the user may have edited it after fetching).
+	var versePartsVal interface{}
+	if passage && utf8.RuneCountInString(verseText) > 500 {
+		var parts []VersePart
+		if json.Unmarshal([]byte(r.FormValue("verse_parts")), &parts) == nil && len(parts) > 1 {
+			var texts []string
+			for _, p := range parts {
+				texts = append(texts, p.Text)
+			}
+			if strings.Join(texts, " ") == verseText {
+				b, _ := json.Marshal(parts)
+				versePartsVal = string(b)
+			}
+		}
 	}
 
 	now := time.Now()
@@ -336,12 +362,13 @@ func (a *App) JournalCreate(w http.ResponseWriter, r *http.Request) {
 	var entryID int64
 	err = a.DB.QueryRowContext(r.Context(), `
 		INSERT INTO journal_entries
-			(user_id, day_number, entry_date, entry_time, location, verse_ref, verse_text, ai_background, latitude, longitude, plan_id, plan_day)
-		VALUES ($1, $2, $3::date, $4::time, $5, $6, $7, $8, $9, $10, $11, $12)
+			(user_id, day_number, entry_date, entry_time, location, verse_ref, verse_text, ai_background, latitude, longitude, plan_id, plan_day, verse_parts)
+		VALUES ($1, $2, $3::date, $4::time, $5, $6, $7, $8, $9, $10, $11, $12, $13::jsonb)
 		RETURNING id`,
-		userID, nextDay, dateStr, timeStr, location, verseRef, verseText, background, lat, lon, planIDVal, planDayVal,
+		userID, nextDay, dateStr, timeStr, location, verseRef, verseText, background, lat, lon, planIDVal, planDayVal, versePartsVal,
 	).Scan(&entryID)
 	if err != nil {
+		log.Printf("[journal] create entry: %v", err)
 		http.Error(w, "could not create journal entry", http.StatusInternalServerError)
 		return
 	}
@@ -367,6 +394,9 @@ type journalViewData struct {
 	UserName         string
 	PlanName         string // "" if entry is not part of a plan
 	PlanDuration     int
+	VerseParts       []VersePart // nil unless entry is a fetched passage
+	CardRef          string      // verse used on the Momen card
+	CardText         string
 }
 
 func (a *App) JournalView(w http.ResponseWriter, r *http.Request) {
@@ -420,13 +450,65 @@ func (a *App) JournalView(w http.ResponseWriter, r *http.Request) {
 			entry.PlanID, entry.UserID).Scan(&planName, &planDuration)
 	}
 
+	var verseParts []VersePart
+	if entry.VerseParts != "" {
+		_ = json.Unmarshal([]byte(entry.VerseParts), &verseParts)
+	}
+	cardRef, cardText := entry.VerseRef, entry.VerseText
+	if entry.CardVerseRef != "" {
+		cardRef, cardText = entry.CardVerseRef, entry.CardVerseText
+	} else if len(verseParts) > 1 {
+		cardRef, cardText = verseParts[0].Ref, verseParts[0].Text
+	}
+
 	a.render(w, "journal_view.html", journalViewData{
+		VerseParts: verseParts, CardRef: cardRef, CardText: cardText,
 		Entry: entry, Messages: messages, CompletedCount: completedCount,
 		LanguageStyle: viewLangStyle, ShowShareCard: showShare, PendingShareCard: pendingShare,
 		UserName:  userName,
 		PlanName:  planName,
 		PlanDuration: planDuration,
 	})
+}
+
+// passageHint tells the AI that the reference is a multi-verse passage.
+func passageHint(ref string) string {
+	if models.IsPassageRef(ref) {
+		return " — perikop beberapa ayat, bahas sebagai satu kesatuan konteks"
+	}
+	return ""
+}
+
+// ---- POST /journal/{id}/card-verse (pick which verse of a passage goes on the Momen card) ----
+
+func (a *App) JournalCardVerse(w http.ResponseWriter, r *http.Request) {
+	entry, ok := a.loadOwnedEntry(w, r)
+	if !ok {
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "bad form", http.StatusBadRequest)
+		return
+	}
+	var parts []VersePart
+	if entry.VerseParts == "" || json.Unmarshal([]byte(entry.VerseParts), &parts) != nil {
+		http.Error(w, "bukan perikop", http.StatusBadRequest)
+		return
+	}
+	ref := r.FormValue("ref")
+	for _, p := range parts {
+		if p.Ref == ref {
+			if _, err := a.DB.ExecContext(r.Context(),
+				`UPDATE journal_entries SET card_verse_ref = $1, card_verse_text = $2 WHERE id = $3`,
+				p.Ref, p.Text, entry.ID); err != nil {
+				http.Error(w, "could not save", http.StatusInternalServerError)
+				return
+			}
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+	}
+	http.Error(w, "ayat tidak ditemukan", http.StatusBadRequest)
 }
 
 // ---- POST /journal/{id}/reflect (save "apa yang didapat setelah membaca") ----
@@ -504,7 +586,7 @@ func (a *App) JournalDiscuss(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	history := []struct{ Role, Content string }{
-		{"user", "Ayat yang sedang saya renungkan (" + entry.VerseRef + "): " + entry.VerseText},
+		{"user", "Ayat yang sedang saya renungkan (" + entry.VerseRef + ")" + passageHint(entry.VerseRef) + ": " + entry.VerseText},
 	}
 	for rows.Next() {
 		var role, content string
@@ -573,7 +655,7 @@ func (a *App) JournalComplete(w http.ResponseWriter, r *http.Request) {
 		entry.ID)
 	if err == nil {
 		history := []struct{ Role, Content string }{
-			{"user", "Ayat yang aku renungkan (" + entry.VerseRef + "): " + entry.VerseText},
+			{"user", "Ayat yang aku renungkan (" + entry.VerseRef + ")" + passageHint(entry.VerseRef) + ": " + entry.VerseText},
 		}
 		for rows.Next() {
 			var role, content string
@@ -813,13 +895,14 @@ func (a *App) loadOwnedEntry(w http.ResponseWriter, r *http.Request) (models.Jou
 	var entryDate, entryTime time.Time
 	err = a.DB.QueryRowContext(r.Context(), `
 		SELECT id, user_id, day_number, entry_date, entry_time, location,
-		       verse_ref, verse_text, ai_background, reflection, practical_step,
+		       verse_ref, verse_text, COALESCE(verse_parts::text, ''), card_verse_ref, card_verse_text,
+		       ai_background, reflection, practical_step,
 		       status, share_summary, COALESCE(plan_id, 0), COALESCE(plan_day, 0),
 		       created_at, updated_at
 		FROM journal_entries WHERE id = $1 AND user_id = $2`,
 		id, userID,
 	).Scan(&e.ID, &e.UserID, &e.DayNumber, &entryDate, &entryTime, &e.Location,
-		&e.VerseRef, &e.VerseText, &e.AIBackground, &e.Reflection, &e.PracticalStep,
+		&e.VerseRef, &e.VerseText, &e.VerseParts, &e.CardVerseRef, &e.CardVerseText, &e.AIBackground, &e.Reflection, &e.PracticalStep,
 		&e.Status, &e.ShareSummary, &e.PlanID, &e.PlanDay, &e.CreatedAt, &e.UpdatedAt)
 	if err != nil {
 		http.NotFound(w, r)

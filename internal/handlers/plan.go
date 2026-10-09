@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"context"
 	"database/sql"
 	"encoding/xml"
@@ -22,6 +23,9 @@ import (
 )
 
 const planSituationLimit = 500
+
+// planVerseLimit is the max verse text length per plan day (a short passage).
+const planVerseLimit = 1500
 const planNameLimit = 60
 
 // ---- GET /plan (list all plans — active and completed) ----
@@ -128,46 +132,68 @@ func (a *App) PlanCreate(w http.ResponseWriter, r *http.Request) {
 	_ = a.DB.QueryRowContext(r.Context(),
 		`SELECT COALESCE(language_style, 'casual') FROM users WHERE id = $1`, userID).Scan(&langStyle)
 
-	draft, err := a.AI.GeneratePlan(r.Context(), situation, langStyle)
-	if err != nil {
-		if errors.Is(err, ai.ErrNotRelevant) {
+	type dayWithText struct {
+		Ref, Text, Intro string
+		Parts            interface{} // JSON string or nil
+	}
+	var draft *ai.PlanDraft
+	var days []dayWithText
+	var err error
+	// Up to 2 attempts: if the AI picks passages that are too long, ask once more.
+	for attempt := 0; attempt < 2; attempt++ {
+		draft, err = a.AI.GeneratePlan(r.Context(), situation, langStyle)
+		if err != nil {
+			if errors.Is(err, ai.ErrNotRelevant) {
+				a.render(w, "plan_new.html", planNewData{
+					Error:     "Teman Selah hanya bisa membantu menyusun rencana renungan dari situasi atau pergumulan hidupmu. Coba ceritakan apa yang sedang kamu rasakan atau pikirkan.",
+					Situation: situation,
+				})
+				return
+			}
+			log.Printf("[plan/create] GeneratePlan error: %v", err)
 			a.render(w, "plan_new.html", planNewData{
-				Error:     "Teman Selah hanya bisa membantu menyusun rencana renungan dari situasi atau pergumulan hidupmu. Coba ceritakan apa yang sedang kamu rasakan atau pikirkan.",
+				Error:     "Teman Selah sedang tidak bisa menyusun rencana. Coba lagi sebentar.",
 				Situation: situation,
 			})
 			return
 		}
-		log.Printf("[plan/create] GeneratePlan error: %v", err)
+
+		days = days[:0]
+		tooLong := false
+		for _, d := range draft.Days {
+			text, parts, err := fetchVerseFromSabda(r.Context(), d.VerseRef)
+			if err != nil || text == "" {
+				log.Printf("[plan/create] verse fetch failed for %q: %v", d.VerseRef, err)
+				a.render(w, "plan_new.html", planNewData{
+					Error:     "Beberapa ayat tidak bisa diambil. Coba buat rencana lagi dengan tema serupa.",
+					Situation: situation,
+				})
+				return
+			}
+			n := utf8.RuneCountInString(text)
+			if n > planVerseLimit {
+				log.Printf("[plan/create] verse text too long for %q (%d chars), attempt %d", d.VerseRef, n, attempt+1)
+				tooLong = true
+				break
+			}
+			var partsVal interface{}
+			if n > 500 && len(parts) > 1 {
+				b, _ := json.Marshal(parts)
+				partsVal = string(b)
+			}
+			days = append(days, dayWithText{Ref: d.VerseRef, Text: text, Intro: d.IntroText, Parts: partsVal})
+		}
+		if !tooLong {
+			break
+		}
+		days = nil
+	}
+	if days == nil {
 		a.render(w, "plan_new.html", planNewData{
-			Error:     "Teman Selah sedang tidak bisa menyusun rencana. Coba lagi sebentar.",
+			Error:     "Beberapa ayat yang dipilih terlalu panjang. Coba buat rencana lagi dengan tema serupa.",
 			Situation: situation,
 		})
 		return
-	}
-
-	type dayWithText struct {
-		Ref, Text, Intro string
-	}
-	days := make([]dayWithText, 0, len(draft.Days))
-	for _, d := range draft.Days {
-		text, err := fetchVerseFromSabda(r.Context(), d.VerseRef)
-		if err != nil || text == "" {
-			log.Printf("[plan/create] verse fetch failed for %q: %v", d.VerseRef, err)
-			a.render(w, "plan_new.html", planNewData{
-				Error:     "Beberapa ayat tidak bisa diambil. Coba buat rencana lagi dengan tema serupa.",
-				Situation: situation,
-			})
-			return
-		}
-		if utf8.RuneCountInString(text) > 500 {
-			log.Printf("[plan/create] verse text too long for %q (%d chars), aborting plan", d.VerseRef, utf8.RuneCountInString(text))
-			a.render(w, "plan_new.html", planNewData{
-				Error:     "Beberapa ayat yang dipilih terlalu panjang. Coba buat rencana lagi dengan tema serupa.",
-				Situation: situation,
-			})
-			return
-		}
-		days = append(days, dayWithText{Ref: d.VerseRef, Text: text, Intro: d.IntroText})
 	}
 
 	tx, err := a.DB.BeginTx(r.Context(), nil)
@@ -189,8 +215,8 @@ func (a *App) PlanCreate(w http.ResponseWriter, r *http.Request) {
 	}
 	for i, d := range days {
 		if _, err := tx.ExecContext(r.Context(),
-			`INSERT INTO plan_days (plan_id, day_number, verse_ref, verse_text, intro_text) VALUES ($1, $2, $3, $4, $5)`,
-			planID, i+1, d.Ref, d.Text, d.Intro); err != nil {
+			`INSERT INTO plan_days (plan_id, day_number, verse_ref, verse_text, intro_text, verse_parts) VALUES ($1, $2, $3, $4, $5, $6::jsonb)`,
+			planID, i+1, d.Ref, d.Text, d.Intro, d.Parts); err != nil {
 			log.Printf("[plan/create] insert plan_days: %v", err)
 			http.Error(w, "could not create plan days", http.StatusInternalServerError)
 			return
@@ -574,33 +600,28 @@ func (a *App) PlanDelete(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/plan", http.StatusSeeOther)
 }
 
-// fetchVerseFromSabda fetches the verse text for a single reference from alkitab.sabda.org (TB).
-func fetchVerseFromSabda(ctx context.Context, ref string) (string, error) {
+// fetchVerseFromSabda fetches the verse text for a reference from alkitab.sabda.org (TB).
+// parts holds the per-verse breakdown (ref + text) for multi-verse references.
+func fetchVerseFromSabda(ctx context.Context, ref string) (text string, parts []VersePart, err error) {
 	apiURL := "https://alkitab.sabda.org/api/passage.php?passage=" + url.QueryEscape(ref)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiURL, nil)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 	defer resp.Body.Close()
 
 	var parsed sabdaXML
 	if err := xml.NewDecoder(resp.Body).Decode(&parsed); err != nil {
-		return "", err
+		return "", nil, err
 	}
-	var parts []string
-	for _, v := range parsed.Book.Chapter.Verses.Verse {
-		t := strings.TrimSpace(v.Text)
-		if t != "" {
-			parts = append(parts, t)
-		}
+	texts := parsed.Texts()
+	if len(texts) == 0 {
+		return "", nil, fmt.Errorf("ayat tidak ditemukan: %s", ref)
 	}
-	if len(parts) == 0 {
-		return "", fmt.Errorf("ayat tidak ditemukan: %s", ref)
-	}
-	return strings.Join(parts, " "), nil
+	return strings.Join(texts, " "), parsed.Parts(), nil
 }

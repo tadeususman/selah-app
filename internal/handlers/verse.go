@@ -114,15 +114,54 @@ var verseBank = []string{
 }
 
 type sabdaXML struct {
-	Book struct {
-		Chapter struct {
+	Books []struct {
+		Name     string `xml:"name,attr"`
+		Chapters []struct {
+			Chap   string `xml:"chap"`
 			Verses struct {
 				Verse []struct {
-					Text string `xml:"text"`
+					Number string `xml:"number"`
+					Text   string `xml:"text"`
 				} `xml:"verse"`
 			} `xml:"verses"`
 		} `xml:"chapter"`
 	} `xml:"book"`
+}
+
+// Texts returns the non-empty verse texts in order, across all chapters.
+func (x sabdaXML) Texts() []string {
+	var out []string
+	for _, bk := range x.Books {
+		for _, ch := range bk.Chapters {
+			for _, v := range ch.Verses.Verse {
+				if t := strings.TrimSpace(v.Text); t != "" {
+					out = append(out, t)
+				}
+			}
+		}
+	}
+	return out
+}
+
+// Parts returns every verse with its "Book chap:num" reference, across chapters.
+func (x sabdaXML) Parts() []VersePart {
+	var out []VersePart
+	for _, bk := range x.Books {
+		for _, ch := range bk.Chapters {
+			for _, v := range ch.Verses.Verse {
+				if t := strings.TrimSpace(v.Text); t != "" {
+					out = append(out, VersePart{Ref: bk.Name + " " + strings.TrimSpace(ch.Chap) + ":" + strings.TrimSpace(v.Number), Text: t})
+				}
+			}
+		}
+	}
+	return out
+}
+
+// VersePart is one verse of a passage: Ref like "Yohanes 3:16" plus its text.
+type VersePart struct {
+	Ref  string `json:"r"`
+	Text string `json:"t"`
 }
 
 func (a *App) VerseFetch(w http.ResponseWriter, r *http.Request) {
@@ -154,14 +193,8 @@ func (a *App) VerseFetch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var parts []string
-	for _, v := range parsed.Book.Chapter.Verses.Verse {
-		t := strings.TrimSpace(v.Text)
-		if t != "" {
-			parts = append(parts, t)
-		}
-	}
-
+	parts := parsed.Texts()
+	verses := parsed.Parts()
 	if len(parts) == 0 {
 		writeErr(http.StatusNotFound, "Ayat tidak ditemukan, coba periksa referensinya")
 		return
@@ -169,7 +202,7 @@ func (a *App) VerseFetch(w http.ResponseWriter, r *http.Request) {
 
 	text := strings.Join(parts, " ")
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"text": text})
+	json.NewEncoder(w).Encode(map[string]interface{}{"text": text, "verses": verses})
 }
 
 // ---- POST /api/verse/recommend (AI-powered verse recommendation) ----
@@ -341,13 +374,7 @@ func (a *App) fetchVerseTexts(refs []string) ([]verseOption, error) {
 		if decodeErr != nil {
 			continue
 		}
-		var parts []string
-		for _, v := range parsed.Book.Chapter.Verses.Verse {
-			t := strings.TrimSpace(v.Text)
-			if t != "" {
-				parts = append(parts, t)
-			}
-		}
+		parts := parsed.Texts()
 		if len(parts) == 0 {
 			continue
 		}

@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"journalflow/internal/middleware"
+	"journalflow/internal/models"
 )
 
 const maxRetries = 2
@@ -364,7 +365,10 @@ func (c *Client) VerseBackground(ctx context.Context, verseRef, verseText, langS
 		sys = formalizePrompt(sys)
 	}
 	prompt := fmt.Sprintf("Ayat: %s\n\nTeks: %s\n\nTolong jelaskan latar belakang, konteks historis, dan makna ayat ini.", verseRef, verseText)
-	return c.send(ctx, sys, []ChatMessage{{Role: "user", Content: prompt}})
+	if models.IsPassageRef(verseRef) {
+		prompt = fmt.Sprintf("Perikop: %s\n\nTeks: %s\n\nIni perikop beberapa ayat. Jelaskan latar belakang, konteks historis, dan makna perikop ini sebagai satu kesatuan, bukan ayat per ayat.", verseRef, verseText)
+	}
+	return c.send(withEffort(ctx, "low"), sys, []ChatMessage{{Role: "user", Content: prompt}})
 }
 
 const discussSystemPromptLight = `Kamu adalah "Teman Selah" — teman yang beriman dan hangat, menemani saat teduh. Bantu pengguna menggali makna ayat yang sedang direnungkan dan kaitkan dengan kehidupan mereka.
@@ -409,6 +413,9 @@ func (c *Client) Discuss(ctx context.Context, history []ChatMessage, originalLan
 	sys := discussSystemPromptLight
 	if originalLang {
 		sys = discussSystemPromptDeep
+	} else {
+		// Light chat is short and conversational; skip extended thinking.
+		ctx = withEffort(ctx, "low")
 	}
 	if langStyle == "formal" {
 		sys = formalizePrompt(sys)
@@ -633,7 +640,7 @@ PANDUAN ISI:
 - Variasikan sumber ayat: Mazmur, kitab Nabi, Injil, surat-surat Paulus, surat-surat umum. Jangan semua dari satu kitab.
 - Setiap referensi harus BERBEDA. Tidak boleh ada pengulangan.
 - Format referensi: standar Indonesia (contoh: "Mazmur 23:1", "Matius 6:25-27", "Roma 8:28"). Gunakan nama kitab lengkap Bahasa Indonesia (bukan singkatan).
-- Pilih SATU ayat saja per referensi (maksimal 2 ayat berdekatan kalau memang perlu, contoh "Roma 8:28-29"). JANGAN pilih rentang panjang atau satu perikop penuh (contoh buruk: "Mazmur 103:1-22", "Yohanes 15:1-17") — pilih satu ayat kunci dari dalamnya saja.
+- Per hari, utamakan PERIKOP PENDEK: 3-6 ayat berdekatan yang satu alur, supaya pengguna mendapat gambaran konteksnya, bukan satu ayat lepas (contoh "Filipi 4:4-9", "Ester 4:12-16", "Matius 6:25-33"). Pilih batas awal dan akhir yang masuk akal (jangan memotong di tengah kalimat atau dialog). Pakai 1-2 ayat HANYA kalau ayat itu benar-benar berdiri sendiri dan konteks sekitarnya tidak menambah apa-apa. Jangan lebih dari 6 ayat per hari. JANGAN pilih satu pasal penuh atau perikop panjang (contoh buruk: "Mazmur 103:1-22", "Yohanes 15:1-17") — ambil bagian intinya saja.
 - intro_text: 2-3 kalimat hangat yang mengajak pengguna masuk ke ayat hari itu — bukan khotbah, bukan ringkasan ayat. Gunakan "kita" — JANGAN pakai "aku", "saya", atau "kamu" (ini pengantar, bukan pesan personal dari Teman Selah). Jangan buka dengan "Hari ini...". Jangan ulang isi ayat.
 - name: judul plan singkat & personal (3-6 kata). Hindari "Renungan tentang...", "Panduan...", atau "Perjalanan..."
 - cover_text: 1-2 kalimat yang terasa seperti undangan — bukan deskripsi akademis. Pakai "kamu". WAJIB tetap pakai istilah persis dari tema pengguna (misal "perumpamaan") — jangan diganti jadi kata yang lebih umum/santai seperti "cerita" demi gaya undangan.

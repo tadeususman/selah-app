@@ -123,7 +123,9 @@
       <label>Teks ayat</label>
       <textarea name="verse_text" id="verse-text" rows="5" placeholder="Ketik atau tempel ayat, atau ceritakan apa yang sedang {{if eq .LanguageStyle "formal"}}Anda{{else}}kamu{{end}} rasakan. Teman Selah akan carikan ayatnya." required{{if .PlanCtx}} readonly{{end}}>{{if .PlanCtx}}{{.PlanCtx.VerseText}}{{end}}</textarea>
       <div class="char-counter" id="verse-text-counter">0 / 500</div>
-      <div class="fetch-status-info" id="verse-too-long" style="display:none">Teks ayat terlalu panjang. Untuk renungan, cukup 1–2 ayat saja. Kalau ingin menggali konteks yang lebih luas, bisa diskusi dengan Teman Selah nanti.</div>
+      <input type="hidden" name="verse_parts" id="verse-parts" value="{{if .PlanCtx}}{{.PlanCtx.VerseParts}}{{end}}">
+      <div class="fetch-status-info" id="passage-chip" style="display:none"></div>
+      <div class="fetch-status-info" id="verse-too-long" style="display:none">Teks terlalu panjang. Untuk ayat tunggal cukup 1–2 ayat; untuk perikop (mis. Yohanes 3:16-21) batasnya 1500 karakter.</div>
 
       {{if not .PlanCtx}}
         <div id="verse-search-results" class="verse-search-results" style="display:none"></div>
@@ -181,6 +183,9 @@
 
     {{if not .PlanCtx}}
     var VERSE_MAX = 500;
+    var PASSAGE_MAX = 1500;
+    var PASSAGE_RE = /\d\s*[-–—,]\s*\d/;
+    function verseMax() { return PASSAGE_RE.test(verseRefEl.value) ? PASSAGE_MAX : VERSE_MAX; }
     var VERSE_TEXT_PLACEHOLDER = "Ketik atau tempel ayat, atau ceritakan apa yang sedang {{if eq .LanguageStyle "formal"}}Anda{{else}}kamu{{end}} rasakan. Teman Selah akan carikan ayatnya.";
     var SPARKLE_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="vertical-align:-2px;margin-right:5px;flex-shrink:0;color:var(--gold)"><path d="M9 4.5a.75.75 0 0 1 .721.544l.813 2.846a3.75 3.75 0 0 0 2.576 2.576l2.846.813a.75.75 0 0 1 0 1.442l-2.846.813a3.75 3.75 0 0 0-2.576 2.576l-.813 2.846a.75.75 0 0 1-1.442 0l-.813-2.846a3.75 3.75 0 0 0-2.576-2.576l-2.846-.813a.75.75 0 0 1 0-1.442l2.846-.813A3.75 3.75 0 0 0 7.466 7.89l.813-2.846A.75.75 0 0 1 9 4.5ZM18 1.5a.75.75 0 0 1 .728.568l.258 1.036c.236.94.97 1.674 1.91 1.91l1.036.258a.75.75 0 0 1 0 1.456l-1.036.258c-.94.236-1.674.97-1.91 1.91l-.258 1.036a.75.75 0 0 1-1.456 0l-.258-1.036a2.625 2.625 0 0 0-1.91-1.91l-1.036-.258a.75.75 0 0 1 0-1.456l1.036-.258a2.625 2.625 0 0 0 1.91-1.91l.258-1.036A.75.75 0 0 1 18 1.5ZM16.5 15a.75.75 0 0 1 .712.513l.394 1.183c.15.447.5.799.948.948l1.183.394a.75.75 0 0 1 0 1.422l-1.183.395c-.447.15-.799.5-.948.948l-.395 1.183a.75.75 0 0 1-1.422 0l-.395-1.183a1.5 1.5 0 0 0-.948-.948l-1.183-.395a.75.75 0 0 1 0-1.422l1.183-.395c.447-.15.799-.5.948-.948l.395-1.183A.75.75 0 0 1 16.5 15Z"/></svg>';
     var verseRefEl  = document.getElementById('verse-ref');
@@ -227,7 +232,7 @@
     function updateBottomBtn() {
       var ref  = verseRefEl.value.trim();
       var text = verseTextEl.value.trim();
-      var valid = text.length > 0 && text.length <= VERSE_MAX;
+      var valid = text.length > 0 && text.length <= verseMax();
       if (ref && valid) {
         searchRow.style.display = 'none';
         submitRow.style.display = 'flex';
@@ -264,11 +269,26 @@
       verseRefEl.focus();
     }
 
+    function updatePassageChip() {
+      var chip = document.getElementById('passage-chip');
+      var partsEl = document.getElementById('verse-parts');
+      var isP = PASSAGE_RE.test(verseRefEl.value);
+      if (!isP) { partsEl.value = ''; chip.style.display = 'none'; return; }
+      var n = 0;
+      try { n = JSON.parse(partsEl.value || '[]').length; } catch (e) {}
+      var long = verseTextEl.value.length > VERSE_MAX;
+      chip.textContent = 'Perikop' + (n > 1 ? ' · ' + n + ' ayat' : '') +
+        (long ? ' — hanya ayat pertama yang di-pin; kartu Momen bisa pilih ayat.' : '');
+      chip.style.display = '';
+    }
+
     function updateVerseCounter() {
       var len = verseTextEl.value.length;
-      verseCounter.textContent = len + ' / ' + VERSE_MAX;
-      verseCounter.classList.toggle('over', len > VERSE_MAX);
-      verseTooLong.style.display = len > VERSE_MAX ? '' : 'none';
+      var max = verseMax();
+      verseCounter.textContent = len + ' / ' + max;
+      verseCounter.classList.toggle('over', len > max);
+      verseTooLong.style.display = len > max ? '' : 'none';
+      updatePassageChip();
       var resultsEl = document.getElementById('verse-search-results');
       if (resultsEl.style.display !== 'none') {
         resultsEl.style.display = 'none';
@@ -280,14 +300,14 @@
       updateTextareaHint();
     }
 
-    verseRefEl.addEventListener('input', function() { updateBottomBtn(); updateFetchBtn(); updateTextareaHint(); });
-    verseTextEl.addEventListener('input', updateVerseCounter);
+    verseRefEl.addEventListener('input', function() { updateVerseCounter(); updateBottomBtn(); updateFetchBtn(); updateTextareaHint(); });
+    verseTextEl.addEventListener('input', function() { document.getElementById('verse-parts').value = ''; updateVerseCounter(); });
     updateFetchBtn();
     updateTextareaHint();
 
     var form = document.querySelector('form');
     form.addEventListener('submit', function(e) {
-      if (verseTextEl.value.length > VERSE_MAX) {
+      if (verseTextEl.value.length > verseMax()) {
         e.preventDefault();
         verseCounter.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
@@ -415,13 +435,18 @@
             status.textContent = data.error;
             status.className = 'fetch-status-error';
             status.style.display = '';
-          } else if (data.text.length > 500) {
-            status.textContent = 'Ayat terlalu panjang. Untuk renungan, cukup 1–2 ayat saja — misalnya "' + ref.replace(/:\d+.*$/, '') + ':1-2". Kalau ingin menggali konteks lebih luas, bisa diskusi dengan Teman Selah nanti.';
+          } else if (data.text.length > verseMax()) {
+            status.textContent = PASSAGE_RE.test(ref)
+              ? 'Perikop terlalu panjang (maksimal ' + PASSAGE_MAX + ' karakter). Coba persempit rentang ayatnya.'
+              : 'Ayat terlalu panjang. Untuk renungan, cukup 1–2 ayat saja — misalnya "' + ref.replace(/:\d+.*$/, '') + ':1-2". Kalau ingin menggali konteks lebih luas, bisa diskusi dengan Teman Selah nanti.';
             status.className = 'fetch-status-info';
             status.style.display = '';
           } else {
             verseTextEl.value = data.text;
             updateVerseCounter();
+            document.getElementById('verse-parts').value =
+              (PASSAGE_RE.test(ref) && data.verses && data.verses.length > 1) ? JSON.stringify(data.verses) : '';
+            updatePassageChip();
             status.style.display = 'none';
           }
         })

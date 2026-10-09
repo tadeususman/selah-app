@@ -46,8 +46,16 @@
 
     <section class="verse-box">
       {{if .Entry.VerseRef}}<div class="verse-ref">{{.Entry.VerseRef}}</div>{{end}}
+      {{if .VerseParts}}
+      <p class="verse-text" id="verse-text-pin"><span class="verse-num">{{verseNum (index .VerseParts 0).Ref}}</span> {{(index .VerseParts 0).Text}}</p>
+      <div class="verse-all" id="verse-all" style="display:none">
+        {{range .VerseParts}}<p class="verse-line"><span class="verse-num">{{verseNum .Ref}}</span> {{.Text}}</p>{{end}}
+      </div>
+      <button type="button" class="verse-expand-btn" id="passage-expand-btn" onclick="togglePassage()">Perikop · {{len .VerseParts}} ayat — lihat semua</button>
+      {{else}}
       <p class="verse-text" id="verse-text-pin">{{.Entry.VerseText}}</p>
       <button type="button" class="verse-expand-btn" id="verse-expand-btn" onclick="toggleVerseExpand()" style="display:none">Selengkapnya</button>
+      {{end}}
     </section>
 
     {{if and (lt .CompletedCount 3) (ne .Entry.Status "completed")}}
@@ -100,10 +108,18 @@
     </div>
     {{end}}
 
+    {{if .VerseParts}}
+    <div id="card-verse-picker" class="card-verse-picker" style="display:none">
+      <button type="button" class="card-verse-arrow" id="card-verse-prev" aria-label="Ayat sebelumnya">‹</button>
+      <div class="card-verse-info"><span class="card-verse-label">Ayat untuk kartu</span><span id="card-verse-name" class="card-verse-name"></span></div>
+      <button type="button" class="card-verse-arrow" id="card-verse-next" aria-label="Ayat berikutnya">›</button>
+    </div>
+    {{end}}
+
     {{if .ShowShareCard}}
     <div id="share-card-section"
-      data-verse-ref="{{.Entry.VerseRef}}"
-      data-verse-text="{{.Entry.VerseText}}"
+      data-verse-ref="{{.CardRef}}"
+      data-verse-text="{{.CardText}}"
       data-day="{{.Entry.DayNumber}}"
       data-date="{{idDate .Entry.EntryDate}}"
       data-weekday="{{idDay .Entry.EntryDate}}"
@@ -526,6 +542,16 @@
       if (btnWrite) { btnWrite.style.display = ''; btnWrite.classList.remove('active'); }
     }
 
+    function togglePassage() {
+      var all = document.getElementById('verse-all');
+      var pin = document.getElementById('verse-text-pin');
+      var btn = document.getElementById('passage-expand-btn');
+      var open = all.style.display === 'none';
+      all.style.display = open ? '' : 'none';
+      pin.style.display = open ? 'none' : '';
+      btn.textContent = open ? 'Tampilkan ayat pertama saja' : 'Perikop · {{len .VerseParts}} ayat — lihat semua';
+    }
+
     function toggleVerseExpand() {
       var pin = document.getElementById('verse-text-pin');
       var btn = document.getElementById('verse-expand-btn');
@@ -541,6 +567,41 @@
         btn.style.display = 'inline';
       }
     })();
+
+
+    // ── Passage: pick which verse goes on the Momen card ──
+    var VERSE_PARTS = {{.VerseParts}};
+    var cardPicker = document.getElementById('card-verse-picker');
+    var cardIdx = 0;
+    function showCardPicker() { if (cardPicker) cardPicker.style.display = ''; }
+    function renderCardPicker() {
+      document.getElementById('card-verse-name').textContent =
+        VERSE_PARTS[cardIdx].r + '  (' + (cardIdx + 1) + '/' + VERSE_PARTS.length + ')';
+      document.getElementById('card-verse-prev').disabled = cardIdx === 0;
+      document.getElementById('card-verse-next').disabled = cardIdx === VERSE_PARTS.length - 1;
+    }
+    function pickCardVerse(i) {
+      if (i < 0 || i >= VERSE_PARTS.length || !shareSection) return;
+      cardIdx = i;
+      var part = VERSE_PARTS[i];
+      renderCardPicker();
+      shareSection.dataset.verseRef = part.r;
+      shareSection.dataset.verseText = part.t;
+      document.fonts.ready.then(function() { drawShareCard(); });
+      fetch('/journal/{{.Entry.ID}}/card-verse', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'ref=' + encodeURIComponent(part.r)
+      }).catch(function() {});
+    }
+    if (cardPicker) {
+      var curRef = '{{.CardRef}}';
+      VERSE_PARTS.forEach(function(p, i) { if (p.r === curRef) cardIdx = i; });
+      renderCardPicker();
+      if (document.getElementById('share-card-section')) showCardPicker();
+      document.getElementById('card-verse-prev').addEventListener('click', function() { pickCardVerse(cardIdx - 1); });
+      document.getElementById('card-verse-next').addEventListener('click', function() { pickCardVerse(cardIdx + 1); });
+    }
 
     // ── Share card (inline) ──
     var shareSection = document.getElementById('share-card-section');
@@ -817,8 +878,8 @@
             // Inject share card section in place of the pending notice
             var section = document.createElement('div');
             section.id = 'share-card-section';
-            section.dataset.verseRef  = '{{.Entry.VerseRef}}';
-            section.dataset.verseText = '{{.Entry.VerseText}}';
+            section.dataset.verseRef  = '{{.CardRef}}';
+            section.dataset.verseText = '{{.CardText}}';
             section.dataset.day       = '{{.Entry.DayNumber}}';
             section.dataset.date      = '{{idDate .Entry.EntryDate}}';
             section.dataset.weekday   = '{{idDay .Entry.EntryDate}}';
@@ -846,6 +907,7 @@
                 '</button>' +
               '</div>';
             if (pending) pending.replaceWith(section);
+            showCardPicker();
             // Re-bind globals and draw
             shareSection = section;
             shareCanvas  = section.querySelector('#share-canvas');

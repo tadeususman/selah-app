@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"strings"
 	"database/sql"
 	"fmt"
 	"html/template"
@@ -43,6 +44,13 @@ func LoadTemplates(dir string) *template.Template {
 		// short month + year: "Agt 2026"
 		"idMonthYear": func(t time.Time) string {
 			return fmt.Sprintf("%s %d", idMonths[t.Month()], t.Year())
+		},
+		// verse number from a ref: "Yohanes 3:16" -> "16"
+		"verseNum": func(ref string) string {
+			if i := strings.LastIndex(ref, ":"); i >= 0 {
+				return ref[i+1:]
+			}
+			return ref
 		},
 		// day name: "Sabtu"
 		"idDay": func(t time.Time) string {

@@ -678,6 +678,19 @@ input:focus, textarea:focus {
   padding: 6px 0 0;
 }
 
+.verse-num { font-size: 11px; font-weight: 700; color: var(--gold); vertical-align: super; margin-right: 2px; }
+.verse-line { margin: 0 0 8px; line-height: 1.7; font-size: 15px; color: var(--text); }
+.card-verse-picker { max-width: 420px; margin: 0 auto; padding: 0 0 8px; display: flex; align-items: center; justify-content: center; gap: 12px; }
+.card-verse-info { display: flex; flex-direction: column; align-items: center; min-width: 150px; }
+.card-verse-label { font-size: 11px; color: var(--text-muted); }
+.card-verse-name { font-size: 14px; font-weight: 600; color: var(--text); }
+.card-verse-arrow {
+  width: 34px; height: 34px; border-radius: 50%;
+  border: 1.5px solid var(--border); background: var(--card); color: var(--text);
+  font-size: 20px; line-height: 1; font-family: inherit; cursor: pointer; padding: 0 0 2px;
+}
+.card-verse-arrow:disabled { opacity: 0.3; cursor: default; }
+
 .thread { display: flex; flex-direction: column; gap: 14px; margin-bottom: 24px; }
 
 .bubble {

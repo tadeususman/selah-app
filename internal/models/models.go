@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"regexp"
+	"time"
+)
 
 type User struct {
 	ID           int64
@@ -19,6 +22,9 @@ type JournalEntry struct {
 	Location       string
 	VerseRef       string
 	VerseText      string
+	VerseParts     string // raw JSON [{"r":"Yohanes 3:16","t":"..."}]; "" if not a fetched passage
+	CardVerseRef   string // verse picked for the Momen card; "" = default
+	CardVerseText  string
 	AIBackground   string
 	Reflection     string
 	PracticalStep  string
@@ -91,3 +97,9 @@ type PlanPreview struct {
 	CreatedAt   time.Time
 	DoneCount   int // # of plan days with a completed journal entry
 }
+
+var passageRefRe = regexp.MustCompile(`\d\s*[-–—,]\s*\d`)
+
+// IsPassageRef reports whether a verse reference spans several verses
+// (e.g. "Yohanes 3:16-21", "Roma 8:28,31"), i.e. a perikop.
+func IsPassageRef(ref string) bool { return passageRefRe.MatchString(ref) }

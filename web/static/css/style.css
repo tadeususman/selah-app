@@ -3266,3 +3266,7 @@ input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:foc
 .journal-form .location-tag-wrap input.location-input:-webkit-autofill { -webkit-box-shadow: 0 0 0 1000px transparent inset; }
 
 .location-pin-btn[hidden], .location-auto-btn[hidden] { display: none; }
+.modal-login-alt { margin: 16px 0 0; font-size: 13px; color: var(--text-muted); text-align: center; line-height: 1.5; }
+.modal-login-alt small { display: block; font-size: 11px; opacity: .8; }
+.modal-link-btn { background: none; border: none; padding: 0; font: inherit; font-weight: 600; color: var(--navy); text-decoration: underline; cursor: pointer; }
+[data-theme="dark"] .modal-link-btn { color: var(--text); }

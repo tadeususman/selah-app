@@ -172,7 +172,10 @@
       '<h3 class="modal-title">Fitur ini untuk pengguna terdaftar</h3>' +
       '<p class="modal-desc">Untuk memakai Plan dan Pengaturan, kamu perlu mendaftar dulu. Gratis, dan jurnal yang sudah kamu tulis ikut tersimpan.</p>' +
       '<div class="modal-actions"><button type="button" class="modal-btn-cancel">Nanti saja</button>' +
-      '<a href="/simpan" class="modal-btn-primary">Daftar Gratis</a></div></div>';
+      '<a href="/simpan" class="modal-btn-primary">Daftar Gratis</a></div>' +
+      '<form method="POST" action="/logout" class="modal-login-alt">' +
+      '<span>Sudah punya akun?</span> <button type="submit" class="modal-link-btn">Keluar &amp; masuk</button>' +
+      '<small>Jurnal coba akan dihapus.</small></form></div>';
     document.body.appendChild(gm);
     var closeGm = function() { gm.style.display = 'none'; };
     gm.addEventListener('click', function(e) { if (e.target === gm) closeGm(); });

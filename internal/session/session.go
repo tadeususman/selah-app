@@ -108,6 +108,21 @@ func (m *Manager) UserID(r *http.Request) (int64, bool) {
 	return userID, true
 }
 
+// UserIDGuest is UserID plus the account's guest flag, from the same query.
+func (m *Manager) UserIDGuest(r *http.Request) (userID int64, isGuest, ok bool) {
+	c, err := r.Cookie(CookieName)
+	if err != nil || c.Value == "" {
+		return 0, false, false
+	}
+	err = m.db.QueryRowContext(r.Context(),
+		`SELECT s.user_id, u.is_guest FROM sessions s JOIN users u ON u.id = s.user_id
+		 WHERE s.id = $1 AND s.expires_at > now()`, c.Value).Scan(&userID, &isGuest)
+	if err != nil {
+		return 0, false, false
+	}
+	return userID, isGuest, true
+}
+
 // Destroy logs the user out: deletes the DB row and clears the cookie.
 func (m *Manager) Destroy(w http.ResponseWriter, r *http.Request) {
 	if c, err := r.Cookie(CookieName); err == nil {

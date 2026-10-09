@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 	"strings"
 	"unicode"
@@ -181,11 +182,13 @@ func (a *App) ForgotSubmit(w http.ResponseWriter, r *http.Request) {
 		err = a.DB.QueryRowContext(r.Context(), `SELECT id FROM users WHERE phone = $1`, normalizePhone(identifier)).Scan(&userID)
 	}
 	if err == nil {
-		res, _ := a.DB.ExecContext(r.Context(), `
+		res, err := a.DB.ExecContext(r.Context(), `
 			INSERT INTO password_reset_requests (user_id)
 			SELECT $1 WHERE NOT EXISTS (
 				SELECT 1 FROM password_reset_requests WHERE user_id = $1 AND resolved_at IS NULL)`, userID)
-		if n, _ := res.RowsAffected(); n > 0 {
+		if err != nil {
+			log.Printf("[forgot] insert reset request: %v", err)
+		} else if n, _ := res.RowsAffected(); n > 0 {
 			var name string
 			_ = a.DB.QueryRowContext(r.Context(), `SELECT name FROM users WHERE id = $1`, userID).Scan(&name)
 			a.Notify.Send("Selah: permintaan reset password\n" + name + " (" + identifier + ")\nBuka Admin → Pengguna untuk memproses.")

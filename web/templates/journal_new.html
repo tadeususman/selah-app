@@ -564,13 +564,17 @@
               document.getElementById('loc-btn').disabled = false;
             });
         },
-        function() {
+        function(err) {
           icon.style.display = 'block';
           spinner.style.display = 'none';
           document.getElementById('loc-btn').disabled = false;
-          document.getElementById('location-input').placeholder = 'Izin lokasi ditolak';
+          // 1 = izin ditolak, 2 = lokasi tidak tersedia (GPS/lokasi HP mati), 3 = kelamaan
+          var msg = err && err.code === 1 ? 'Izin lokasi ditolak. Aktifkan di Pengaturan HP.'
+                  : err && err.code === 3 ? 'Lokasi terlalu lama. Coba lagi.'
+                  : 'Lokasi tidak tersedia. Pastikan lokasi HP aktif.';
+          document.getElementById('location-input').placeholder = msg;
         },
-        { timeout: 10000 }
+        { timeout: 15000, maximumAge: 60000 }
       );
     });
   </script>

@@ -3265,5 +3265,4 @@ input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:foc
 }
 .journal-form .location-tag-wrap input.location-input:-webkit-autofill { -webkit-box-shadow: 0 0 0 1000px transparent inset; }
 
-.loc-hint { margin: -4px 0 12px; padding: 0 2px; font-size: 12px; line-height: 1.5; color: var(--text-muted); }
-.loc-hint[hidden] { display: none; }
+.location-pin-btn[hidden], .location-auto-btn[hidden] { display: none; }

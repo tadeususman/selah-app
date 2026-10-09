@@ -111,7 +111,6 @@
         <input type="text" id="location-input" name="location" class="location-input" placeholder="Lokasi (opsional)" maxlength="200" autocomplete="off" autocapitalize="words">
         <button type="button" class="location-auto-btn" onclick="document.getElementById('loc-btn').click()">Deteksi otomatis</button>
       </div>
-      <p id="loc-hint" class="loc-hint" hidden></p>
 
       <label>Referensi ayat</label>
       <div class="verse-ref-wrap">
@@ -525,9 +524,39 @@
     })();
     {{end}}
 
+    // Pesan kesalahan lokasi dalam popup (rapi di layar HP, tidak terpotong)
+    function showLocError(title, desc) {
+      var m = document.createElement('div');
+      m.className = 'modal-backdrop';
+      m.innerHTML = '<div class="modal-card" role="alertdialog" aria-modal="true">' +
+        '<h3 class="modal-title"></h3><p class="modal-desc"></p>' +
+        '<div class="modal-actions"><button type="button" class="modal-btn-primary">Mengerti</button></div></div>';
+      m.querySelector('.modal-title').textContent = title;
+      m.querySelector('.modal-desc').textContent = desc;
+      var close = function() { m.remove(); };
+      m.addEventListener('click', function(e) { if (e.target === m) close(); });
+      m.querySelector('button').addEventListener('click', close);
+      document.body.appendChild(m);
+    }
+
+    // Sembunyikan tombol deteksi lokasi bila perangkat/app memang tidak bisa (mis. izin diblokir)
+    (function() {
+      var setAuto = function(on) {
+        document.getElementById('loc-btn').hidden = !on;
+        var ab = document.querySelector('.location-auto-btn'); if (ab) ab.hidden = !on;
+      };
+      if (!navigator.geolocation) { setAuto(false); return; }
+      try {
+        navigator.permissions.query({ name: 'geolocation' }).then(function(p) {
+          setAuto(p.state !== 'denied');
+          p.onchange = function() { setAuto(p.state !== 'denied'); };
+        }).catch(function() {});
+      } catch (e) {}
+    })();
+
     document.getElementById('loc-btn').addEventListener('click', function() {
       if (!navigator.geolocation) {
-        var h0 = document.getElementById('loc-hint'); h0.textContent = 'Geolokasi tidak didukung di perangkat ini.'; h0.hidden = false;
+        showLocError('Lokasi tidak didukung', 'Perangkat ini tidak mendukung deteksi lokasi. Kamu tetap bisa mengetik lokasinya sendiri.');
         return;
       }
       var icon = document.getElementById('loc-icon');
@@ -537,7 +566,6 @@
       this.disabled = true;
 
       var retried = false;
-      var locHint = document.getElementById('loc-hint'); locHint.hidden = true; locHint.textContent = '';
       var onOk = function(pos) {
           var lat = pos.coords.latitude, lon = pos.coords.longitude;
           document.getElementById('lat-input').value = lat;
@@ -558,7 +586,7 @@
               document.getElementById('location-input').value = name;
             })
             .catch(function() {
-              var h1 = document.getElementById('loc-hint'); h1.textContent = 'Gagal mendapatkan nama lokasi. Isi manual.'; h1.hidden = false;
+              showLocError('Nama lokasi tidak ditemukan', 'Lokasi terdeteksi, tapi namanya gagal diambil. Silakan ketik sendiri.');
             })
             .finally(function() {
               icon.style.display = 'block';
@@ -578,11 +606,9 @@
           document.getElementById('loc-btn').disabled = false;
           // 1 = izin ditolak, 2 = lokasi tidak tersedia (lokasi HP mati / penyedia lokasi gagal), 3 = kelamaan
           var code = err && err.code;
-          var short_ = code === 1 ? 'Izin ditolak [1]' : code === 3 ? 'Terlalu lama [3]' : 'Lokasi gagal [2]';
-          var hint = code === 1 ? 'Pengaturan HP \u2192 Aplikasi \u2192 Selah \u2192 Izin \u2192 Lokasi \u2192 Izinkan.'
-                   : code === 3 ? 'Coba di tempat terbuka.'
-                   : 'Nyalakan Lokasi HP, coba lagi.';
-          var lh = document.getElementById('loc-hint'); lh.textContent = short_ + '. ' + hint; lh.hidden = false;
+          if (code === 1) showLocError('Izin lokasi ditolak', 'Buka Pengaturan HP \u2192 Aplikasi \u2192 Selah \u2192 Izin \u2192 Lokasi \u2192 Izinkan. Jika sudah diizinkan tapi tetap gagal, jadikan Chrome sebagai browser default (Brave dan beberapa browser lain tidak mendukung).');
+          else if (code === 3) showLocError('Lokasi terlalu lama', 'Lokasi belum didapat. Coba lagi di tempat terbuka.');
+          else showLocError('Lokasi tidak tersedia', 'Nyalakan Lokasi di HP, lalu coba lagi.');
       };
       navigator.geolocation.getCurrentPosition(onOk, onErr, { timeout: 15000, maximumAge: 60000 });
     });

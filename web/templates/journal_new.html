@@ -541,7 +541,8 @@
       var offBtn = m.querySelector('[data-off]');
       if (offBtn) offBtn.addEventListener('click', function() {
         try { localStorage.setItem('selah-autoloc', 'off'); } catch (e) {}
-        document.getElementById('loc-btn').hidden = true;
+        var pin = document.getElementById('loc-btn');
+        pin.dataset.off = '1'; pin.tabIndex = -1; pin.classList.add('is-off');
         var ab = document.querySelector('.location-auto-btn'); if (ab) ab.hidden = true;
         close();
       });
@@ -551,7 +552,11 @@
     // Sembunyikan tombol deteksi lokasi bila perangkat/app memang tidak bisa (mis. izin diblokir)
     (function() {
       var setAuto = function(on) {
-        document.getElementById('loc-btn').hidden = !on;
+        // Ikon pin tetap tampil; saat mati hanya tidak memicu deteksi.
+        var pin = document.getElementById('loc-btn');
+        pin.dataset.off = on ? '' : '1';
+        pin.tabIndex = on ? 0 : -1;
+        pin.classList.toggle('is-off', !on);
         var ab = document.querySelector('.location-auto-btn'); if (ab) ab.hidden = !on;
       };
       var off = false;
@@ -566,6 +571,7 @@
     })();
 
     document.getElementById('loc-btn').addEventListener('click', function() {
+      if (this.dataset.off === '1') return;
       if (!navigator.geolocation) {
         showLocError('Lokasi tidak didukung', 'Perangkat ini tidak mendukung deteksi lokasi. Kamu tetap bisa mengetik lokasinya sendiri.');
         return;

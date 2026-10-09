@@ -2947,11 +2947,8 @@ button:active:not(:disabled), .btn-primary:active, .btn-secondary:active, .btn-d
    ===================================================================== */
 .set-profile { display: flex; align-items: center; gap: 14px; margin: 0 0 24px; }
 .set-avatar { width: 56px; height: 56px; flex-shrink: 0; border-radius: 50%; display: grid; place-items: center; background: var(--navy); color: #fff; font-size: 24px; font-weight: 700; }
-.set-who { min-width: 0; flex: 1; }
-.set-profile-logout { flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; margin: 0; padding: 8px 12px; border: 1px solid var(--border); border-radius: 999px; background: none; font: inherit; font-size: 13px; font-weight: 600; color: var(--navy); cursor: pointer; }
-.set-profile-logout:active { opacity: .6; }
-[data-theme="dark"] .set-profile-logout { color: var(--text); }
-.set-name { font-size: 19px; font-weight: 700; letter-spacing: -0.02em; color: var(--navy-dark); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.set-who { min-width: 0; }
+[data-theme="dark"] .set-name { font-size: 19px; font-weight: 700; letter-spacing: -0.02em; color: var(--navy-dark); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .set-mail { margin-top: 2px; font-size: 13px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .set-section { margin-bottom: 24px; }
@@ -3017,6 +3014,7 @@ button:active:not(:disabled), .btn-primary:active, .btn-secondary:active, .btn-d
 
 /* logout / delete */
 .set-logout { justify-content: center; color: var(--danger); font-weight: 600; }
+.set-signout .set-label { color: var(--text); }
 .set-danger-zone { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--border); }
 .set-danger-zone .set-title { color: var(--danger); }
 
@@ -3272,8 +3270,10 @@ input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:foc
 }
 .journal-form .location-tag-wrap input.location-input:-webkit-autofill { -webkit-box-shadow: 0 0 0 1000px transparent inset; }
 
-.location-pin-btn[hidden], .location-auto-btn[hidden] { display: none; }
+.location-auto-btn[hidden] { display: none; }
 .modal-login-alt { margin: 16px 0 0; font-size: 13px; color: var(--text-muted); text-align: center; line-height: 1.5; }
 .modal-login-alt small { display: block; font-size: 11px; opacity: .8; }
 .modal-link-btn { background: none; border: none; padding: 0; font: inherit; font-weight: 600; color: var(--navy); text-decoration: underline; cursor: pointer; }
 [data-theme="dark"] .modal-link-btn { color: var(--text); }
+.location-pin-btn.is-off { cursor: default; opacity: .55; }
+.location-pin-btn.is-off:active { transform: none; }

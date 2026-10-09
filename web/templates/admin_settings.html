@@ -7,123 +7,65 @@
 </head>
 <body>
   <main class="page">
-    <header class="page-header">
-      <a href="/admin" class="back-link">← Admin</a>
-      <p class="brand-wordmark brand-small">{{template "wordmark-svg"}}</p>
+    <header class="adm-head">
+      <a href="/admin" class="adm-back"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>Admin</a>
       <h1>Pengaturan Server</h1>
     </header>
 
-    <div class="admin-section" style="margin-bottom:12px">
-      <h3 style="margin-bottom:14px">AI Provider</h3>
-
-      <div style="display:flex;flex-direction:column;gap:8px;font-size:14px">
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px">
-          <span style="color:var(--text-muted)">Provider aktif</span>
-          <span style="font-weight:600">
-            {{if eq .Provider "qwen"}}Qwen (Fireworks){{else}}Claude Bridge{{end}}
-          </span>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px">
-          <span style="color:var(--text-muted)">Model</span>
-          <span style="font-weight:600;font-size:12px">{{.Model}}</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px">
-          <span style="color:var(--text-muted)">API Key</span>
-          {{if .APIKeySet}}
-            <span style="font-weight:600;color:var(--sage)">Terset ✓</span>
-          {{else}}
-            <span style="font-weight:600;color:#e05252">Belum diset</span>
-          {{end}}
-        </div>
+    <section class="set-section">
+      <h2 class="set-title">AI Provider</h2>
+      <div class="set-group">
+        <div class="set-row set-row-static"><span class="set-label">Provider aktif</span><span class="set-value strong">{{if eq .Provider "qwen"}}Qwen{{else}}Claude Bridge{{end}}</span></div>
+        <div class="set-row set-row-static"><span class="set-label">Model</span><span class="set-value">{{.Model}}</span></div>
+        <div class="set-row set-row-static"><span class="set-label">API key</span>{{if .APIKeySet}}<span class="set-value ok">Terset ✓</span>{{else}}<span class="set-value bad">Belum diset</span>{{end}}</div>
+        <form method="POST" action="/admin/settings/test" style="margin:0">
+          <button type="submit" class="set-row set-action">Test koneksi</button>
+        </form>
       </div>
+      {{if eq .TestResult "ok"}}<p class="set-note" style="color:#3E8E5A;font-weight:600">Koneksi berhasil{{if .TestMsg}} · {{.TestMsg}}{{end}}</p>
+      {{else if eq .TestResult "fail"}}<p class="set-note" style="color:var(--danger)">Koneksi gagal: {{.TestMsg}}</p>{{end}}
+      <p class="set-note">Ganti provider: ubah <code>AI_PROVIDER</code> di <code>.env</code> lalu restart container. Nilai: <code>bridge</code> (default) atau <code>qwen</code>.</p>
+    </section>
 
-      {{if eq .TestResult "ok"}}
-      <div style="margin-top:10px;padding:10px 12px;background:var(--card-bg);border:1px solid var(--sage);border-radius:8px;font-size:13px;color:var(--sage);font-weight:600">
-        Koneksi berhasil {{if .TestMsg}}· {{.TestMsg}}{{end}}
-      </div>
-      {{else if eq .TestResult "fail"}}
-      <div style="margin-top:10px;padding:10px 12px;background:var(--card-bg);border:1px solid #e05252;border-radius:8px;font-size:13px;color:#e05252">
-        Koneksi gagal: {{.TestMsg}}
-      </div>
-      {{end}}
-
-      <form method="POST" action="/admin/settings/test" style="margin-top:12px">
-        <button type="submit" class="btn-primary" style="width:100%">Test Koneksi</button>
-      </form>
-
-      <p style="margin-top:12px;font-size:12px;color:var(--text-muted);line-height:1.6">
-        Ganti provider: ubah <code>AI_PROVIDER</code> di <code>.env</code> lalu restart container.<br>
-        Nilai: <code>bridge</code> (default) atau <code>qwen</code>.
-      </p>
-    </div>
-
-    <div class="admin-section" style="margin-bottom:12px">
-      <h3 style="margin-bottom:6px">Mode Coba Dulu</h3>
-      <p style="font-size:12px;color:var(--text-muted);line-height:1.6;margin-bottom:12px">
-        Hari ini {{.GuestToday}} tamu menulis jurnal · {{.GuestActive}} akun tamu sedang ada. Kuota hanya terpakai saat tamu menulis jurnal pertamanya; yang sekadar melihat-lihat tidak dihitung. Isi <strong>0</strong> pada batas harian untuk tanpa batas.
-      </p>
-      {{if .SavedOK}}<div class="flash-ok">Pengaturan Coba Dulu disimpan.</div>{{end}}
+    <section class="set-section">
+      <h2 class="set-title">Mode Coba Dulu</h2>
+      {{if .SavedOK}}<div class="flash-ok">Pengaturan disimpan.</div>{{end}}
       {{if .SavedErr}}<div class="flash-err">Nilai tidak valid. Periksa angka yang kamu isi.</div>{{end}}
-      <form method="POST" action="/admin/settings/guest" class="stacked-form">
-        <label class="admin-checkbox-label">
-          <input type="checkbox" name="enabled" value="1" {{if .Guest.Enabled}}checked{{end}}> Aktifkan tombol Coba dulu
-        </label>
-        <label for="g-ip">Maks tamu yang menulis jurnal per IP per hari</label>
-        <input id="g-ip" name="per_ip_day" type="number" min="0" max="10000" value="{{.Guest.PerIPPerDay}}" required>
-        <span class="auth-field-hint">Satu IP bisa dipakai banyak orang (kampus, kantor, data seluler). Naikkan saat dibagikan ke forum.</span>
-        <label for="g-global">Maks tamu yang menulis jurnal per hari (total)</label>
-        <input id="g-global" name="global_day" type="number" min="0" max="100000" value="{{.Guest.GlobalDay}}" required>
-        <label for="g-j">Jurnal per tamu</label>
-        <input id="g-j" name="max_journals" type="number" min="1" max="20" value="{{.Guest.MaxJournals}}" required>
-        <label for="g-c">Pesan diskusi AI per tamu</label>
-        <input id="g-c" name="max_chats" type="number" min="1" max="100" value="{{.Guest.MaxChats}}" required>
-        <button type="submit" class="btn-primary">Simpan</button>
+      <form method="POST" action="/admin/settings/guest">
+        <div class="set-group">
+          <div class="set-row set-row-static">
+            <span class="set-label">Tombol Coba dulu</span>
+            <span class="set-seg">
+              <label><input type="radio" name="enabled" value="1" {{if .Guest.Enabled}}checked{{end}}><span>Aktif</span></label>
+              <label><input type="radio" name="enabled" value="0" {{if not .Guest.Enabled}}checked{{end}}><span>Mati</span></label>
+            </span>
+          </div>
+          <label class="set-row" for="g-ip"><span class="set-label">Tamu per IP / hari</span><span class="set-value"></span><input id="g-ip" class="set-input" name="per_ip_day" type="number" inputmode="numeric" min="0" max="10000" value="{{.Guest.PerIPPerDay}}" required></label>
+          <label class="set-row" for="g-global"><span class="set-label">Tamu total / hari</span><span class="set-value"></span><input id="g-global" class="set-input" name="global_day" type="number" inputmode="numeric" min="0" max="100000" value="{{.Guest.GlobalDay}}" required></label>
+          <label class="set-row" for="g-j"><span class="set-label">Jurnal per tamu</span><span class="set-value"></span><input id="g-j" class="set-input" name="max_journals" type="number" inputmode="numeric" min="1" max="20" value="{{.Guest.MaxJournals}}" required></label>
+          <label class="set-row" for="g-c"><span class="set-label">Diskusi AI per tamu</span><span class="set-value"></span><input id="g-c" class="set-input" name="max_chats" type="number" inputmode="numeric" min="1" max="100" value="{{.Guest.MaxChats}}" required></label>
+          <button type="submit" class="set-row set-action">Simpan</button>
+        </div>
       </form>
-    </div>
+      <p class="set-note">Hari ini {{.GuestToday}} tamu menulis jurnal · {{.GuestActive}} akun tamu sedang ada. Kuota hanya terpakai saat tamu menulis jurnal pertamanya; yang sekadar melihat-lihat tidak dihitung.</p>
+      <p class="set-note">Isi 0 pada batas harian untuk tanpa batas. Satu IP bisa dipakai banyak orang (kampus, kantor, data seluler), jadi naikkan batas saat dibagikan ke forum.</p>
+    </section>
 
     {{if .Usage}}
-    <div class="admin-section" style="margin-bottom:12px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-        <h3>Pemakaian AI</h3>
-        {{if eq .Provider "qwen"}}
-        <a href="https://app.fireworks.ai/billing" target="_blank" style="font-size:12px;color:var(--text-muted)">Cek di Fireworks →</a>
-        {{end}}
+    <section class="set-section">
+      <h2 class="set-title">Pemakaian AI</h2>
+      <div class="set-group">
+        <div class="adm-stats">
+          <div class="adm-stat"><b>${{printf "%.2f" .Usage.MonthCostUSD}}</b><span>Bulan ini</span></div>
+          <div class="adm-stat"><b>${{printf "%.2f" .Usage.TotalCostUSD}}</b><span>Total</span></div>
+        </div>
+        <div class="set-row set-row-static"><span class="set-label">Token input</span><span class="set-value strong">{{fmtInt .Usage.TotalInputTokens}}</span></div>
+        <div class="set-row set-row-static"><span class="set-label">Token output</span><span class="set-value strong">{{fmtInt .Usage.TotalOutputTokens}}</span></div>
+        {{if .Usage.LastUsed}}<div class="set-row set-row-static"><span class="set-label">Terakhir dipakai</span><span class="set-value">{{wibDateTime .Usage.LastUsed}}</span></div>{{end}}
       </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-        <div style="padding:12px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;text-align:center">
-          <div style="font-size:20px;font-weight:700;color:var(--navy)">${{printf "%.4f" .Usage.TotalCostUSD}}</div>
-          <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Total semua waktu</div>
-        </div>
-        <div style="padding:12px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px;text-align:center">
-          <div style="font-size:20px;font-weight:700;color:var(--navy)">${{printf "%.4f" .Usage.MonthCostUSD}}</div>
-          <div style="font-size:11px;color:var(--text-muted);margin-top:2px">Bulan ini</div>
-        </div>
-      </div>
-
-      <div style="display:flex;flex-direction:column;gap:6px;font-size:13px">
-        <div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px">
-          <span style="color:var(--text-muted)">Token input</span>
-          <span style="font-weight:600">{{fmtInt .Usage.TotalInputTokens}}</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px">
-          <span style="color:var(--text-muted)">Token output</span>
-          <span style="font-weight:600">{{fmtInt .Usage.TotalOutputTokens}}</span>
-        </div>
-        {{if .Usage.LastUsed}}
-        <div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--card-bg);border:1px solid var(--border);border-radius:8px">
-          <span style="color:var(--text-muted)">Terakhir dipakai</span>
-          <span style="font-weight:600">{{wibDateTime .Usage.LastUsed}}</span>
-        </div>
-        {{end}}
-      </div>
-
-      {{if eq .Provider "bridge"}}
-      <p style="margin-top:10px;font-size:12px;color:var(--text-muted)">Tracking biaya hanya aktif saat pakai provider Qwen.</p>
-      {{end}}
-    </div>
+      {{if eq .Provider "bridge"}}<p class="set-note">Biaya hanya terlacak saat memakai provider Qwen.</p>{{end}}
+    </section>
     {{end}}
-
   </main>
   {{template "nav" .}}
 </body>

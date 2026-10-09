@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -13,17 +14,84 @@ import (
 )
 
 // Batas "Coba dulu": cukup untuk merasakan inti app (1 jurnal + diskusi),
-// sambil menjaga biaya AI dan penyalahgunaan tetap terkendali.
+// sambil menjaga biaya AI dan penyalahgunaan tetap terkendali. Nilai bisa
+// diubah admin (Admin → Pengaturan Server); konstanta di bawah hanyalah default.
 const (
-	guestMaxJournals    = 1
-	guestMaxChats       = 6
-	guestPerIPPerDay    = 3
-	guestGlobalPerDay   = 50
 	guestRetention      = 7 * 24 * time.Hour
 	guestCookieName     = "jf_guest"
 	guestCleanupEvery   = time.Hour
 	guestUnusablePwHash = "!" // bukan hash bcrypt valid, jadi tidak pernah cocok saat login
 )
+
+type guestSettings struct {
+	Enabled     bool
+	MaxJournals int // per tamu
+	MaxChats    int // pesan diskusi per tamu
+	PerIPPerDay int // 0 = tanpa batas
+	GlobalDay   int // 0 = tanpa batas
+}
+
+func defaultGuestSettings() guestSettings {
+	return guestSettings{Enabled: true, MaxJournals: 1, MaxChats: 6, PerIPPerDay: 5, GlobalDay: 100}
+}
+
+func (a *App) loadGuestSettings(ctx context.Context) guestSettings {
+	gs := defaultGuestSettings()
+	rows, err := a.DB.QueryContext(ctx, `SELECT key, value FROM app_settings WHERE key LIKE 'guest_%'`)
+	if err != nil {
+		return gs
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var k, v string
+		if rows.Scan(&k, &v) != nil {
+			continue
+		}
+		n, convErr := strconv.Atoi(v)
+		switch k {
+		case "guest_enabled":
+			gs.Enabled = v == "1"
+		case "guest_max_journals":
+			if convErr == nil && n >= 1 {
+				gs.MaxJournals = n
+			}
+		case "guest_max_chats":
+			if convErr == nil && n >= 1 {
+				gs.MaxChats = n
+			}
+		case "guest_per_ip_day":
+			if convErr == nil && n >= 0 {
+				gs.PerIPPerDay = n
+			}
+		case "guest_global_day":
+			if convErr == nil && n >= 0 {
+				gs.GlobalDay = n
+			}
+		}
+	}
+	return gs
+}
+
+func (a *App) saveGuestSettings(ctx context.Context, gs guestSettings) error {
+	enabled := "0"
+	if gs.Enabled {
+		enabled = "1"
+	}
+	for k, v := range map[string]string{
+		"guest_enabled":      enabled,
+		"guest_max_journals": strconv.Itoa(gs.MaxJournals),
+		"guest_max_chats":    strconv.Itoa(gs.MaxChats),
+		"guest_per_ip_day":   strconv.Itoa(gs.PerIPPerDay),
+		"guest_global_day":   strconv.Itoa(gs.GlobalDay),
+	} {
+		if _, err := a.DB.ExecContext(ctx, `
+			INSERT INTO app_settings (key, value) VALUES ($1, $2)
+			ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()`, k, v); err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
 // clientIP prefers the proxy-provided address (Cloudflare, then nginx).
 func clientIP(r *http.Request) string {
@@ -63,12 +131,17 @@ func clearGuestCookie(w http.ResponseWriter) {
 }
 
 type guestPageData struct {
-	Error string
+	Error  string
+	Closed bool
 }
 
 func (a *App) GuestPage(w http.ResponseWriter, r *http.Request) {
 	if _, ok := a.Sessions.UserID(r); ok {
 		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
+		return
+	}
+	if !a.loadGuestSettings(r.Context()).Enabled {
+		a.render(w, "coba.html", guestPageData{Error: "Fitur coba sedang ditutup sementara. Silakan daftar akun gratis.", Closed: true})
 		return
 	}
 	a.render(w, "coba.html", guestPageData{})
@@ -79,6 +152,11 @@ func (a *App) GuestStart(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 		return
 	}
+	gs := a.loadGuestSettings(r.Context())
+	if !gs.Enabled {
+		a.render(w, "coba.html", guestPageData{Error: "Fitur coba sedang ditutup sementara. Silakan daftar akun gratis.", Closed: true})
+		return
+	}
 	ip := clientIP(r)
 
 	var perIP, global int
@@ -86,11 +164,11 @@ func (a *App) GuestStart(w http.ResponseWriter, r *http.Request) {
 		`SELECT COUNT(*) FROM users WHERE is_guest AND guest_ip = $1 AND created_at > now() - interval '24 hours'`, ip).Scan(&perIP)
 	_ = a.DB.QueryRowContext(r.Context(),
 		`SELECT COUNT(*) FROM users WHERE is_guest AND created_at > now() - interval '24 hours'`).Scan(&global)
-	if perIP >= guestPerIPPerDay {
+	if gs.PerIPPerDay > 0 && perIP >= gs.PerIPPerDay {
 		a.render(w, "coba.html", guestPageData{Error: "Kamu sudah mencoba beberapa kali hari ini. Daftar akun gratis untuk melanjutkan."})
 		return
 	}
-	if global >= guestGlobalPerDay {
+	if gs.GlobalDay > 0 && global >= gs.GlobalDay {
 		a.render(w, "coba.html", guestPageData{Error: "Fitur coba sedang penuh hari ini. Silakan daftar akun gratis atau coba lagi besok."})
 		return
 	}

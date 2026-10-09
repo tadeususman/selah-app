@@ -160,6 +160,7 @@ func main() {
 		r.Get("/admin/ai-stats", app.AdminAIStats)
 		r.Get("/admin/settings", app.AdminSettings)
 		r.Post("/admin/settings/test", app.AdminSettingsTest)
+		r.Post("/admin/settings/guest", app.AdminGuestSettingsSave)
 		r.Get("/admin/server", app.AdminServerStatus)
 	})
 

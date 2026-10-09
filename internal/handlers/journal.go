@@ -236,7 +236,7 @@ func (a *App) JournalCreate(w http.ResponseWriter, r *http.Request) {
 	if a.isGuest(r.Context(), userID) {
 		var total int
 		_ = a.DB.QueryRowContext(r.Context(), `SELECT COUNT(*) FROM journal_entries WHERE user_id = $1`, userID).Scan(&total)
-		if total >= guestMaxJournals {
+		if total >= a.loadGuestSettings(r.Context()).MaxJournals {
 			http.Redirect(w, r, "/simpan?from=journal", http.StatusSeeOther)
 			return
 		}
@@ -479,7 +479,7 @@ func (a *App) JournalDiscuss(w http.ResponseWriter, r *http.Request) {
 		_ = a.DB.QueryRowContext(r.Context(), `
 			SELECT COUNT(*) FROM journal_messages m JOIN journal_entries e ON e.id = m.entry_id
 			WHERE e.user_id = $1 AND m.role = 'user'`, userID).Scan(&chats)
-		if chats >= guestMaxChats {
+		if chats >= a.loadGuestSettings(r.Context()).MaxChats {
 			http.Redirect(w, r, "/simpan?from=chat", http.StatusSeeOther)
 			return
 		}

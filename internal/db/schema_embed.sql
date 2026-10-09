@@ -152,3 +152,10 @@ CREATE INDEX IF NOT EXISTS idx_pw_reset_pending ON password_reset_requests (user
 ALTER TABLE users ADD COLUMN IF NOT EXISTS is_guest BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS guest_ip TEXT;
 CREATE INDEX IF NOT EXISTS idx_users_guest ON users (created_at) WHERE is_guest;
+
+-- Pengaturan yang bisa diubah admin dari panel (key/value), mis. batas mode "Coba dulu".
+CREATE TABLE IF NOT EXISTS app_settings (
+    key        TEXT PRIMARY KEY,
+    value      TEXT NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);

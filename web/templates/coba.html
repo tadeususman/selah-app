@@ -24,9 +24,13 @@
       <li>Suka? Daftar kapan saja, <strong>gratis</strong>, dan jurnalmu ikut tersimpan</li>
     </ul>
 
+    {{if .Closed}}
+    <a href="/register" class="auth-btn" style="display:block;text-align:center;text-decoration:none">Daftar Gratis</a>
+    {{else}}
     <form method="POST" action="/coba" class="auth-form-new">
       <button type="submit" class="auth-btn">Mulai Mencoba</button>
     </form>
+    {{end}}
     <p class="auth-hint-note">Mencoba dan mendaftar sama-sama gratis. Data coba otomatis dihapus setelah 7 hari jika tidak didaftarkan.</p>
 
     <p class="auth-switch">Sudah punya akun? <a href="/login">Masuk</a> · <a href="/register">Daftar</a></p>

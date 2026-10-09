@@ -57,6 +57,30 @@
       </p>
     </div>
 
+    <div class="admin-section" style="margin-bottom:12px">
+      <h3 style="margin-bottom:6px">Mode Coba Dulu</h3>
+      <p style="font-size:12px;color:var(--text-muted);line-height:1.6;margin-bottom:12px">
+        Hari ini {{.GuestToday}} akun tamu dibuat · {{.GuestActive}} tamu aktif. Isi <strong>0</strong> pada batas harian untuk tanpa batas.
+      </p>
+      {{if .SavedOK}}<div class="flash-ok">Pengaturan Coba Dulu disimpan.</div>{{end}}
+      {{if .SavedErr}}<div class="flash-err">Nilai tidak valid. Periksa angka yang kamu isi.</div>{{end}}
+      <form method="POST" action="/admin/settings/guest" class="stacked-form">
+        <label class="admin-checkbox-label">
+          <input type="checkbox" name="enabled" value="1" {{if .Guest.Enabled}}checked{{end}}> Aktifkan tombol Coba dulu
+        </label>
+        <label for="g-ip">Maks akun tamu per IP per hari</label>
+        <input id="g-ip" name="per_ip_day" type="number" min="0" max="10000" value="{{.Guest.PerIPPerDay}}" required>
+        <span class="auth-field-hint">Satu IP bisa dipakai banyak orang (kampus, kantor, data seluler). Naikkan saat dibagikan ke forum.</span>
+        <label for="g-global">Maks akun tamu total per hari</label>
+        <input id="g-global" name="global_day" type="number" min="0" max="100000" value="{{.Guest.GlobalDay}}" required>
+        <label for="g-j">Jurnal per tamu</label>
+        <input id="g-j" name="max_journals" type="number" min="1" max="20" value="{{.Guest.MaxJournals}}" required>
+        <label for="g-c">Pesan diskusi AI per tamu</label>
+        <input id="g-c" name="max_chats" type="number" min="1" max="100" value="{{.Guest.MaxChats}}" required>
+        <button type="submit" class="btn-primary">Simpan</button>
+      </form>
+    </div>
+
     {{if .Usage}}
     <div class="admin-section" style="margin-bottom:12px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">

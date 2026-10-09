@@ -236,8 +236,13 @@ func (a *App) JournalCreate(w http.ResponseWriter, r *http.Request) {
 	if a.isGuest(r.Context(), userID) {
 		var total int
 		_ = a.DB.QueryRowContext(r.Context(), `SELECT COUNT(*) FROM journal_entries WHERE user_id = $1`, userID).Scan(&total)
-		if total >= a.loadGuestSettings(r.Context()).MaxJournals {
+		gs := a.loadGuestSettings(r.Context())
+		if total >= gs.MaxJournals {
 			http.Redirect(w, r, "/simpan?from=journal", http.StatusSeeOther)
+			return
+		}
+		if total == 0 && a.guestQuotaFull(r.Context(), userID, gs) {
+			http.Redirect(w, r, "/simpan?from=quota", http.StatusSeeOther)
 			return
 		}
 	}

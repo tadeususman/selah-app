@@ -19,6 +19,8 @@ import (
 const (
 	guestRetention      = 7 * 24 * time.Hour
 	guestCookieName     = "jf_guest"
+	guestCreatePerIPDay = 30             // pagar teknis anti-spam baris tamu kosong; bukan kuota (kuota dihitung saat jurnal pertama)
+	guestIdleRetention  = 24 * time.Hour // tamu yang hanya melihat-lihat (tanpa jurnal) dibersihkan lebih cepat
 	guestCleanupEvery   = time.Hour
 	guestUnusablePwHash = "!" // bukan hash bcrypt valid, jadi tidak pernah cocok saat login
 )
@@ -93,6 +95,30 @@ func (a *App) saveGuestSettings(ctx context.Context, gs guestSettings) error {
 	return nil
 }
 
+// guestQuotaFull reports whether today's "Coba dulu" quota is used up. Only
+// guests who have actually written a journal count (that is when AI cost
+// starts), so people just browsing never consume quota.
+func (a *App) guestQuotaFull(ctx context.Context, userID int64, gs guestSettings) bool {
+	var ip string
+	_ = a.DB.QueryRowContext(ctx, `SELECT COALESCE(guest_ip, '') FROM users WHERE id = $1`, userID).Scan(&ip)
+	const active = `SELECT COUNT(DISTINCT u.id) FROM users u JOIN journal_entries j ON j.user_id = u.id
+		WHERE u.is_guest AND u.id <> $1 AND j.created_at > now() - interval '24 hours'`
+	var perIP, global int
+	if gs.PerIPPerDay > 0 && ip != "" {
+		_ = a.DB.QueryRowContext(ctx, active+` AND u.guest_ip = $2`, userID, ip).Scan(&perIP)
+		if perIP >= gs.PerIPPerDay {
+			return true
+		}
+	}
+	if gs.GlobalDay > 0 {
+		_ = a.DB.QueryRowContext(ctx, active, userID).Scan(&global)
+		if global >= gs.GlobalDay {
+			return true
+		}
+	}
+	return false
+}
+
 // clientIP prefers the proxy-provided address (Cloudflare, then nginx).
 func clientIP(r *http.Request) string {
 	for _, h := range []string{"CF-Connecting-IP", "X-Real-IP"} {
@@ -159,17 +185,11 @@ func (a *App) GuestStart(w http.ResponseWriter, r *http.Request) {
 	}
 	ip := clientIP(r)
 
-	var perIP, global int
+	var created int
 	_ = a.DB.QueryRowContext(r.Context(),
-		`SELECT COUNT(*) FROM users WHERE is_guest AND guest_ip = $1 AND created_at > now() - interval '24 hours'`, ip).Scan(&perIP)
-	_ = a.DB.QueryRowContext(r.Context(),
-		`SELECT COUNT(*) FROM users WHERE is_guest AND created_at > now() - interval '24 hours'`).Scan(&global)
-	if gs.PerIPPerDay > 0 && perIP >= gs.PerIPPerDay {
-		a.render(w, "coba.html", guestPageData{Error: "Kamu sudah mencoba beberapa kali hari ini. Daftar akun gratis untuk melanjutkan."})
-		return
-	}
-	if gs.GlobalDay > 0 && global >= gs.GlobalDay {
-		a.render(w, "coba.html", guestPageData{Error: "Fitur coba sedang penuh hari ini. Silakan daftar akun gratis atau coba lagi besok."})
+		`SELECT COUNT(*) FROM users WHERE is_guest AND guest_ip = $1 AND created_at > now() - interval '24 hours'`, ip).Scan(&created)
+	if created >= guestCreatePerIPDay {
+		a.render(w, "coba.html", guestPageData{Error: "Terlalu banyak percobaan dari jaringan ini hari ini. Daftar akun gratis untuk melanjutkan."})
 		return
 	}
 
@@ -205,6 +225,8 @@ func (a *App) GuestUpgradePage(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Query().Get("from") {
 	case "journal":
 		data.Info = "Kamu sudah mencoba satu jurnal. Daftar gratis supaya bisa terus menulis, dan jurnalmu ikut tersimpan."
+	case "quota":
+		data.Info = "Kuota mencoba hari ini sudah penuh. Daftar gratis supaya bisa langsung menulis jurnal."
 	case "chat":
 		data.Info = "Batas percakapan untuk mencoba sudah tercapai. Daftar gratis untuk melanjutkan, dan jurnalmu ikut tersimpan."
 	case "feature":
@@ -297,8 +319,12 @@ func (a *App) BlockGuests(next http.Handler) http.Handler {
 // that were never turned into real accounts.
 func (a *App) GuestCleanupLoop() {
 	for {
-		res, err := a.DB.Exec(`DELETE FROM users WHERE is_guest AND created_at < now() - make_interval(secs => $1)`,
-			guestRetention.Seconds())
+		res, err := a.DB.Exec(`
+			DELETE FROM users WHERE is_guest AND (
+				created_at < now() - make_interval(secs => $1)
+				OR (created_at < now() - make_interval(secs => $2)
+				    AND NOT EXISTS (SELECT 1 FROM journal_entries WHERE user_id = users.id)))`,
+			guestRetention.Seconds(), guestIdleRetention.Seconds())
 		if err != nil {
 			log.Printf("[guest] cleanup: %v", err)
 		} else if n, _ := res.RowsAffected(); n > 0 {

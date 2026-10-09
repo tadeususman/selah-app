@@ -57,7 +57,8 @@ func (a *App) AdminSettings(w http.ResponseWriter, r *http.Request) {
 
 	data.Guest = a.loadGuestSettings(r.Context())
 	_ = a.DB.QueryRowContext(r.Context(),
-		`SELECT COUNT(*) FROM users WHERE is_guest AND created_at > now() - interval '24 hours'`).Scan(&data.GuestToday)
+		`SELECT COUNT(DISTINCT u.id) FROM users u JOIN journal_entries j ON j.user_id = u.id
+		 WHERE u.is_guest AND j.created_at > now() - interval '24 hours'`).Scan(&data.GuestToday)
 	_ = a.DB.QueryRowContext(r.Context(), `SELECT COUNT(*) FROM users WHERE is_guest`).Scan(&data.GuestActive)
 	data.SavedOK = r.URL.Query().Get("saved") == "guest"
 	data.SavedErr = r.URL.Query().Get("err") == "guest"

@@ -3231,3 +3231,7 @@ label.set-row { font-weight: 400; font-size: 15px; }
 .adm-tabs { display: flex; margin: 0 0 20px; }
 .adm-tabs > a { flex: 1; display: block; padding: 8px 12px; border-radius: 8px; text-align: center; text-decoration: none; font-size: 14px; color: var(--text-muted); }
 .adm-tabs > a.active { background: var(--navy); color: #fff; font-weight: 600; }
+
+.about-maker { margin-top: 14px; font-size: 12px; line-height: 1.7; text-align: center; color: var(--text-muted); }
+.about-maker strong { color: var(--text); font-weight: 600; }
+.about-maker a { color: var(--text-muted); text-decoration: underline; text-underline-offset: 2px; }

@@ -54,39 +54,60 @@
   ],
   "screenshots": [
     {
-      "src": "/static/screenshots/journal-list.jpeg",
-      "sizes": "576x1280",
+      "src": "/static/screenshots/01-hero.jpg",
+      "sizes": "720x1280",
       "type": "image/jpeg",
       "form_factor": "narrow",
-      "label": "Journal List"
+      "label": "Beranda"
     },
     {
-      "src": "/static/screenshots/new-journal.jpeg",
-      "sizes": "576x1280",
+      "src": "/static/screenshots/02-pilihkan-ayat.jpg",
+      "sizes": "720x1280",
       "type": "image/jpeg",
       "form_factor": "narrow",
-      "label": "New Journal"
+      "label": "Pilihkan Ayat"
     },
     {
-      "src": "/static/screenshots/journal.jpeg",
-      "sizes": "576x1280",
+      "src": "/static/screenshots/03-ceritakan.jpg",
+      "sizes": "720x1280",
       "type": "image/jpeg",
       "form_factor": "narrow",
-      "label": "Journal View"
+      "label": "Ceritakan situasimu"
     },
     {
-      "src": "/static/screenshots/discussion.jpeg",
-      "sizes": "576x1280",
+      "src": "/static/screenshots/04-renungan.jpg",
+      "sizes": "720x1280",
       "type": "image/jpeg",
       "form_factor": "narrow",
-      "label": "Discussion"
+      "label": "Renungan"
     },
     {
-      "src": "/static/screenshots/dark-mode.jpeg",
-      "sizes": "576x1280",
+      "src": "/static/screenshots/05-ngobrol.jpg",
+      "sizes": "720x1280",
       "type": "image/jpeg",
       "form_factor": "narrow",
-      "label": "Dark Mode"
+      "label": "Tanya dan ngobrol"
+    },
+    {
+      "src": "/static/screenshots/06-plan.jpg",
+      "sizes": "720x1280",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Plan renungan"
+    },
+    {
+      "src": "/static/screenshots/07-journal.jpg",
+      "sizes": "720x1280",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Daily Journal"
+    },
+    {
+      "src": "/static/screenshots/08-momen-selah.jpg",
+      "sizes": "720x1280",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Momen Selah"
     }
   ]
 }

@@ -3120,3 +3120,38 @@ button:active:not(:disabled), .btn-primary:active, .btn-secondary:active, .btn-d
 .auth-points li::before { content: ""; position: absolute; left: 4px; top: 8px; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
 .auth-hint-note { text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 10px; }
 .auth-link-btn { background: none; border: 0; padding: 0; font: inherit; font-size: 13px; color: var(--text-muted); text-decoration: underline; cursor: pointer; }
+.modal-btn-primary {
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--navy);
+  color: #fff;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+}
+.modal-btn-primary:hover { opacity: 0.9; }
+.modal-btn-primary:active { transform: scale(.96); }
+
+/* Tombol "Coba dulu" di login/daftar: gold agar menarik perhatian tanpa menyaingi tombol utama */
+.auth-btn-try {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 13px 16px;
+  border-radius: 14px;
+  border: 1.5px solid var(--gold);
+  background: var(--gold-light, #FFF7E6);
+  color: var(--navy-dark, #1E3050);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.auth-btn-try span { color: var(--gold); }
+.auth-btn-try:hover { filter: brightness(0.97); }
+.auth-btn-try:active { transform: scale(.98); }
+[data-theme="dark"] .auth-btn-try { background: #2A2418; color: var(--gold); }

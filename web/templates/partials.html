@@ -14,7 +14,7 @@
 <link rel="manifest" href="/static/manifest.json">
 {{template "page-loader-tpl"}}
 <link rel="preload" as="image" href="/static/logo-animated-dark.svg?v=2">
-<link rel="stylesheet" href="/static/css/style.css?v=138">
+<link rel="stylesheet" href="/static/css/style.css?v=140">
 <script>
   (function() {
     var saved = localStorage.getItem('selah-theme');
@@ -162,6 +162,32 @@
     gb.href = '/simpan';
     gb.textContent = 'Mode coba · Daftar gratis untuk menyimpan →';
     document.body.insertBefore(gb, document.body.firstChild);
+
+    // Plan & Pengaturan tidak tersedia untuk tamu: tampilkan penjelasan dulu,
+    // jangan langsung melempar ke halaman daftar (terkesan seperti error).
+    var gm = document.createElement('div');
+    gm.className = 'modal-backdrop';
+    gm.style.display = 'none';
+    gm.innerHTML = '<div class="modal-card" role="dialog" aria-modal="true">' +
+      '<h3 class="modal-title">Fitur ini untuk pengguna terdaftar</h3>' +
+      '<p class="modal-desc">Untuk memakai Plan dan Pengaturan, kamu perlu mendaftar dulu. Gratis, dan jurnal yang sudah kamu tulis ikut tersimpan.</p>' +
+      '<div class="modal-actions"><button type="button" class="modal-btn-cancel">Nanti saja</button>' +
+      '<a href="/simpan" class="modal-btn-primary">Daftar Gratis</a></div></div>';
+    document.body.appendChild(gm);
+    var closeGm = function() { gm.style.display = 'none'; };
+    gm.addEventListener('click', function(e) { if (e.target === gm) closeGm(); });
+    gm.querySelector('.modal-btn-cancel').addEventListener('click', closeGm);
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeGm(); });
+    document.addEventListener('click', function(e) {
+      var a = e.target.closest && e.target.closest('a[href]');
+      if (!a) return;
+      var path = a.getAttribute('href') || '';
+      if (/^\/(plan|user)(\/|\?|$)/.test(path)) {
+        e.preventDefault();
+        e.stopPropagation(); // jangan sampai pemuat halaman (page-loader) ikut menyala
+        gm.style.display = 'flex';
+      }
+    }, true);
   }
   document.querySelectorAll('.nav-item[data-path]').forEach(function(el) {
     if (window.location.pathname.startsWith(el.dataset.path)) {

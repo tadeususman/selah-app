@@ -3124,6 +3124,8 @@ button:active:not(:disabled), .btn-primary:active, .btn-secondary:active, .btn-d
   flex: 1;
   padding: 12px;
   border-radius: 12px;
+  border: none;
+  cursor: pointer;
   background: var(--navy);
   color: #fff;
   font-family: inherit;

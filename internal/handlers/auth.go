@@ -106,26 +106,31 @@ func (a *App) RegisterSubmit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var userID int64
 	if strings.Contains(identifier, "@") {
-		_, err = a.DB.ExecContext(r.Context(),
-			`INSERT INTO users (email, password_hash, name, onboarded) VALUES ($1, $2, $3, false)`,
-			identifier, string(hash), name)
+		err = a.DB.QueryRowContext(r.Context(),
+			`INSERT INTO users (email, password_hash, name, onboarded) VALUES ($1, $2, $3, false) RETURNING id`,
+			identifier, string(hash), name).Scan(&userID)
 		if err != nil {
 			a.render(w, "register.html", registerPageData{Error: "Email sudah terdaftar."})
 			return
 		}
 	} else {
 		phone := normalizePhone(identifier)
-		_, err = a.DB.ExecContext(r.Context(),
-			`INSERT INTO users (phone, password_hash, name, onboarded) VALUES ($1, $2, $3, false)`,
-			phone, string(hash), name)
+		err = a.DB.QueryRowContext(r.Context(),
+			`INSERT INTO users (phone, password_hash, name, onboarded) VALUES ($1, $2, $3, false) RETURNING id`,
+			phone, string(hash), name).Scan(&userID)
 		if err != nil {
 			a.render(w, "register.html", registerPageData{Error: "Nomor HP sudah terdaftar."})
 			return
 		}
 	}
 
-	http.Redirect(w, r, "/login?registered=1", http.StatusSeeOther)
+	if err := a.Sessions.Create(w, r, userID); err != nil {
+		http.Redirect(w, r, "/login?registered=1", http.StatusSeeOther)
+		return
+	}
+	http.Redirect(w, r, "/welcome", http.StatusSeeOther)
 }
 
 // normalizePhone converts Indonesian phone formats to +62xxxxxxxxxx.

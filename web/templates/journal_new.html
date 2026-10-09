@@ -108,13 +108,13 @@
             <path d="M12 3a9 9 0 019 9" stroke-linecap="round"/>
           </svg>
         </button>
-        <input type="text" id="location-input" name="location" class="location-input" placeholder="Lokasi (opsional)" maxlength="200">
+        <input type="text" id="location-input" name="location" class="location-input" placeholder="Lokasi (opsional)" maxlength="200" autocomplete="off" autocapitalize="words">
         <button type="button" class="location-auto-btn" onclick="document.getElementById('loc-btn').click()">Deteksi otomatis</button>
       </div>
 
       <label>Referensi ayat</label>
       <div class="verse-ref-wrap">
-        <input type="text" name="verse_ref" id="verse-ref" placeholder="Mis. Mazmur 23:1-2" maxlength="100" required{{if not .PlanCtx}} autofocus{{end}}{{if .PlanCtx}} value="{{.PlanCtx.VerseRef}}" readonly{{end}}>
+        <input type="text" name="verse_ref" id="verse-ref" placeholder="Mis. Mazmur 23:1-2" maxlength="100" autocomplete="off" required{{if not .PlanCtx}} autofocus{{end}}{{if .PlanCtx}} value="{{.PlanCtx.VerseRef}}" readonly{{end}}>
         {{if not .PlanCtx}}<button type="button" id="fetch-verse-btn" class="btn-fetch-verse">Ambil ayat</button>{{end}}
       </div>
       <div id="fetch-status" style="display:none"></div>

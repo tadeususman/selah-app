@@ -3255,3 +3255,12 @@ label.set-row { font-weight: 400; font-size: 15px; }
 .report-msg.err { color: var(--danger); } .report-msg.ok { color: #3E8E5A; font-weight: 600; }
 .adm-quote { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--btn-secondary-bg); font-size: 13px; line-height: 1.55; color: var(--text); white-space: pre-wrap; word-break: break-word; max-height: 220px; overflow: auto; }
 .adm-quote-label { margin: 10px 0 4px; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); }
+
+/* Pengisian otomatis Chrome/Android jangan mengubah latar atau warna teks kolom form */
+input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:focus, textarea:-webkit-autofill {
+  -webkit-text-fill-color: var(--text);
+  caret-color: var(--text);
+  -webkit-box-shadow: 0 0 0 1000px var(--btn-secondary-bg) inset;
+  transition: background-color 9999s ease-out 0s;
+}
+.journal-form .location-tag-wrap input.location-input:-webkit-autofill { -webkit-box-shadow: 0 0 0 1000px transparent inset; }

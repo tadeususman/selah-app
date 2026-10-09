@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"journalflow/internal/notify"
 	"log"
 	"net/http"
 
@@ -64,6 +65,7 @@ func main() {
 		Sessions: sessions,
 		AI:       aiClient,
 		Tmpl:     tmpl,
+		Notify:   notify.New(cfg.TelegramBotToken, cfg.TelegramChatID),
 	}
 
 	r := chi.NewRouter()

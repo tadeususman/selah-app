@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"journalflow/internal/ai"
+	"journalflow/internal/notify"
 	"journalflow/internal/session"
 )
 
@@ -18,6 +19,7 @@ type App struct {
 	Sessions *session.Manager
 	AI       *ai.Client
 	Tmpl     *template.Template
+	Notify   *notify.Telegram
 }
 
 var idMonths = [13]string{"", "Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"}

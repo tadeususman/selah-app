@@ -3235,3 +3235,7 @@ label.set-row { font-weight: 400; font-size: 15px; }
 .about-maker { margin-top: 14px; font-size: 12px; line-height: 1.7; text-align: center; color: var(--text-muted); }
 .about-maker strong { color: var(--text); font-weight: 600; }
 .about-maker a { color: var(--text-muted); text-decoration: underline; text-underline-offset: 2px; }
+.sonade-logo { height: 14px; width: auto; vertical-align: -2px; margin-left: 3px; }
+.sonade-dark { display: none; }
+[data-theme="dark"] .sonade-light { display: none; }
+[data-theme="dark"] .sonade-dark { display: inline; }

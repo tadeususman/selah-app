@@ -666,7 +666,16 @@ input:focus, textarea:focus {
 }
 .verse-text.expanded {
   display: block;
-  overflow: visible;
+  overflow-y: auto;
+  max-height: 45vh;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.verse-all {
+  max-height: 45vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 .verse-expand-btn {
   background: none;
